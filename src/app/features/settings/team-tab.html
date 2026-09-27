@@ -1,0 +1,81 @@
+<div class="settings-grid">
+  <mat-card appearance="outlined" class="hs-card">
+    <mat-card-header>
+      <mat-card-title>People</mat-card-title>
+      @if (auth.canManageTeam()) {
+        <button mat-flat-button type="button" class="team__invite" data-test="invite" (click)="invite()">
+          <mat-icon svgIcon="plus" /> Invite people
+        </button>
+      }
+    </mat-card-header>
+    <mat-card-content>
+      @if (failed()) {
+        <p class="notice notice--error" role="alert">We could not load your team. <button mat-button type="button" (click)="load()">Try again</button></p>
+      } @else if (team(); as t) {
+        <table mat-table [dataSource]="t.members" class="hs-responsive-table">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let m" class="hs-cell--primary">{{ m.name }} @if (m.is_you) { <span class="muted">(you)</span> }</td>
+          </ng-container>
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef>Email</th>
+            <td mat-cell *matCellDef="let m" data-label="Email">{{ m.email }}</td>
+          </ng-container>
+          <ng-container matColumnDef="role">
+            <th mat-header-cell *matHeaderCellDef>Role</th>
+            <td mat-cell *matCellDef="let m" data-label="Role">
+              @if (canEdit(m)) {
+                <mat-select [value]="m.role" (selectionChange)="changeRole(m, $event.value)" [attr.aria-label]="'Role for ' + m.name" class="team__role">
+                  <mat-option value="admin">Admin</mat-option>
+                  <mat-option value="member">Member</mat-option>
+                </mat-select>
+              } @else {
+                {{ roleLabel(m.role) }}
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+            <td mat-cell *matCellDef="let m">
+              @if (canEdit(m)) {
+                <button mat-button type="button" data-test="remove" (click)="remove(m)">Remove</button>
+              }
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr mat-row *matRowDef="let row; columns: columns"></tr>
+        </table>
+      } @else {
+        <mat-progress-bar mode="indeterminate" aria-label="Loading your team" />
+      }
+    </mat-card-content>
+  </mat-card>
+
+  @if (team(); as t) {
+    <mat-card appearance="outlined" class="hs-card">
+      <mat-card-header><mat-card-title>Pending invitations</mat-card-title></mat-card-header>
+      <mat-card-content>
+        @if (t.invitations.length === 0) {
+          <p class="muted">No pending invitations.</p>
+        } @else {
+          <ul class="team__invites">
+            @for (inv of t.invitations; track inv.id) {
+              <li class="team__invite-row">
+                <div>
+                  <strong>{{ inv.email }}</strong>
+                  <span class="muted"> · {{ roleLabel(inv.role) }} · expires {{ inv.expires_at | date: 'd MMM y' }}</span>
+                </div>
+                @if (auth.canManageTeam()) {
+                  <div class="team__invite-actions">
+                    <button mat-button type="button" (click)="resend(inv)">Resend</button>
+                    <button mat-button type="button" (click)="cancel(inv)">Cancel</button>
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+</div>
