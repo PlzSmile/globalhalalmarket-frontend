@@ -1,0 +1,12 @@
+{
+  // New terminals in this window load ..\dev.ps1: private Node 24 and "ng" = this project's Angular CLI 22
+  // (never the global Angular CLI 14 / Node 18 that belong to Tawasul).
+  "terminal.integrated.profiles.windows": {
+    "HalalSecure": {
+      "path": "powershell.exe",
+      "args": ["-NoExit", "-ExecutionPolicy", "Bypass", "-Command", "if (Test-Path .\\dev.ps1) { . .\\dev.ps1 } elseif (Test-Path ..\\dev.ps1) { . ..\\dev.ps1 } else { Write-Host 'dev.ps1 not found' -ForegroundColor Red }"],
+      "icon": "server"
+    }
+  },
+  "terminal.integrated.defaultProfile.windows": "HalalSecure"
+}
