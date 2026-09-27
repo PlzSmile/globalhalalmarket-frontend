@@ -1,0 +1,41 @@
+@let s = state();
+@if (s.kind === 'loading') {
+  <mat-progress-bar mode="indeterminate" aria-label="Checking your invitation" />
+} @else if (s.kind === 'invalid') {
+  <h1 class="auth-title">Invitation not found</h1>
+  <p class="notice notice--error" role="alert">This invitation link is not valid or has expired. Ask your colleague to send a new one.</p>
+  <p class="auth-footer"><a routerLink="/login">Go to log in</a></p>
+} @else {
+  <h1 class="auth-title">Join {{ s.preview.company_name }} as {{ roleLabels[s.preview.role] }}</h1>
+  <p class="auth-subtitle">Create your account for <strong>{{ s.preview.email }}</strong>.</p>
+
+  @if (auth.user(); as current) {
+    <p class="notice notice--info" role="status">You're logged in as {{ current.email }}. Log out to accept this invitation.</p>
+    <button mat-flat-button class="auth-submit" type="button" (click)="logout()">Log out</button>
+  } @else {
+    @if (formError(); as message) { <p class="notice notice--error" role="alert">{{ message }}</p> }
+    <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <mat-form-field appearance="outline">
+        <mat-label>Your name</mat-label>
+        <input matInput formControlName="name" autocomplete="name" required />
+        @if (form.controls.name.hasError('required')) { <mat-error>Enter your name.</mat-error> }
+        @else if (serverError(form.controls.name); as message) { <mat-error>{{ message }}</mat-error> }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" formControlName="password" autocomplete="new-password" required />
+        <mat-hint>At least {{ passwordMin }} characters.</mat-hint>
+        @if (form.controls.password.hasError('required')) { <mat-error>Choose a password.</mat-error> }
+        @else if (form.controls.password.hasError('minlength')) { <mat-error>Use at least {{ passwordMin }} characters.</mat-error> }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Confirm password</mat-label>
+        <input matInput type="password" formControlName="password_confirmation" autocomplete="new-password" required />
+        @if (form.controls.password_confirmation.hasError('mismatch')) { <mat-error>The passwords do not match.</mat-error> }
+        @else if (form.controls.password_confirmation.hasError('required')) { <mat-error>Type your password again.</mat-error> }
+      </mat-form-field>
+      <button mat-flat-button class="auth-submit" type="submit" [disabled]="busy()">Join {{ s.preview.company_name }}</button>
+      @if (busy()) { <mat-progress-bar mode="indeterminate" aria-label="Creating your account" /> }
+    </form>
+  }
+}

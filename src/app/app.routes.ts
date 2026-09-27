@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { Shell } from './layout/shell/shell';
 import { AuthLayout } from './layout/auth-layout/auth-layout';
-import { authGuard, guestGuard } from './core/auth/guards';
+import { authGuard, guestGuard, unverifiedGuard } from './core/auth/guards';
 
 export const routes: Routes = [
   {
@@ -11,6 +11,10 @@ export const routes: Routes = [
     children: [
       { path: 'login', title: 'Log in · HalalSecure', canActivate: [guestGuard], loadComponent: () => import('./features/auth/login/login').then((m) => m.Login) },
       { path: 'register', title: 'Create account · HalalSecure', canActivate: [guestGuard], loadComponent: () => import('./features/auth/register/register').then((m) => m.Register) },
+      { path: 'forgot-password', title: 'Forgot password · HalalSecure', canActivate: [guestGuard], loadComponent: () => import('./features/auth/forgot-password/forgot-password').then((m) => m.ForgotPassword) },
+      { path: 'reset-password', title: 'New password · HalalSecure', canActivate: [guestGuard], loadComponent: () => import('./features/auth/reset-password/reset-password').then((m) => m.ResetPassword) },
+      { path: 'verify-email', title: 'Verify your email · HalalSecure', canActivate: [unverifiedGuard], loadComponent: () => import('./features/auth/verify-email/verify-email').then((m) => m.VerifyEmail) },
+      { path: 'invitation/:token', title: 'Accept invitation · HalalSecure', loadComponent: () => import('./features/auth/accept-invitation/accept-invitation').then((m) => m.AcceptInvitation) },
     ],
   },
   {
