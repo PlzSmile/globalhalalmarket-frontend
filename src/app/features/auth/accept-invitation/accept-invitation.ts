@@ -10,7 +10,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TeamApi } from '../../../core/api/team-api';
 import { AuthService } from '../../../core/auth/auth.service';
 import { InvitationPreview, ROLE_LABELS } from '../../../core/models/auth';
-import { applyServerErrors, serverError } from '../../../shared/forms/server-errors';
+import { applyServerErrors, clearServerErrors, serverError } from '../../../shared/forms/server-errors';
 import { PASSWORD_MIN, matchesField } from '../../../shared/forms/validators';
 
 type State = { kind: 'loading' } | { kind: 'invalid' } | { kind: 'ready'; preview: InvitationPreview };
@@ -55,6 +55,7 @@ export class AcceptInvitation implements OnInit {
   }
 
   async submit(): Promise<void> {
+    clearServerErrors(this.form);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;

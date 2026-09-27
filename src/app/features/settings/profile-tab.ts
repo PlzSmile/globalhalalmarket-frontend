@@ -9,7 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../../core/auth/auth.service';
 import { MeApi } from '../../core/api/me-api';
-import { applyServerErrors, serverError } from '../../shared/forms/server-errors';
+import { applyServerErrors, clearServerErrors, serverError } from '../../shared/forms/server-errors';
 import { PASSWORD_MIN, matchesField } from '../../shared/forms/validators';
 
 @Component({
@@ -107,6 +107,7 @@ export class ProfileTab {
   }
 
   async saveProfile(): Promise<void> {
+    clearServerErrors(this.profile);
     if (this.profile.invalid) return this.profile.markAllAsTouched();
     this.savingProfile.set(true);
     try {
@@ -120,6 +121,7 @@ export class ProfileTab {
   }
 
   async saveCompany(): Promise<void> {
+    clearServerErrors(this.company);
     if (this.company.invalid) return this.company.markAllAsTouched();
     this.savingCompany.set(true);
     try {
@@ -135,6 +137,7 @@ export class ProfileTab {
   }
 
   async changePassword(): Promise<void> {
+    clearServerErrors(this.password);
     if (this.password.invalid) return this.password.markAllAsTouched();
     this.savingPassword.set(true);
     try {

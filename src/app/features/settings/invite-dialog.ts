@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { TeamApi } from '../../core/api/team-api';
 import { AssignableRole, PendingInvitation } from '../../core/models/auth';
-import { applyServerErrors, serverError } from '../../shared/forms/server-errors';
+import { applyServerErrors, clearServerErrors, serverError } from '../../shared/forms/server-errors';
 
 @Component({
   selector: 'hs-invite-dialog',
@@ -54,6 +54,7 @@ export class InviteDialog {
   protected readonly serverError = serverError;
 
   async send(): Promise<void> {
+    clearServerErrors(this.form);
     if (this.form.invalid) return this.form.markAllAsTouched();
     this.busy.set(true);
     try {

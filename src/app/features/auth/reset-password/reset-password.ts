@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AuthApi } from '../../../core/api/auth-api';
-import { applyServerErrors } from '../../../shared/forms/server-errors';
+import { applyServerErrors, clearServerErrors } from '../../../shared/forms/server-errors';
 import { PASSWORD_MIN, matchesField } from '../../../shared/forms/validators';
 
 @Component({
@@ -64,6 +64,7 @@ export class ResetPassword {
   }
 
   async submit(): Promise<void> {
+    clearServerErrors(this.form);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;

@@ -9,7 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AuthService } from '../../../core/auth/auth.service';
 import { safeReturnUrl } from '../../../core/auth/return-url';
-import { applyServerErrors, serverError } from '../../../shared/forms/server-errors';
+import { applyServerErrors, clearServerErrors, serverError } from '../../../shared/forms/server-errors';
 
 const NOTICES: Record<string, string> = {
   verified: 'Your email is verified. Please log in.',
@@ -45,6 +45,7 @@ export class Login {
   });
 
   async submit(): Promise<void> {
+    clearServerErrors(this.form);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;

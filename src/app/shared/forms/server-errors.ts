@@ -26,6 +26,17 @@ export function applyServerErrors(form: FormGroup, error: unknown): string | nul
   return unmatched;
 }
 
+/** Call at the start of every submit: old server messages must not keep a corrected form invalid. */
+export function clearServerErrors(form: FormGroup): void {
+  for (const control of Object.values(form.controls)) {
+    if (control.hasError('server')) {
+      const { server: _removed, ...rest } = control.errors ?? {};
+      control.setErrors(Object.keys(rest).length ? rest : null);
+      control.updateValueAndValidity({ emitEvent: false });
+    }
+  }
+}
+
 export function serverError(control: AbstractControl | null): string | null {
   return (control?.errors?.['server'] as string | undefined) ?? null;
 }
