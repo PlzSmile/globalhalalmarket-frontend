@@ -1,0 +1,61 @@
+<a class="skip-link" href="#app-main">Skip to content</a>
+
+<mat-sidenav-container class="shell">
+  <mat-sidenav #drawer class="shell__sidenav" [mode]="isLarge() ? 'side' : 'over'" [opened]="isLarge()"
+               [fixedInViewport]="!isLarge()" aria-label="App navigation">
+    <div class="shell__brand">
+      <a class="shell__logo" href="/" aria-label="HalalSecure public site">
+        <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <path d="M16 2.5 4.5 6.8v8.4c0 7.2 4.9 12.6 11.5 14.3 6.6-1.7 11.5-7.1 11.5-14.3V6.8L16 2.5z" fill="currentColor" opacity=".14"/>
+          <path d="M16 2.5 4.5 6.8v8.4c0 7.2 4.9 12.6 11.5 14.3 6.6-1.7 11.5-7.1 11.5-14.3V6.8L16 2.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <path d="m10.5 16 3.8 3.8 7.2-8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Halal<span class="shell__accent">Secure</span></span>
+      </a>
+      @if (!isLarge()) {
+        <button mat-icon-button type="button" (click)="drawer.close()" aria-label="Close menu">
+          <mat-icon svgIcon="close" />
+        </button>
+      }
+    </div>
+
+    <mat-nav-list class="shell__nav">
+      @for (item of nav; track item.path) {
+        <a mat-list-item [routerLink]="item.path" routerLinkActive #rla="routerLinkActive"
+           [activated]="rla.isActive" [attr.aria-current]="rla.isActive ? 'page' : null"
+           (click)="isLarge() || drawer.close()">
+          <mat-icon matListItemIcon [svgIcon]="item.icon" />
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
+      }
+    </mat-nav-list>
+
+    <mat-nav-list class="shell__footer">
+      <a mat-list-item href="/">
+        <mat-icon matListItemIcon svgIcon="external" />
+        <span matListItemTitle>Public checker</span>
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="shell__main">
+    <mat-toolbar class="shell__toolbar">
+      @if (!isLarge()) {
+        <button mat-icon-button type="button" (click)="drawer.open()" aria-label="Open menu" [attr.aria-expanded]="drawer.opened">
+          <mat-icon svgIcon="menu" />
+        </button>
+      }
+      <span class="shell__company">Demo company</span>
+      <button mat-icon-button type="button" (click)="theme.toggle()"
+              [matTooltip]="theme.theme() === 'dark' ? 'Light theme' : 'Dark theme'"
+              [attr.aria-pressed]="theme.theme() === 'dark'"
+              [attr.aria-label]="theme.theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'">
+        <mat-icon [svgIcon]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
+      </button>
+    </mat-toolbar>
+
+    <main class="shell__content" id="app-main" tabindex="-1">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

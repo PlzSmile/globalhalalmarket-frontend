@@ -1,0 +1,79 @@
+<header class="page-top">
+  <div>
+    <h1 class="page-top__title">Dashboard</h1>
+    <p class="muted">Halal compliance of your products in each export market.</p>
+  </div>
+  <span matTooltip="Available in the tracker milestone">
+    <button mat-flat-button type="button" disabled>
+      <mat-icon svgIcon="plus" />
+      Add product
+    </button>
+  </span>
+</header>
+
+<mat-card appearance="outlined" class="hs-card notice" role="note">
+  <mat-card-content class="notice__content">
+    <mat-icon svgIcon="info" class="notice__icon" />
+    <p><strong>Preview.</strong> This screen shows sample data. It connects to your products and suppliers in the tracker milestone.</p>
+  </mat-card-content>
+</mat-card>
+
+<section class="summary" aria-label="Summary">
+  <mat-card appearance="outlined" class="hs-card">
+    <mat-card-content class="summary__card">
+      <span class="summary__icon summary__icon--red"><mat-icon svgIcon="alert" /></span>
+      <div><p class="summary__value">{{ totals().red }}</p><p class="subtle">Need action</p></div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card appearance="outlined" class="hs-card">
+    <mat-card-content class="summary__card">
+      <span class="summary__icon summary__icon--amber"><mat-icon svgIcon="clock" /></span>
+      <div><p class="summary__value">{{ totals().amber }}</p><p class="subtle">Expiring within 60 days</p></div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card appearance="outlined" class="hs-card">
+    <mat-card-content class="summary__card">
+      <span class="summary__icon summary__icon--green"><mat-icon svgIcon="check" /></span>
+      <div><p class="summary__value">{{ totals().green }}</p><p class="subtle">Compliant</p></div>
+    </mat-card-content>
+  </mat-card>
+</section>
+
+<section aria-labelledby="matrix-title">
+  <h2 id="matrix-title" class="section-title">Products × export markets</h2>
+  <mat-card appearance="outlined" class="hs-card table-card">
+    <table mat-table [dataSource]="products()" class="hs-responsive-table">
+      <caption class="visually-hidden">Compliance status of each product per export market</caption>
+
+      <ng-container matColumnDef="product">
+        <th mat-header-cell *matHeaderCellDef scope="col">Product</th>
+        <td mat-cell *matCellDef="let product" class="hs-cell--primary">
+          <span class="product-name">{{ product.name }}</span>
+          <span class="subtle mono"> · {{ product.sku }}</span>
+        </td>
+      </ng-container>
+
+      @for (market of markets(); track market.slug) {
+        <ng-container [matColumnDef]="market.slug">
+          <th mat-header-cell *matHeaderCellDef scope="col"><span aria-hidden="true">{{ market.flag }}</span> {{ market.name }}</th>
+          <td mat-cell *matCellDef="let product" [attr.data-label]="market.name + ' (' + market.authority + ')'">
+            @let cell = cellFor(product, market);
+            @if (cell) {
+              <div class="cell">
+                <hs-status-badge [status]="cell.status" [reason]="cell.reason" />
+                @if (cell.reason) {
+                  <span class="cell__reason">{{ cell.reason }}</span>
+                }
+              </div>
+            } @else {
+              <span class="subtle">Not tracked</span>
+            }
+          </td>
+        </ng-container>
+      }
+
+      <tr mat-header-row *matHeaderRowDef="columns()"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns()"></tr>
+    </table>
+  </mat-card>
+</section>

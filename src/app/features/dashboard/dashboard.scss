@@ -1,0 +1,44 @@
+:host { display: grid; gap: var(--space-6); }
+
+.page-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); }
+.page-top__title { font-size: var(--text-3xl); margin-bottom: var(--space-2); }
+
+.notice {
+  --mat-card-outlined-container-color: var(--color-warning-bg);
+  --mat-card-outlined-outline-color: var(--color-warning-border);
+  box-shadow: none;
+}
+.notice__content { display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-4) !important; font-size: var(--text-sm); }
+.notice__icon { color: var(--color-warning-fg); flex: none; }
+
+.summary { display: grid; gap: var(--space-4); grid-template-columns: 1fr; }
+@media (min-width: 768px) { .summary { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.summary__card { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-5) !important; }
+.summary__value { font-size: var(--text-3xl); font-weight: var(--weight-bold); line-height: 1; letter-spacing: var(--tracking-tight); }
+.summary__icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: var(--radius-md); flex: none; }
+.summary__icon--red { background: var(--color-danger-bg); color: var(--color-danger-fg); }
+.summary__icon--amber { background: var(--color-warning-bg); color: var(--color-warning-fg); }
+.summary__icon--green { background: var(--color-success-bg); color: var(--color-success-fg); }
+
+.section-title { font-size: var(--text-xl); margin-bottom: var(--space-4); }
+
+.table-card { overflow: hidden; }
+.table-card table {
+  --mat-table-background-color: var(--color-surface);
+  --mat-table-header-headline-color: var(--color-text-muted);
+  --mat-table-header-headline-size: var(--text-xs);
+  --mat-table-header-headline-weight: var(--weight-semibold);
+  --mat-table-row-item-outline-color: var(--color-border);
+  width: 100%;
+}
+.table-card th { text-transform: uppercase; letter-spacing: 0.06em; background: var(--color-surface-muted); }
+.table-card td, .table-card th { padding: var(--space-3) var(--space-4); }
+.product-name { font-weight: var(--weight-semibold); }
+
+.cell { display: grid; gap: var(--space-1); justify-items: start; }
+.cell__reason { font-size: var(--text-xs); color: var(--color-text-subtle); max-width: 28ch; }
+@media (max-width: 767px) { .cell { justify-items: end; text-align: right; } }
+@media (max-width: 767px) {
+  .table-card td { padding: 0; }
+  .table-card tr.mat-mdc-row + tr.mat-mdc-row { border-top: 1px solid var(--color-border); }
+}

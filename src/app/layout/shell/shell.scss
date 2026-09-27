@@ -1,0 +1,55 @@
+:host { display: block; }
+
+.shell {
+  min-height: 100dvh;
+  --mat-sidenav-container-background-color: var(--color-surface);
+  --mat-sidenav-container-divider-color: var(--color-border);
+  --mat-sidenav-content-background-color: var(--color-bg);
+  --mat-sidenav-container-shape: 0;
+}
+
+.shell__sidenav { width: 264px; display: flex; flex-direction: column; }
+.shell__sidenav ::ng-deep .mat-drawer-inner-container { display: flex; flex-direction: column; }
+
+.shell__brand {
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: var(--header-height); padding: 0 var(--space-3) 0 var(--space-5);
+}
+.shell__logo {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  color: var(--color-text); text-decoration: none;
+  font-weight: var(--weight-bold); font-size: var(--text-lg); letter-spacing: var(--tracking-tight);
+  svg { width: 30px; height: 30px; color: var(--color-primary); }
+}
+.shell__accent { color: var(--color-primary); }
+
+.shell__nav, .shell__footer {
+  padding: var(--space-2) var(--space-3);
+  --mat-list-active-indicator-color: var(--color-primary-soft);
+  --mat-list-active-indicator-shape: var(--radius-md);
+  --mat-list-list-item-leading-icon-color: var(--color-text-muted);
+  --mat-list-list-item-label-text-color: var(--color-text-muted);
+  --mat-list-list-item-label-text-weight: var(--weight-medium);
+}
+.shell__nav .mdc-list-item { border-radius: var(--radius-md); margin-bottom: var(--space-1); }
+.shell__nav .mdc-list-item--activated {
+  --mat-list-list-item-leading-icon-color: var(--color-primary);
+  --mat-list-list-item-label-text-color: var(--color-primary);
+}
+.shell__footer { margin-top: auto; border-top: 1px solid var(--color-border); }
+
+.shell__toolbar {
+  position: sticky; top: 0; z-index: 10;
+  gap: var(--space-2);
+  height: var(--header-height);
+  padding-inline: var(--gutter);
+  --mat-toolbar-container-background-color: color-mix(in srgb, var(--color-surface) 90%, transparent);
+  --mat-toolbar-container-text-color: var(--color-text);
+  backdrop-filter: saturate(160%) blur(10px);
+  border-bottom: 1px solid var(--color-border);
+}
+.shell__company { margin-right: auto; font-weight: var(--weight-semibold); font-size: var(--text-sm); }
+
+.shell__content { padding: var(--space-6) var(--gutter) var(--space-12); max-width: var(--container-max); }
+.shell__content:focus { outline: none; }
+@media (min-width: 1200px) { .shell__content { padding-top: var(--space-8); } }

@@ -1,0 +1,94 @@
+// Angular Material (Material 3) themed from OUR design tokens, so the app and the public site share one
+// source of truth: ../../backend/public/css/tokens.css. Light/dark follows <html data-theme> / the OS,
+// because both our tokens and Material's system variables use light-dark() with `color-scheme`.
+@use '@angular/material' as mat;
+@use '../../backend/public/css/tokens';
+
+html {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$green-palette,
+        tertiary: mat.$yellow-palette,
+      ),
+      typography: (
+        plain-family: 'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif',
+        brand-family: 'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif',
+      ),
+      density: 0,
+    )
+  );
+
+  // Map Material system colours onto our tokens (never hard-code colours here).
+  @include mat.theme-overrides(
+    (
+      primary: var(--color-primary),
+      on-primary: var(--color-primary-contrast),
+      primary-container: var(--color-primary-soft),
+      on-primary-container: var(--color-primary),
+      secondary-container: var(--color-primary-soft),
+      on-secondary-container: var(--color-primary),
+      surface: var(--color-bg),
+      on-surface: var(--color-text),
+      on-surface-variant: var(--color-text-muted),
+      surface-container-lowest: var(--color-surface),
+      surface-container-low: var(--color-surface),
+      surface-container: var(--color-surface),
+      surface-container-high: var(--color-surface-muted),
+      surface-container-highest: var(--color-surface-muted),
+      outline: var(--color-border-strong),
+      outline-variant: var(--color-border),
+      error: var(--color-danger-fg),
+    )
+  );
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { margin: 0; line-height: var(--leading-tight); letter-spacing: var(--tracking-tight); font-weight: var(--weight-bold); }
+p { margin: 0; }
+a { color: var(--color-link); }
+:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.skip-link {
+  position: absolute; left: var(--space-4); top: -100px; z-index: 1000;
+  background: var(--color-primary); color: var(--color-primary-contrast);
+  padding: var(--space-2) var(--space-4); border-radius: var(--radius-sm);
+}
+.skip-link:focus { top: var(--space-2); }
+.muted { color: var(--color-text-muted); }
+.subtle { color: var(--color-text-subtle); font-size: var(--text-sm); }
+.mono { font-family: var(--font-mono); font-size: 0.92em; }
+
+// Cards: flat, bordered surface (matches the public site cards).
+.mat-mdc-card.hs-card {
+  --mat-card-outlined-container-color: var(--color-surface);
+  --mat-card-outlined-outline-color: var(--color-border);
+  --mat-card-outlined-container-shape: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+// Responsive data tables: on small screens each row becomes a card (cells show their column name).
+@media (max-width: 767px) {
+  .hs-responsive-table .mat-mdc-header-row { display: none; }
+  .hs-responsive-table .mat-mdc-row { display: grid; gap: var(--space-2); height: auto; padding: var(--space-4); }
+  .hs-responsive-table .mat-mdc-cell {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+    padding: 0; border: 0; min-height: 0;
+  }
+  .hs-responsive-table .mat-mdc-cell[data-label]::before {
+    content: attr(data-label); color: var(--color-text-subtle); font-size: var(--text-xs); font-weight: var(--weight-medium);
+  }
+  .hs-responsive-table .hs-cell--primary { display: block; }
+}
