@@ -1,0 +1,53 @@
+<h1 class="auth-title">Create your account</h1>
+<p class="auth-subtitle">Free while we are in early access. No card needed.</p>
+
+@if (formError(); as message) { <p class="notice notice--error" role="alert">{{ message }}</p> }
+
+<form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-form-field appearance="outline">
+    <mat-label>Your name</mat-label>
+    <input matInput formControlName="name" autocomplete="name" required />
+    @if (form.controls.name.hasError('required')) { <mat-error>Enter your name.</mat-error> }
+    @else if (serverError(form.controls.name); as message) { <mat-error>{{ message }}</mat-error> }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Work email</mat-label>
+    <input matInput type="email" formControlName="email" autocomplete="email" required />
+    @if (form.controls.email.hasError('required')) { <mat-error>Enter your email address.</mat-error> }
+    @else if (form.controls.email.hasError('email')) { <mat-error>Enter a valid email address.</mat-error> }
+    @else if (serverError(form.controls.email); as message) { <mat-error>{{ message }}</mat-error> }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Password</mat-label>
+    <input matInput [type]="showPassword() ? 'text' : 'password'" formControlName="password" autocomplete="new-password" required />
+    <button mat-icon-button matSuffix type="button" (click)="showPassword.set(!showPassword())"
+            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'" [attr.aria-pressed]="showPassword()">
+      <mat-icon [svgIcon]="showPassword() ? 'eye-off' : 'eye'" />
+    </button>
+    <mat-hint>At least {{ passwordMin }} characters. A short sentence works well.</mat-hint>
+    @if (form.controls.password.hasError('required')) { <mat-error>Choose a password.</mat-error> }
+    @else if (form.controls.password.hasError('minlength')) { <mat-error>Use at least {{ passwordMin }} characters.</mat-error> }
+    @else if (serverError(form.controls.password); as message) { <mat-error>{{ message }}</mat-error> }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Confirm password</mat-label>
+    <input matInput [type]="showPassword() ? 'text' : 'password'" formControlName="password_confirmation" autocomplete="new-password" required />
+    @if (form.controls.password_confirmation.hasError('required')) { <mat-error>Type your password again.</mat-error> }
+    @else if (form.controls.password_confirmation.hasError('mismatch')) { <mat-error>The passwords do not match.</mat-error> }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Company name</mat-label>
+    <input matInput formControlName="company_name" autocomplete="organization" required />
+    @if (form.controls.company_name.hasError('required')) { <mat-error>Enter your company name.</mat-error> }
+    @else if (serverError(form.controls.company_name); as message) { <mat-error>{{ message }}</mat-error> }
+  </mat-form-field>
+
+  <button mat-flat-button class="auth-submit" type="submit" [disabled]="busy()">Create account</button>
+  @if (busy()) { <mat-progress-bar mode="indeterminate" aria-label="Creating your account" /> }
+</form>
+
+<p class="auth-footer">Already have an account? <a routerLink="/login">Log in</a></p>

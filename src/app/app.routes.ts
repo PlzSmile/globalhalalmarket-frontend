@@ -1,8 +1,18 @@
 import { Routes } from '@angular/router';
 import { Shell } from './layout/shell/shell';
-import { authGuard } from './core/auth/guards';
+import { AuthLayout } from './layout/auth-layout/auth-layout';
+import { authGuard, guestGuard } from './core/auth/guards';
 
 export const routes: Routes = [
+  {
+    // Login, sign-up, password and invitation screens (matched before the Shell's catch-all).
+    path: '',
+    component: AuthLayout,
+    children: [
+      { path: 'login', title: 'Log in · HalalSecure', canActivate: [guestGuard], loadComponent: () => import('./features/auth/login/login').then((m) => m.Login) },
+      { path: 'register', title: 'Create account · HalalSecure', canActivate: [guestGuard], loadComponent: () => import('./features/auth/register/register').then((m) => m.Register) },
+    ],
+  },
   {
     path: '',
     component: Shell,
