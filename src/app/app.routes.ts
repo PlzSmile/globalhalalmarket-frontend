@@ -24,7 +24,8 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', title: 'Dashboard · HalalSecure', loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard) },
-      ...(['products', 'suppliers', 'certificates', 'settings'] as const).map((path) => ({
+      { path: 'settings', title: 'Settings · HalalSecure', loadComponent: () => import('./features/settings/settings').then((m) => m.Settings) },
+      ...(['products', 'suppliers', 'certificates'] as const).map((path) => ({
         path,
         title: `${path[0].toUpperCase()}${path.slice(1)} · HalalSecure`,
         data: { title: `${path[0].toUpperCase()}${path.slice(1)}` },

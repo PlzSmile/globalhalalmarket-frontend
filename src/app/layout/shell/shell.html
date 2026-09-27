@@ -4,14 +4,7 @@
   <mat-sidenav #drawer class="shell__sidenav" [mode]="isLarge() ? 'side' : 'over'" [opened]="isLarge()"
                [fixedInViewport]="!isLarge()" aria-label="App navigation">
     <div class="shell__brand">
-      <a class="shell__logo" href="/" aria-label="HalalSecure public site">
-        <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-          <path d="M16 2.5 4.5 6.8v8.4c0 7.2 4.9 12.6 11.5 14.3 6.6-1.7 11.5-7.1 11.5-14.3V6.8L16 2.5z" fill="currentColor" opacity=".14"/>
-          <path d="M16 2.5 4.5 6.8v8.4c0 7.2 4.9 12.6 11.5 14.3 6.6-1.7 11.5-7.1 11.5-14.3V6.8L16 2.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-          <path d="m10.5 16 3.8 3.8 7.2-8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span>Halal<span class="shell__accent">Secure</span></span>
-      </a>
+      <hs-logo />
       @if (!isLarge()) {
         <button mat-icon-button type="button" (click)="drawer.close()" aria-label="Close menu">
           <mat-icon svgIcon="close" />
@@ -45,13 +38,25 @@
           <mat-icon svgIcon="menu" />
         </button>
       }
-      <span class="shell__company">Demo company</span>
+      <span class="shell__company">{{ auth.user()?.company?.name }}</span>
       <button mat-icon-button type="button" (click)="theme.toggle()"
               [matTooltip]="theme.theme() === 'dark' ? 'Light theme' : 'Dark theme'"
               [attr.aria-pressed]="theme.theme() === 'dark'"
               [attr.aria-label]="theme.theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'">
         <mat-icon [svgIcon]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
       </button>
+      <button mat-icon-button type="button" [matMenuTriggerFor]="userMenu" aria-label="Account menu">
+        <mat-icon svgIcon="user" />
+      </button>
+      <mat-menu #userMenu="matMenu" xPosition="before">
+        <div class="shell__who" aria-hidden="true">
+          <strong>{{ auth.user()?.name }}</strong>
+          <span>{{ auth.user()?.email }}</span>
+        </div>
+        <a mat-menu-item routerLink="/settings"><mat-icon svgIcon="settings" /> Settings</a>
+        <a mat-menu-item routerLink="/settings" [queryParams]="{ tab: 'team' }"><mat-icon svgIcon="users" /> Team</a>
+        <button mat-menu-item type="button" (click)="logout()"><mat-icon svgIcon="logout" /> Log out</button>
+      </mat-menu>
     </mat-toolbar>
 
     <main class="shell__content" id="app-main" tabindex="-1">
