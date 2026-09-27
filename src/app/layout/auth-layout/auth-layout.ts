@@ -25,10 +25,10 @@ import { Logo } from '../../shared/ui/logo';
     </main>
   `,
   styles: `
-    .auth { min-height: 100dvh; display: grid; align-content: start; justify-items: center; gap: var(--space-6);
+    .auth { min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; justify-items: center; gap: var(--space-6);
       padding: var(--space-6) var(--gutter) var(--space-12); background: var(--color-bg); }
     .auth__top { width: min(100%, var(--container-form)); display: flex; align-items: center; justify-content: space-between; }
-    .auth__card { width: min(100%, var(--container-form)); background: var(--color-surface); border: 1px solid var(--color-border);
+    .auth__card { box-sizing: border-box; width: min(100%, var(--container-form)); background: var(--color-surface); border: 1px solid var(--color-border);
       border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: var(--space-8) var(--space-6); }
     @media (min-width: 768px) { .auth { align-content: center; } .auth__card { padding: var(--space-10); } }
   `,
