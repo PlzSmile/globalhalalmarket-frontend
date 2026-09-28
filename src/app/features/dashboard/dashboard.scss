@@ -2,7 +2,7 @@
 
 .page-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); }
 .page-top__title { font-size: var(--text-3xl); margin-bottom: var(--space-2); }
-.page-top button { min-height: 44px; }
+.page-top a, .page-top button { min-height: 44px; }
 
 .overview { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); align-items: start; }
 @media (min-width: 768px) { .overview { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }

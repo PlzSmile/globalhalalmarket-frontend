@@ -3,12 +3,10 @@
     <h1 class="page-top__title">Dashboard</h1>
     <p class="muted">What is safe to ship, for each of your export markets.</p>
   </div>
-  <span matTooltip="Coming soon">
-    <button mat-flat-button type="button" disabled>
-      <mat-icon svgIcon="plus" />
-      Add product
-    </button>
-  </span>
+  <a mat-flat-button routerLink="/products" data-test="header-add-product">
+    <mat-icon svgIcon="plus" />
+    Add product
+  </a>
 </header>
 
 @let s = state();
@@ -56,10 +54,8 @@
     <hs-empty-state
       icon="box"
       heading="Add your first product"
-      text="Products, suppliers and certificates arrive in the next updates. Then this page shows what is safe to ship to each market.">
-      <span matTooltip="Coming soon">
-        <button mat-flat-button type="button" class="empty-action" disabled>Add product</button>
-      </span>
+      text="List the products you export, their ingredients and suppliers. Certificates come next; then this page shows what is safe to ship to each market.">
+      <a mat-flat-button routerLink="/products" class="empty-action">Add product</a>
     </hs-empty-state>
   }
 }

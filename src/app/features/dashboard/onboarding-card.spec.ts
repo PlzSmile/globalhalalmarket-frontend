@@ -47,6 +47,16 @@ describe('OnboardingCard', () => {
     expect(el.textContent).toContain('Ask an owner or admin to choose');
   });
 
+  it('links the products and suppliers steps when they are to do, for every role', () => {
+    const steps: readonly OnboardingStep[] = [
+      { key: 'markets', status: 'done' }, { key: 'team', status: 'done' },
+      { key: 'products', status: 'todo' }, { key: 'suppliers', status: 'todo' }, { key: 'certificates', status: 'coming_soon' },
+    ];
+    const { el } = render(false, steps);
+    expect(el.querySelector('[data-test="add-products"]')?.getAttribute('href')).toContain('/products');
+    expect(el.querySelector('[data-test="add-suppliers"]')?.getAttribute('href')).toContain('/suppliers');
+  });
+
   it('marks later steps as Coming soon without actions', () => {
     const { el } = render(true);
     const products = el.querySelector('[data-test="step-products"]') as HTMLElement;

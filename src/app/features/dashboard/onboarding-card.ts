@@ -45,6 +45,10 @@ const STATUS_LABEL: Record<StepStatus, string> = { done: 'done', todo: 'to do', 
                     } @else if (step.key === 'team') {
                       @if (canManage()) { <a mat-stroked-button routerLink="/settings" [queryParams]="{ tab: 'team' }" data-test="invite-team">Invite</a> }
                       @else { <span class="step__hint">Ask an owner or admin to invite colleagues</span> }
+                    } @else if (step.key === 'products') {
+                      <a mat-stroked-button routerLink="/products" data-test="add-products">Add product</a>
+                    } @else if (step.key === 'suppliers') {
+                      <a mat-stroked-button routerLink="/suppliers" data-test="add-suppliers">Add supplier</a>
                     }
                   }
                 }

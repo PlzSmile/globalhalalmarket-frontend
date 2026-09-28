@@ -7,7 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink } from '@angular/router';
 import { DashboardApi } from '../../core/api/dashboard-api';
 import { AuthService } from '../../core/auth/auth.service';
 import { DashboardData } from '../../core/models/dashboard';
@@ -21,7 +21,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; data: Da
 @Component({
   selector: 'hs-dashboard',
   imports: [
-    MatButtonModule, MatCardModule, MatChipsModule, MatIconModule, MatProgressBarModule, MatTooltipModule, EmptyState, OnboardingCard,
+    MatButtonModule, MatCardModule, MatChipsModule, MatIconModule, MatProgressBarModule, RouterLink, EmptyState, OnboardingCard,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
