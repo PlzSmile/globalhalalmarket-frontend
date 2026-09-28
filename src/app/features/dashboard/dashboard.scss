@@ -13,5 +13,7 @@
 .markets__edit { min-height: 44px; }
 @media (max-width: 767px) { .markets__edit { width: 100%; } }
 
+.empty-action { min-height: 44px; }
+
 .load-error { display: grid; gap: var(--space-3); justify-items: start; }
 .load-error button { min-height: 44px; }

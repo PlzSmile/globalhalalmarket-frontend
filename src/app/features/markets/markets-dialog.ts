@@ -21,18 +21,23 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; markets:
         <mat-progress-bar mode="indeterminate" aria-label="Loading markets" />
       } @else if (s.kind === 'error') {
         <p class="notice notice--error" role="alert">Markets could not be loaded.</p>
-        <button mat-stroked-button type="button" (click)="load()" data-test="retry-markets">Try again</button>
+        <button mat-stroked-button type="button" class="dialog-btn" (click)="load()" data-test="retry-markets">Try again</button>
       } @else {
         <hs-market-picker [markets]="s.markets" (saved)="onSaved($event)">
-          <button pickerCancel mat-button type="button" mat-dialog-close>Cancel</button>
+          <button pickerCancel mat-button type="button" class="picker-cancel" mat-dialog-close>Cancel</button>
         </hs-market-picker>
       }
     </mat-dialog-content>
     @if (state().kind !== 'ready') {
-      <mat-dialog-actions align="end"><button mat-button type="button" mat-dialog-close>Cancel</button></mat-dialog-actions>
+      <mat-dialog-actions align="end"><button mat-button type="button" class="dialog-btn" mat-dialog-close>Cancel</button></mat-dialog-actions>
     }
   `,
-  styles: `.intro { margin-bottom: var(--space-4); }`,
+  styles: `
+    .intro { margin-bottom: var(--space-4); }
+    /* Projected into the picker, so the picker's own button styles do not reach it. */
+    .picker-cancel, .dialog-btn { min-height: 44px; }
+    @media (max-width: 767px) { .picker-cancel { flex: 1 1 100%; } }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MarketsDialog implements OnInit {

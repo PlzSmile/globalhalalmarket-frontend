@@ -26,7 +26,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; markets:
             <mat-progress-bar mode="indeterminate" aria-label="Loading markets" />
           } @else if (s.kind === 'error') {
             <p class="notice notice--error" role="alert">Markets could not be loaded.</p>
-            <button mat-stroked-button type="button" (click)="load()">Try again</button>
+            <button mat-stroked-button type="button" class="retry" (click)="load()">Try again</button>
           } @else {
             <hs-market-picker [markets]="s.markets" [readonly]="!auth.canManageTeam()" (saved)="onSaved($event)" />
           }
@@ -34,6 +34,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; markets:
       </mat-card>
     </div>
   `,
+  styles: `.retry { min-height: 44px; }`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MarketsTab implements OnInit {
