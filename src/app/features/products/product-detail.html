@@ -1,0 +1,75 @@
+<a routerLink="/products" class="back">← All products</a>
+
+@let s = state();
+@if (s.kind === 'loading') {
+  <mat-progress-bar mode="indeterminate" aria-label="Loading product" />
+} @else if (s.kind === 'notFound') {
+  <mat-card appearance="outlined" class="hs-card"><mat-card-content class="load-error">
+    <h1 class="card-title">Product not found</h1>
+    <p class="muted">It may have been deleted.</p>
+    <a mat-stroked-button routerLink="/products" class="btn">Back to products</a>
+  </mat-card-content></mat-card>
+} @else if (s.kind === 'error') {
+  <mat-card appearance="outlined" class="hs-card"><mat-card-content class="load-error">
+    <p role="alert">We couldn't load this product.</p>
+    <button mat-stroked-button type="button" class="btn" (click)="load()" data-test="retry">Try again</button>
+  </mat-card-content></mat-card>
+} @else {
+  @let product = s.product;
+  <header class="page-top">
+    <div>
+      <h1 class="page-top__title">{{ product.name }}</h1>
+      <p class="muted">SKU: <span class="mono">{{ product.sku ?? 'none' }}</span></p>
+    </div>
+    <div class="actions">
+      <button mat-stroked-button type="button" class="btn" (click)="editProduct(product)" [disabled]="busy()">Edit</button>
+      <button mat-stroked-button type="button" class="btn" (click)="deleteProduct()" [disabled]="busy()" data-test="delete-product">Delete</button>
+    </div>
+  </header>
+
+  <mat-card appearance="outlined" class="hs-card">
+    <mat-card-header><mat-card-title><h2 class="card-title">Ingredients</h2></mat-card-title></mat-card-header>
+    <mat-card-content>
+      <hs-link-picker label="Add ingredient (search or type a new one)" testId="add-ingredient" [search]="searchIngredients"
+                      [excludeIds]="ingredientIds(product)" [busy]="busy()" (picked)="linkIngredient($event)" />
+      @if (product.ingredients.length === 0) {
+        <p class="muted">No ingredients yet. Add the first one above.</p>
+      } @else {
+        <ul class="ingredients">
+          @for (ingredient of product.ingredients; track ingredient.id) {
+            <li class="ingredient" [attr.data-test]="'ingredient-' + ingredient.id">
+              <div class="ingredient__top">
+                <div>
+                  <span class="ingredient__name">{{ ingredient.name }}</span>
+                  <span class="ingredient__meta"> · in {{ ingredient.products_count }} {{ ingredient.products_count === 1 ? 'product' : 'products' }}</span>
+                </div>
+                <button mat-icon-button type="button" [matMenuTriggerFor]="menu" [attr.aria-label]="'Actions for ' + ingredient.name" [disabled]="busy()">
+                  <mat-icon svgIcon="more" />
+                </button>
+                <mat-menu #menu="matMenu">
+                  <button mat-menu-item type="button" (click)="renameIngredient(ingredient)">Rename ingredient</button>
+                  <button mat-menu-item type="button" (click)="unlinkIngredient(ingredient)">Remove from this product</button>
+                  <button mat-menu-item type="button" (click)="deleteIngredient(ingredient)">Delete ingredient everywhere</button>
+                </mat-menu>
+              </div>
+              @if (ingredient.suppliers.length) {
+                <mat-chip-set [attr.aria-label]="'Suppliers of ' + ingredient.name">
+                  @for (supplier of ingredient.suppliers; track supplier.id) {
+                    <mat-chip [removable]="true" (removed)="unlinkSupplier(ingredient, supplier)" [disabled]="busy()">
+                      {{ supplier.name }}
+                      <button matChipRemove type="button" [attr.aria-label]="'Remove ' + supplier.name + ' from ' + ingredient.name"><mat-icon svgIcon="close" /></button>
+                    </mat-chip>
+                  }
+                </mat-chip-set>
+              } @else {
+                <p class="ingredient__meta">No supplier yet.</p>
+              }
+              <hs-link-picker label="Add supplier" [testId]="'add-supplier-' + ingredient.id" [search]="searchSuppliers"
+                              [excludeIds]="supplierIds(ingredient)" [busy]="busy()" (picked)="linkSupplier(ingredient, $event)" />
+            </li>
+          }
+        </ul>
+      }
+    </mat-card-content>
+  </mat-card>
+}

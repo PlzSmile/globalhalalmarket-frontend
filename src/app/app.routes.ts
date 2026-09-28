@@ -26,6 +26,7 @@ export const routes: Routes = [
       { path: 'dashboard', title: 'Dashboard · HalalSecure', loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard) },
       { path: 'settings', title: 'Settings · HalalSecure', loadComponent: () => import('./features/settings/settings').then((m) => m.Settings) },
       { path: 'products', title: 'Products · HalalSecure', loadComponent: () => import('./features/products/products-list').then((m) => m.ProductsList) },
+      { path: 'products/:id', title: 'Product · HalalSecure', loadComponent: () => import('./features/products/product-detail').then((m) => m.ProductDetailPage) },
       ...(['suppliers', 'certificates'] as const).map((path) => ({
         path,
         title: `${path[0].toUpperCase()}${path.slice(1)} · HalalSecure`,
