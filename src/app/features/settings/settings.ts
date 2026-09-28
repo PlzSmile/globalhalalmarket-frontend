@@ -1,17 +1,21 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MarketsTab } from './markets-tab';
 import { ProfileTab } from './profile-tab';
 import { TeamTab } from './team-tab';
 
+const TABS = ['profile', 'team', 'markets'] as const;
+
 @Component({
   selector: 'hs-settings',
-  imports: [MatTabsModule, ProfileTab, TeamTab],
+  imports: [MatTabsModule, ProfileTab, TeamTab, MarketsTab],
   template: `
     <h1 class="page-title">Settings</h1>
     <mat-tab-group [selectedIndex]="initialTab" mat-stretch-tabs="false" animationDuration="0ms">
       <mat-tab label="Profile"><hs-profile-tab /></mat-tab>
       <mat-tab label="Team"><hs-team-tab /></mat-tab>
+      <mat-tab label="Markets"><hs-markets-tab /></mat-tab>
     </mat-tab-group>
   `,
   styles: `
@@ -29,5 +33,6 @@ import { TeamTab } from './team-tab';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Settings {
-  protected readonly initialTab = inject(ActivatedRoute).snapshot.queryParamMap.get('tab') === 'team' ? 1 : 0;
+  /** ?tab=profile|team|markets opens that tab (links from the dashboard); anything else opens Profile. */
+  protected readonly initialTab = Math.max(0, TABS.indexOf(inject(ActivatedRoute).snapshot.queryParamMap.get('tab') as (typeof TABS)[number]));
 }
