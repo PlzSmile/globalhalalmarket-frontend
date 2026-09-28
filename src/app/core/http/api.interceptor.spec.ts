@@ -67,6 +67,33 @@ describe('apiInterceptor', () => {
     expect(body).toEqual({ ok: true });
   });
 
+  it('goes to login when the retry after 419 answers 401 (session expired too)', () => {
+    let failed = false;
+    http.put('/api/v1/me/password', {}).subscribe({ error: () => (failed = true) });
+    backend.expectOne('/api/v1/me/password').flush({}, { status: 419, statusText: 'Page Expired' });
+    backend.expectOne('/sanctum/csrf-cookie').flush(null, { status: 204, statusText: 'No Content' });
+    backend.expectOne('/api/v1/me/password').flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(failed).toBe(true);
+    expect(auth.clear).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/login'], expect.objectContaining({ queryParams: expect.any(Object) }));
+  });
+
+  it('treats 401 on PATCH me (saving the profile) as an expired session', () => {
+    http.patch('/api/v1/me', { name: 'A' }).subscribe({ error: () => undefined });
+    backend.expectOne('/api/v1/me').flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(auth.clear).toHaveBeenCalled();
+  });
+
+  it('retries 419 only once', () => {
+    let failed = false;
+    http.post('/api/v1/team/invitations', {}).subscribe({ error: () => (failed = true) });
+    backend.expectOne('/api/v1/team/invitations').flush({}, { status: 419, statusText: 'Page Expired' });
+    backend.expectOne('/sanctum/csrf-cookie').flush(null, { status: 204, statusText: 'No Content' });
+    backend.expectOne('/api/v1/team/invitations').flush({}, { status: 419, statusText: 'Page Expired' });
+    backend.expectNone('/sanctum/csrf-cookie');
+    expect(failed).toBe(true);
+  });
+
   it('explains rate limits and server errors in a snackbar', () => {
     http.get('/api/v1/team').subscribe({ error: () => undefined });
     backend.expectOne('/api/v1/team').flush({}, { status: 429, statusText: 'Too Many Requests' });

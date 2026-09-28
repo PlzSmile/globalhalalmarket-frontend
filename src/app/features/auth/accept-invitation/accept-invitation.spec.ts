@@ -45,4 +45,21 @@ describe('AcceptInvitation', () => {
     expect(fixture.nativeElement.textContent).toContain("You're logged in as someone@else.com");
     expect(fixture.nativeElement.querySelector('form')).toBeNull();
   });
+
+  it('shows a server password message under the field, not "may have expired"', async () => {
+    const breached = 'The given password has appeared in a data leak. Please choose a different password.';
+    const fixture = setup(of({ company_name: 'Khan Foods', email: 'new@example.com', role: 'member' as const }));
+    const api = TestBed.inject(TeamApi) as unknown as { acceptInvitation: ReturnType<typeof vi.fn> };
+    api.acceptInvitation.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 422, error: { errors: { password: [breached] } } })));
+    await fixture.componentInstance.ngOnInit();
+    fixture.detectChanges();
+    fixture.componentInstance['form'].setValue({ name: 'New Person', password: 'password-password', password_confirmation: 'password-password' });
+
+    await fixture.componentInstance.submit();
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain(breached);
+    expect(text).not.toContain('may have expired');
+  });
 });

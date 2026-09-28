@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AuthApi } from '../../../core/api/auth-api';
-import { applyServerErrors, clearServerErrors } from '../../../shared/forms/server-errors';
+import { applyServerErrorsOr, clearServerErrors, serverError } from '../../../shared/forms/server-errors';
 import { PASSWORD_MIN, matchesField } from '../../../shared/forms/validators';
 
 @Component({
@@ -29,6 +29,7 @@ import { PASSWORD_MIN, matchesField } from '../../../shared/forms/validators';
         <mat-hint>At least {{ passwordMin }} characters.</mat-hint>
         @if (form.controls.password.hasError('required')) { <mat-error>Choose a password.</mat-error> }
         @else if (form.controls.password.hasError('minlength')) { <mat-error>Use at least {{ passwordMin }} characters.</mat-error> }
+        @else if (serverError(form.controls.password); as message) { <mat-error>{{ message }}</mat-error> }
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Confirm new password</mat-label>
@@ -48,6 +49,7 @@ export class ResetPassword {
   private readonly params = inject(ActivatedRoute).snapshot.queryParamMap;
 
   protected readonly passwordMin = PASSWORD_MIN;
+  protected readonly serverError = serverError;
   protected readonly email = this.params.get('email') ?? '';
   private readonly token = this.params.get('token') ?? '';
   protected readonly form = inject(NonNullableFormBuilder).group({
@@ -76,7 +78,7 @@ export class ResetPassword {
       await this.router.navigateByUrl('/login?reset=1');
     } catch (error) {
       // Token/email problems come back on "email", which has no field here → show them above the form.
-      this.formError.set(applyServerErrors(this.form, error) ?? 'This reset link is not valid or has expired.');
+      this.formError.set(applyServerErrorsOr(this.form, error, 'This reset link is not valid or has expired.'));
     } finally {
       this.busy.set(false);
     }

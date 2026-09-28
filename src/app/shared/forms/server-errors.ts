@@ -26,6 +26,20 @@ export function applyServerErrors(form: FormGroup, error: unknown): string | nul
   return unmatched;
 }
 
+/**
+ * Like applyServerErrors, but returns `fallback` for failures that no message explains (expired link, 404, …).
+ * Returns null when the server's field messages already explain the problem under the fields.
+ */
+export function applyServerErrorsOr(form: FormGroup, error: unknown, fallback: string): string | null {
+  const unmatched = applyServerErrors(form, error);
+  if (unmatched) {
+    return unmatched;
+  }
+  const hasFieldErrors = error instanceof HttpErrorResponse && error.status === 422
+    && Object.keys(error.error?.errors ?? {}).length > 0;
+  return hasFieldErrors ? null : fallback;
+}
+
 /** Call at the start of every submit: old server messages must not keep a corrected form invalid. */
 export function clearServerErrors(form: FormGroup): void {
   for (const control of Object.values(form.controls)) {

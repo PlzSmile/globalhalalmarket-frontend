@@ -27,6 +27,7 @@
         <mat-hint>At least {{ passwordMin }} characters.</mat-hint>
         @if (form.controls.password.hasError('required')) { <mat-error>Choose a password.</mat-error> }
         @else if (form.controls.password.hasError('minlength')) { <mat-error>Use at least {{ passwordMin }} characters.</mat-error> }
+        @else if (serverError(form.controls.password); as message) { <mat-error>{{ message }}</mat-error> }
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Confirm password</mat-label>

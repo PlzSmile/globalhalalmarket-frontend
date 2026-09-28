@@ -10,7 +10,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TeamApi } from '../../../core/api/team-api';
 import { AuthService } from '../../../core/auth/auth.service';
 import { InvitationPreview, ROLE_LABELS } from '../../../core/models/auth';
-import { applyServerErrors, clearServerErrors, serverError } from '../../../shared/forms/server-errors';
+import { applyServerErrorsOr, clearServerErrors, serverError } from '../../../shared/forms/server-errors';
 import { PASSWORD_MIN, matchesField } from '../../../shared/forms/validators';
 
 type State = { kind: 'loading' } | { kind: 'invalid' } | { kind: 'ready'; preview: InvitationPreview };
@@ -66,7 +66,7 @@ export class AcceptInvitation implements OnInit {
       this.auth.setUser(await firstValueFrom(this.api.acceptInvitation(this.token(), this.form.getRawValue())));
       await this.router.navigateByUrl('/dashboard');
     } catch (error) {
-      this.formError.set(applyServerErrors(this.form, error) ?? 'This invitation could not be accepted. It may have expired.');
+      this.formError.set(applyServerErrorsOr(this.form, error, 'This invitation could not be accepted. It may have expired.'));
     } finally {
       this.busy.set(false);
     }
