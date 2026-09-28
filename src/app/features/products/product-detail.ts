@@ -185,7 +185,12 @@ export class ProductDetailPage implements OnInit {
       await action();
     } catch (error) {
       if (isNotFound(error)) {
-        this.state.set({ kind: 'notFound' });
+        // The product OR a linked ingredient/supplier is gone: reload decides (load() shows "not found" only if
+        // the product itself was deleted).
+        await this.load();
+        if (this.state().kind === 'ready') {
+          this.snackBar.open('Someone else changed this just now. The page is up to date again.', 'Close', { duration: 6000 });
+        }
       } else {
         this.snackBar.open(errorMessage(error, fallback), 'Close', { duration: 6000 });
       }

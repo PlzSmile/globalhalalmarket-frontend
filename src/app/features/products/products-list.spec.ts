@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ProductsList } from './products-list';
 import { ProductsApi } from '../../core/api/products-api';
@@ -73,6 +73,23 @@ describe('ProductsList', () => {
     await settle(fixture);
     expect(list).toHaveBeenLastCalledWith('beef', 1);
     expect(navigate).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: { search: 'beef', page: null }, replaceUrl: true }));
+  });
+
+  it('ignores a slow older reply that arrives after a newer one', async () => {
+    const older = new Subject<Paginated<ProductListItem>>();
+    const newer = new Subject<Paginated<ProductListItem>>();
+    const list = vi.fn().mockReturnValueOnce(of(page([]))).mockReturnValueOnce(older.asObservable()).mockReturnValueOnce(newer.asObservable());
+    const { fixture, el } = setup(list);
+    await settle(fixture);
+    fixture.componentInstance['onPage']({ pageIndex: 1, pageSize: 25, length: 60 });
+    fixture.componentInstance['onPage']({ pageIndex: 2, pageSize: 25, length: 60 });
+    newer.next(page([{ id: 3, name: 'Page three product', sku: null, ingredients_count: 0 }]));
+    newer.complete();
+    older.next(page([{ id: 2, name: 'Page two product', sku: null, ingredients_count: 0 }]));
+    older.complete();
+    await settle(fixture);
+    expect(el.textContent).toContain('Page three product');
+    expect(el.textContent).not.toContain('Page two product');
   });
 
   it('changes page', async () => {

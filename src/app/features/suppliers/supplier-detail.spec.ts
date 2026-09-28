@@ -38,7 +38,7 @@ describe('SupplierDetailPage', () => {
     const { fixture, el } = setup();
     await settle(fixture);
     expect(el.querySelector('h1')?.textContent).toContain('Acme Gelatin');
-    expect((el.querySelector('[data-test="mailto"]') as HTMLAnchorElement).getAttribute('href')).toBe('mailto:q@acme.test');
+    expect((el.querySelector('[data-test="mailto"]') as HTMLAnchorElement).getAttribute('href')).toBe('mailto:q%40acme.test');
     expect(el.textContent).toContain('Gelatin');
   });
 
@@ -58,6 +58,23 @@ describe('SupplierDetailPage', () => {
     expect(suppliers.remove).toHaveBeenCalledWith(5);
     expect(navigate).toHaveBeenCalledWith(['/suppliers']);
     expect(snackBar.open).toHaveBeenCalledWith('Supplier deleted.', 'Close', { duration: 4000 });
+  });
+
+  it('keeps the supplier when only a linked ingredient was removed meanwhile', async () => {
+    const { fixture, page, el, snackBar, suppliers } = setup({ unlinkIngredient: vi.fn(() => throwError(() => new HttpErrorResponse({ status: 404 }))) });
+    await settle(fixture);
+    await page['unlinkIngredient']({ id: 3, name: 'Gelatin' });
+    fixture.detectChanges();
+    expect(suppliers.get).toHaveBeenCalledTimes(2);
+    expect(el.textContent).not.toContain('Supplier not found');
+    expect(snackBar.open).toHaveBeenCalledWith('Someone else changed this just now. The page is up to date again.', 'Close', { duration: 6000 });
+  });
+
+  it('builds a mailto link that cannot add hidden recipients', async () => {
+    const { fixture, el } = setup({ get: vi.fn(() => of({ ...ACME, contact_email: 'a?bcc=x@evil.test&z=@acme.test' })) });
+    await settle(fixture);
+    expect((el.querySelector('[data-test="mailto"]') as HTMLAnchorElement).getAttribute('href'))
+      .toBe('mailto:' + encodeURIComponent('a?bcc=x@evil.test&z=@acme.test'));
   });
 
   it('shows not found', async () => {

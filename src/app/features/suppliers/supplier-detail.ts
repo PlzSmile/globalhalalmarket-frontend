@@ -43,7 +43,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
           <h1 class="page-top__title">{{ supplier.name }}</h1>
           <p class="muted">{{ supplier.country?.name ?? 'Country not set' }}</p>
           @if (supplier.contact_email) {
-            <p><a [href]="'mailto:' + supplier.contact_email" class="mail" data-test="mailto">{{ supplier.contact_email }}</a></p>
+            <p><a [href]="mailto(supplier.contact_email)" class="mail" data-test="mailto">{{ supplier.contact_email }}</a></p>
           } @else {
             <p class="muted">No contact email yet.</p>
           }
@@ -122,6 +122,11 @@ export class SupplierDetailPage implements OnInit {
     }
   }
 
+  /** Encoded, so a crafted address ("a?bcc=…") cannot add hidden recipients in the mail client. */
+  protected mailto(email: string): string {
+    return 'mailto:' + encodeURIComponent(email);
+  }
+
   protected ingredientIds(supplier: SupplierDetail): readonly number[] {
     return supplier.ingredients.map((i) => i.id);
   }
@@ -183,7 +188,11 @@ export class SupplierDetailPage implements OnInit {
       await action();
     } catch (error) {
       if (isNotFound(error)) {
-        this.state.set({ kind: 'notFound' });
+        // The supplier OR a linked ingredient is gone: reload decides (not found only if the supplier was deleted).
+        await this.load();
+        if (this.state().kind === 'ready') {
+          this.snackBar.open('Someone else changed this just now. The page is up to date again.', 'Close', { duration: 6000 });
+        }
       } else {
         this.snackBar.open(errorMessage(error, fallback), 'Close', { duration: 6000 });
       }

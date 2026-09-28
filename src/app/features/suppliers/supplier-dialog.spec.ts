@@ -10,14 +10,14 @@ import { CountriesApi } from '../../core/api/countries-api';
 const GB = { code: 'GB', name: 'United Kingdom' };
 const SAVED = { id: 5, name: 'Acme', contact_email: 'q@acme.test', country: GB, ingredients: [] };
 
-function setup(data: SupplierDialogData, api: Record<string, unknown>) {
+function setup(data: SupplierDialogData, api: Record<string, unknown>, countries: () => unknown = () => of([GB, { code: 'MY', name: 'Malaysia' }])) {
   const close = vi.fn();
   TestBed.configureTestingModule({
     providers: [
       { provide: MAT_DIALOG_DATA, useValue: data },
       { provide: MatDialogRef, useValue: { close } },
       { provide: SuppliersApi, useValue: api },
-      { provide: CountriesApi, useValue: { list: () => of([GB, { code: 'MY', name: 'Malaysia' }]) } },
+      { provide: CountriesApi, useValue: { list: countries } },
     ],
   });
   const fixture = TestBed.createComponent(SupplierDialog);
@@ -34,6 +34,16 @@ describe('SupplierDialog', () => {
     await dialog['save']();
     expect(create).toHaveBeenCalledWith({ name: 'Acme', contact_email: null, country_code: 'GB' });
     expect(close).toHaveBeenCalledWith(SAVED);
+  });
+
+  it('still works without a country list when that request fails', async () => {
+    const create = vi.fn(() => of(SAVED));
+    const { fixture, dialog } = setup({ supplier: null }, { create }, () => throwError(() => new Error('down')));
+    expect(() => fixture.detectChanges()).not.toThrow();
+    expect(dialog['filteredCountries']()).toEqual([]);
+    dialog['form'].setValue({ name: 'Acme', contact_email: '', country: '' });
+    await dialog['save']();
+    expect(create).toHaveBeenCalledWith({ name: 'Acme', contact_email: null, country_code: null });
   });
 
   it('filters countries by the typed text', () => {

@@ -100,6 +100,8 @@ export class SuppliersList implements OnInit {
   protected readonly search = new FormControl('', { nonNullable: true });
   protected readonly query = signal({ search: '', page: 1 });
   protected readonly state = signal<State>({ kind: 'loading' });
+  /** Only the newest request may update the list (a slow older reply must not overwrite a newer one). */
+  private latestRequest = 0;
 
   constructor() {
     this.search.valueChanges.pipe(
@@ -120,12 +122,18 @@ export class SuppliersList implements OnInit {
   }
 
   async load(): Promise<void> {
+    const request = ++this.latestRequest;
     this.state.set({ kind: 'loading' });
     try {
       const { search, page } = this.query();
-      this.state.set({ kind: 'ready', page: await firstValueFrom(this.api.list(search, page)) });
+      const result = await firstValueFrom(this.api.list(search, page));
+      if (request === this.latestRequest) {
+        this.state.set({ kind: 'ready', page: result });
+      }
     } catch {
-      this.state.set({ kind: 'error' });
+      if (request === this.latestRequest) {
+        this.state.set({ kind: 'error' });
+      }
     }
   }
 

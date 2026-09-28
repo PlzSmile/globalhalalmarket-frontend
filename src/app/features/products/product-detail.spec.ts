@@ -99,12 +99,24 @@ describe('ProductDetailPage', () => {
     expect(el.textContent).toContain('Product not found');
   });
 
-  it('shows not found when an action returns 404 (deleted meanwhile)', async () => {
-    const { fixture, page, el } = setup({ products: { linkIngredient: vi.fn(() => throwError(() => NOT_FOUND)) } });
+  it('shows not found when an action returns 404 because the product itself was deleted', async () => {
+    const get = vi.fn().mockReturnValueOnce(of(PRODUCT)).mockReturnValue(throwError(() => NOT_FOUND));
+    const { fixture, page, el } = setup({ products: { get, linkIngredient: vi.fn(() => throwError(() => NOT_FOUND)) } });
     await settle(fixture);
     await page['linkIngredient']({ id: 9 });
     fixture.detectChanges();
     expect(el.textContent).toContain('Product not found');
+  });
+
+  it('keeps the product and explains when only a linked record was removed meanwhile', async () => {
+    const { fixture, page, el, snackBar, products } = setup({ ingredients: { unlinkSupplier: vi.fn(() => throwError(() => NOT_FOUND)) } });
+    await settle(fixture);
+    await page['unlinkSupplier'](PRODUCT.ingredients[0], PRODUCT.ingredients[0].suppliers[0]);
+    fixture.detectChanges();
+    expect(products.get).toHaveBeenCalledTimes(2);
+    expect(el.textContent).not.toContain('Product not found');
+    expect(el.querySelector('h1')?.textContent).toContain('Chicken sausage');
+    expect(snackBar.open).toHaveBeenCalledWith('Someone else changed this just now. The page is up to date again.', 'Close', { duration: 6000 });
   });
 
   it('shows the server message and ignores clicks while busy', async () => {

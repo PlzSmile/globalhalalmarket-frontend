@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom, of } from 'rxjs';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -78,7 +78,8 @@ export class SupplierDialog {
     country: this.fb.control<Country | string>(this.data.supplier?.country ?? '', countryPicked),
   });
 
-  private readonly countries = toSignal(inject(CountriesApi).list(), { initialValue: [] as readonly Country[] });
+  // A failed request must not break the dialog (a toSignal of an errored observable throws when read).
+  private readonly countries = toSignal(inject(CountriesApi).list().pipe(catchError(() => of([] as readonly Country[]))), { initialValue: [] as readonly Country[] });
   private readonly countryValue = toSignal(this.form.controls.country.valueChanges, { initialValue: this.form.controls.country.value });
   protected readonly filteredCountries = computed(() => {
     const value = this.countryValue();
