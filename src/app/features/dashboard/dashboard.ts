@@ -1,37 +1,70 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ComplianceCell, ComplianceStatus, Market, ProductCompliance } from '../../core/models/compliance';
-import { StatusBadge } from '../../shared/ui/status-badge';
-import { SAMPLE_MARKETS, SAMPLE_PRODUCTS } from './sample-data';
+import { DashboardApi } from '../../core/api/dashboard-api';
+import { AuthService } from '../../core/auth/auth.service';
+import { DashboardData } from '../../core/models/dashboard';
+import { MarketOption } from '../../core/models/markets';
+import { EmptyState } from '../../shared/ui/empty-state';
+import { MarketsDialog } from '../markets/markets-dialog';
+import { OnboardingCard } from './onboarding-card';
+
+type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; data: DashboardData };
 
 @Component({
   selector: 'hs-dashboard',
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatTableModule, MatTooltipModule, StatusBadge],
+  imports: [
+    MatButtonModule, MatCardModule, MatChipsModule, MatIconModule, MatProgressBarModule, MatTooltipModule, EmptyState, OnboardingCard,
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Dashboard {
-  protected readonly markets = signal<readonly Market[]>(SAMPLE_MARKETS);
-  protected readonly products = signal<readonly ProductCompliance[]>(SAMPLE_PRODUCTS);
+export class Dashboard implements OnInit {
+  protected readonly auth = inject(AuthService);
+  private readonly api = inject(DashboardApi);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
 
-  protected readonly columns = computed(() => ['product', ...this.markets().map((market) => market.slug)]);
-
-  protected readonly totals = computed(() => {
-    const counts: Record<ComplianceStatus, number> = { green: 0, amber: 0, red: 0 };
-    for (const product of this.products()) {
-      for (const cell of product.cells) {
-        counts[cell.status]++;
-      }
-    }
-    return counts;
+  protected readonly state = signal<State>({ kind: 'loading' });
+  protected readonly allStepsDone = computed(() => {
+    const s = this.state();
+    return s.kind === 'ready' && s.data.onboarding.steps.every((step) => step.status === 'done');
   });
 
-  protected cellFor(product: ProductCompliance, market: Market): ComplianceCell | null {
-    return product.cells.find((cell) => cell.market === market.slug) ?? null;
+  ngOnInit(): void {
+    void this.load();
+  }
+
+  async load(): Promise<void> {
+    // Keep showing the current data while refreshing (e.g. after saving markets); spinner only on first load/retry.
+    if (this.state().kind !== 'ready') {
+      this.state.set({ kind: 'loading' });
+    }
+    try {
+      this.state.set({ kind: 'ready', data: await firstValueFrom(this.api.get()) });
+    } catch {
+      this.state.set({ kind: 'error' });
+    }
+  }
+
+  async chooseMarkets(): Promise<void> {
+    const ref = this.dialog.open<MarketsDialog, void, readonly MarketOption[]>(MarketsDialog, {
+      autoFocus: 'first-tabbable',
+      width: '560px',
+      maxWidth: 'calc(100vw - 32px)',
+    });
+    const saved = await firstValueFrom(ref.afterClosed());
+    if (saved) {
+      this.snackBar.open('Markets saved.', 'Close', { duration: 4000 });
+      await this.load();
+    }
   }
 }
