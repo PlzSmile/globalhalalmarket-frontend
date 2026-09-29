@@ -14,6 +14,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { SuppliersApi } from '../../core/api/suppliers-api';
 import { Paginated, SupplierDetail, SupplierListItem } from '../../core/models/catalogue';
+import { AuthService } from '../../core/auth/auth.service';
 import { collapseSpaces } from '../../shared/forms/normalise';
 import { EmptyState } from '../../shared/ui/empty-state';
 import { SupplierDialog, SupplierDialogData } from './supplier-dialog';
@@ -29,7 +30,12 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Pa
   template: `
     <header class="page-top">
       <h1 class="page-top__title">Suppliers</h1>
-      <button mat-flat-button type="button" class="btn" (click)="add()" data-test="add-supplier"><mat-icon svgIcon="plus" /> Add supplier</button>
+      <div class="page-top__actions">
+        @if (auth.canManageTeam()) {
+          <a mat-stroked-button routerLink="/import" class="btn" data-test="import-csv">Import CSV</a>
+        }
+        <button mat-flat-button type="button" class="btn" (click)="add()" data-test="add-supplier"><mat-icon svgIcon="plus" /> Add supplier</button>
+      </div>
     </header>
 
     <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
@@ -82,6 +88,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Pa
     :host { display: grid; gap: var(--space-4); }
     .page-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
     .page-top__title { font-size: var(--text-3xl); }
+    .page-top__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
     .search { width: min(100%, var(--container-form)); }
     .btn { min-height: 44px; }
     .table-card { overflow: hidden; }
@@ -91,6 +98,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Pa
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SuppliersList implements OnInit {
+  protected readonly auth = inject(AuthService);
   private readonly api = inject(SuppliersApi);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);

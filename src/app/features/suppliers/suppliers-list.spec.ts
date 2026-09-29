@@ -6,7 +6,10 @@ import { vi } from 'vitest';
 import { SuppliersList } from './suppliers-list';
 import { SuppliersApi } from '../../core/api/suppliers-api';
 import { Paginated, SupplierListItem } from '../../core/models/catalogue';
+import { AuthService } from '../../core/auth/auth.service';
 import { settle } from '../../../testing/settle';
+
+let canManage = true;
 
 const ACME: SupplierListItem = { id: 5, name: 'Acme Gelatin', country: { code: 'GB', name: 'United Kingdom' }, ingredients_count: 2 };
 const page = (items: readonly SupplierListItem[]): Paginated<SupplierListItem> =>
@@ -17,6 +20,7 @@ function setup(list: ReturnType<typeof vi.fn>, query: Record<string, string> = {
     providers: [
       provideRouter([]),
       { provide: SuppliersApi, useValue: { list } },
+      { provide: AuthService, useValue: { canManageTeam: () => canManage } },
       { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(query) } } },
       { provide: MatDialog, useValue: { open: vi.fn(() => ({ afterClosed: () => of(dialogResult) })) } },
     ],
@@ -27,6 +31,10 @@ function setup(list: ReturnType<typeof vi.fn>, query: Record<string, string> = {
 }
 
 describe('SuppliersList', () => {
+  beforeEach(() => {
+    canManage = true;
+  });
+
   it('lists suppliers with country and ingredient count, never an email', async () => {
     const list = vi.fn(() => of(page([ACME])));
     const { fixture, el } = setup(list, { search: 'acm' });
@@ -69,5 +77,17 @@ describe('SuppliersList', () => {
     await settle(fixture);
     await fixture.componentInstance['add']();
     expect(navigate).toHaveBeenLastCalledWith(['/suppliers', 8]);
+  });
+
+  it('shows "Import CSV" to owners and admins only', async () => {
+    const shown = setup(vi.fn(() => of(page([ACME]))));
+    await settle(shown.fixture);
+    expect(shown.el.querySelector('[data-test="import-csv"]')?.getAttribute('href')).toContain('/import');
+
+    TestBed.resetTestingModule();
+    canManage = false;
+    const hidden = setup(vi.fn(() => of(page([ACME]))));
+    await settle(hidden.fixture);
+    expect(hidden.el.querySelector('[data-test="import-csv"]')).toBeNull();
   });
 });

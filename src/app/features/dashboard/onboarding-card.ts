@@ -47,6 +47,7 @@ const STATUS_LABEL: Record<StepStatus, string> = { done: 'done', todo: 'to do', 
                       @else { <span class="step__hint">Ask an owner or admin to invite colleagues</span> }
                     } @else if (step.key === 'products') {
                       <a mat-stroked-button routerLink="/products" data-test="add-products">Add product</a>
+                      @if (canManage()) { <a mat-button routerLink="/import" data-test="import-products">or import a CSV</a> }
                     } @else if (step.key === 'suppliers') {
                       <a mat-stroked-button routerLink="/suppliers" data-test="add-suppliers">Add supplier</a>
                     } @else if (step.key === 'certificates') {
@@ -74,7 +75,7 @@ const STATUS_LABEL: Record<StepStatus, string> = { done: 'done', todo: 'to do', 
     .step--soon .step__title, .step--soon .step__text { color: var(--color-text-subtle); }
     .step__text, .step__hint { color: var(--color-text-muted); font-size: var(--text-sm); }
     .step__done { color: var(--color-success-fg); font-weight: var(--weight-semibold); font-size: var(--text-sm); }
-    .step__action { grid-column: 2; }
+    .step__action { grid-column: 2; display: flex; flex-wrap: wrap; gap: var(--space-2); }
     .step__action a, .step__action button { min-height: 44px; width: 100%; }
     @media (min-width: 768px) {
       .step { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }

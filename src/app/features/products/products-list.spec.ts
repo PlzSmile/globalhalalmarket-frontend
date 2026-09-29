@@ -6,7 +6,10 @@ import { vi } from 'vitest';
 import { ProductsList } from './products-list';
 import { ProductsApi } from '../../core/api/products-api';
 import { Paginated, ProductListItem } from '../../core/models/catalogue';
+import { AuthService } from '../../core/auth/auth.service';
 import { settle } from '../../../testing/settle';
+
+let canManage = true;
 
 function page(items: readonly ProductListItem[], total = items.length): Paginated<ProductListItem> {
   return { data: items, meta: { current_page: 1, last_page: Math.max(1, Math.ceil(total / 25)), per_page: 25, total } };
@@ -20,6 +23,7 @@ function setup(list: ReturnType<typeof vi.fn>, query: Record<string, string> = {
     providers: [
       provideRouter([]),
       { provide: ProductsApi, useValue: { list } },
+      { provide: AuthService, useValue: { canManageTeam: () => canManage } },
       { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(query) } } },
       { provide: MatDialog, useValue: dialog },
     ],
@@ -30,6 +34,10 @@ function setup(list: ReturnType<typeof vi.fn>, query: Record<string, string> = {
 }
 
 describe('ProductsList', () => {
+  beforeEach(() => {
+    canManage = true;
+  });
+
   it('loads the search and page from the URL and links each product', async () => {
     const list = vi.fn(() => of(page([SAUSAGE])));
     const { fixture, el } = setup(list, { search: 'sau', page: '2' });
@@ -107,5 +115,17 @@ describe('ProductsList', () => {
     await fixture.componentInstance['add']();
     expect(dialog.open).toHaveBeenCalled();
     expect(navigate).toHaveBeenLastCalledWith(['/products', 9]);
+  });
+
+  it('shows "Import CSV" to owners and admins only', async () => {
+    const shown = setup(vi.fn(() => of(page([SAUSAGE]))));
+    await settle(shown.fixture);
+    expect(shown.el.querySelector('[data-test="import-csv"]')?.getAttribute('href')).toContain('/import');
+
+    TestBed.resetTestingModule();
+    canManage = false;
+    const hidden = setup(vi.fn(() => of(page([SAUSAGE]))));
+    await settle(hidden.fixture);
+    expect(hidden.el.querySelector('[data-test="import-csv"]')).toBeNull();
   });
 });

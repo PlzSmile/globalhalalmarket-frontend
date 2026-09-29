@@ -73,4 +73,17 @@ describe('OnboardingCard', () => {
     expect(el.textContent).toContain('Add certificates');
     expect(el.querySelector('[data-test="add-certificates"]')?.getAttribute('href')).toContain('/certificates');
   });
+
+  it('offers a CSV import on the products step to owners and admins', () => {
+    const steps: readonly OnboardingStep[] = [
+      { key: 'markets', status: 'done' }, { key: 'team', status: 'done' },
+      { key: 'products', status: 'todo' }, { key: 'suppliers', status: 'todo' }, { key: 'certificates', status: 'todo' },
+    ];
+    const owner = render(true, steps);
+    expect(owner.el.querySelector('[data-test="import-products"]')?.getAttribute('href')).toContain('/import');
+
+    TestBed.resetTestingModule();
+    const member = render(false, steps);
+    expect(member.el.querySelector('[data-test="import-products"]')).toBeNull();
+  });
 });
