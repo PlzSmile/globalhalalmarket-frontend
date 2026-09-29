@@ -114,14 +114,16 @@ function picked(control: AbstractControl<Picked<NamedRef>>): ValidationErrors | 
             <input matInput [matDatepicker]="issued" formControlName="issued_on" />
             <mat-datepicker-toggle matIconSuffix [for]="issued" />
             <mat-datepicker #issued />
-            @if (serverError(form.controls.issued_on); as m) { <mat-error>{{ m }}</mat-error> }
+            @if (form.controls.issued_on.hasError('matDatepickerParse')) { <mat-error>Enter the date as DD/MM/YYYY.</mat-error> }
+            @else if (serverError(form.controls.issued_on); as m) { <mat-error>{{ m }}</mat-error> }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Expiry date</mat-label>
             <input matInput [matDatepicker]="expires" formControlName="expires_on" required />
             <mat-datepicker-toggle matIconSuffix [for]="expires" />
             <mat-datepicker #expires />
-            @if (form.controls.expires_on.hasError('required')) { <mat-error>Enter the expiry date.</mat-error> }
+            @if (form.controls.expires_on.hasError('matDatepickerParse')) { <mat-error>Enter the date as DD/MM/YYYY.</mat-error> }
+            @else if (form.controls.expires_on.hasError('required')) { <mat-error>Enter the expiry date.</mat-error> }
             @else if (form.controls.expires_on.hasError('order')) { <mat-error>The expiry date must be on or after the issue date.</mat-error> }
             @else if (serverError(form.controls.expires_on); as m) { <mat-error>{{ m }}</mat-error> }
           </mat-form-field>
@@ -310,7 +312,11 @@ export class CertificateDialog implements OnInit {
       this.ingredientsError.set('Choose at least one ingredient.');
       valid = false;
     }
-    if (!expires) {
+    // A typed date the adapter cannot read leaves the value null with a parse error: never save it as "no date".
+    const unreadable = c.issued_on.hasError('matDatepickerParse') || c.expires_on.hasError('matDatepickerParse');
+    if (unreadable) {
+      valid = false;
+    } else if (!expires) {
       c.expires_on.setErrors({ required: true });
       valid = false;
     } else if (issued && issued > expires) {

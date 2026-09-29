@@ -147,4 +147,18 @@ describe('CertificateDialog', () => {
     const date = adapter.parse('12/03/2027', null) as Date;
     expect([date.getFullYear(), date.getMonth(), date.getDate()]).toEqual([2027, 2, 12]);
   });
+
+  it('does not save a typed date it cannot read (no silent "no date")', async () => {
+    const { fixture, dialog, api, el } = setup({ certificate: null });
+    await settle(fixture);
+    fill(dialog);
+    const issued = el.querySelector('input[formcontrolname="issued_on"]') as HTMLInputElement;
+    issued.value = '31/02/2027';
+    issued.dispatchEvent(new Event('input'));
+    issued.dispatchEvent(new Event('blur'));
+    await dialog['save']();
+    fixture.detectChanges();
+    expect(api.create).not.toHaveBeenCalled();
+    expect(el.textContent).toContain('Enter the date as DD/MM/YYYY.');
+  });
 });
