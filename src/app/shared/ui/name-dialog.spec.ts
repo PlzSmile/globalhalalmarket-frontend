@@ -5,9 +5,9 @@ import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { NameDialog, NameDialogData } from './name-dialog';
 
-function render(save: NameDialogData['save']) {
+function render(save: NameDialogData['save'], overrides: Partial<NameDialogData> = {}) {
   const close = vi.fn();
-  const data: NameDialogData = { title: 'Rename ingredient', label: 'Name', value: 'Gelatin', maxLength: 120, save };
+  const data: NameDialogData = { title: 'Rename ingredient', label: 'Name', value: 'Gelatin', maxLength: 120, save, ...overrides };
   TestBed.configureTestingModule({
     providers: [{ provide: MAT_DIALOG_DATA, useValue: data }, { provide: MatDialogRef, useValue: { close } }],
   });
@@ -43,5 +43,14 @@ describe('NameDialog', () => {
     dialog['form'].controls.name.setValue('   ');
     await dialog['save']();
     expect(save).not.toHaveBeenCalled();
+  });
+
+  it('uses a custom message when the field is empty', async () => {
+    const { fixture, dialog } = render(vi.fn(() => of({})), { title: 'Reject certificate', label: 'Reason', value: '', maxLength: 500, requiredMessage: 'Enter the reason.' });
+    await dialog['save']();
+    fixture.detectChanges();
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Enter the reason.');
+    expect(text).not.toContain('Enter a name.');
   });
 });

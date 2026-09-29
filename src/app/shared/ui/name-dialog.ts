@@ -14,6 +14,8 @@ export interface NameDialogData {
   readonly value: string;
   readonly maxLength: number;
   readonly save: (name: string) => Observable<unknown>;
+  /** Shown when the field is left empty (default "Enter a name."). */
+  readonly requiredMessage?: string;
 }
 
 /** Small "edit one name" dialog; saves itself so server messages show under the field. Closes with true. */
@@ -28,7 +30,7 @@ export interface NameDialogData {
         <mat-form-field appearance="outline" class="field">
           <mat-label>{{ data.label }}</mat-label>
           <input matInput formControlName="name" [attr.maxlength]="data.maxLength" required cdkFocusInitial />
-          @if (form.controls.name.hasError('required')) { <mat-error>Enter a name.</mat-error> }
+          @if (form.controls.name.hasError('required')) { <mat-error>{{ data.requiredMessage ?? 'Enter a name.' }}</mat-error> }
           @else if (serverError(form.controls.name); as message) { <mat-error>{{ message }}</mat-error> }
         </mat-form-field>
       </mat-dialog-content>
