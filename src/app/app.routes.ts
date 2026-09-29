@@ -29,6 +29,7 @@ export const routes: Routes = [
       { path: 'products/:id', title: 'Product · HalalSecure', loadComponent: () => import('./features/products/product-detail').then((m) => m.ProductDetailPage) },
       { path: 'suppliers', title: 'Suppliers · HalalSecure', loadComponent: () => import('./features/suppliers/suppliers-list').then((m) => m.SuppliersList) },
       { path: 'suppliers/:id', title: 'Supplier · HalalSecure', loadComponent: () => import('./features/suppliers/supplier-detail').then((m) => m.SupplierDetailPage) },
+      { path: 'import', title: 'Import · HalalSecure', loadComponent: () => import('./features/import/catalogue-import').then((m) => m.CatalogueImport) },
       { path: 'certificates', title: 'Certificates · HalalSecure', loadComponent: () => import('./features/certificates/certificates-list').then((m) => m.CertificatesList) },
       { path: 'certificates/:id', title: 'Certificate · HalalSecure', loadComponent: () => import('./features/certificates/certificate-detail').then((m) => m.CertificateDetailPage) },
       { path: '**', redirectTo: 'dashboard' },
