@@ -84,4 +84,11 @@ describe('CertificateDetailPage', () => {
     await settle(fixture);
     expect(el.textContent).toContain('Certificate not found');
   });
+
+  it('shows who reviewed it and when, without a stray space', async () => {
+    const reviewed = { ...CERT, status: 'approved' as const, reviewed_by: { id: 2, name: 'Ana Reviewer' }, reviewed_at: '2026-09-29T09:00:00+00:00' };
+    const { fixture, el } = setup({ get: vi.fn(() => of(reviewed)) });
+    await settle(fixture);
+    expect(el.textContent?.replace(/\s+/g, ' ')).toContain('Ana Reviewer, 29 Sep 2026');
+  });
 });

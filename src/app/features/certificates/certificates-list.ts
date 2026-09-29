@@ -107,6 +107,8 @@ const STATUSES: readonly CertificateStatus[] = ['approved', 'pending', 'rejected
     .page-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
     .page-top__title { font-size: var(--text-3xl); }
     .filters { display: grid; gap: var(--space-3); }
+    /* Touch targets ≥ 44 px (Material chips default to 32 px). */
+    .filters mat-chip-option { --mat-chip-container-height: 44px; }
     .search { width: min(100%, var(--container-form)); }
     .btn { min-height: 44px; }
     .table-card { overflow: hidden; }

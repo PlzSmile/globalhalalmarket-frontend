@@ -66,7 +66,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
             <dt>Scope</dt><dd>{{ c.scope ?? '—' }}</dd>
             <dt>Covers</dt><dd>{{ c.ingredients.length ? ingredientNames(c) : 'Covers no ingredients — edit to choose them' }}</dd>
             <dt>File</dt><dd>{{ c.file.original_name }} · {{ size(c.file.size) }}</dd>
-            @if (c.reviewed_by) { <dt>Reviewed</dt><dd>{{ c.reviewed_by.name }}@if (c.reviewed_at) { , {{ date(c.reviewed_at) }} }</dd> }
+            @if (c.reviewed_by) { <dt>Reviewed</dt><dd>{{ c.reviewed_by.name }}{{ c.reviewed_at ? ', ' + date(c.reviewed_at) : '' }}</dd> }
             @if (c.rejection_reason) { <dt>Reason</dt><dd>{{ c.rejection_reason }}</dd> }
           </dl>
         </mat-card-content>
@@ -84,6 +84,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
     .facts { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-1) var(--space-4); margin: 0; }
     .facts dt { color: var(--color-text-muted); font-size: var(--text-sm); }
     .facts dd { margin: 0 0 var(--space-3); }
+    .facts a { display: inline-flex; align-items: center; min-height: 44px; }
     @media (min-width: 768px) { .facts { grid-template-columns: 12rem minmax(0, 1fr); } .facts dd { margin: 0; } }
     .note { margin-inline-start: var(--space-2); font-size: var(--text-xs); font-weight: var(--weight-semibold); }
     .note--danger { color: var(--color-danger-fg); }
