@@ -14,7 +14,7 @@ import { settle } from '../../../testing/settle';
 const CERT: CertificateDetail = { id: 1, status: 'pending', body: { id: 9, name: 'Halal Monitoring Committee' }, body_name_other: null,
   supplier: { id: 5, name: 'Acme Gelatin' }, certificate_number: 'HMC-1', scope: 'Gelatin', issued_on: '2026-01-10', expires_on: '2027-01-09',
   ingredients_count: 1, ingredients: [{ id: 3, name: 'Gelatin' }], file: { original_name: 'acme.pdf', size: 204800 },
-  reviewed_by: null, reviewed_at: null, rejection_reason: null, created_at: null };
+  reviewed_by: null, reviewed_at: null, rejection_reason: null, created_at: null, from_upload_link: false };
 
 function setup(api: Record<string, unknown> = {}, dialogResult: unknown = true) {
   const certificates = { get: vi.fn(() => of(CERT)), approve: vi.fn(() => of({ ...CERT, status: 'approved' })), reject: vi.fn(() => of({ ...CERT, status: 'rejected' })),

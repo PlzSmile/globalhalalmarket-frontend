@@ -16,7 +16,7 @@ const ACME = { id: 5, name: 'Acme Gelatin' };
 const HMC = { id: 9, name: 'Halal Monitoring Committee', country: null };
 const SAVED = { id: 1, status: 'approved', supplier: ACME, body: { id: 9, name: HMC.name }, body_name_other: null, ingredients: [{ id: 3, name: 'Gelatin' }],
   certificate_number: 'HMC-1', scope: null, issued_on: '2026-01-10', expires_on: '2027-01-09', ingredients_count: 1,
-  file: { original_name: 'c.pdf', size: 100 }, reviewed_by: null, reviewed_at: null, rejection_reason: null, created_at: null } as CertificateDetail;
+  file: { original_name: 'c.pdf', size: 100 }, reviewed_by: null, reviewed_at: null, rejection_reason: null, created_at: null, from_upload_link: false } as CertificateDetail;
 
 function setup(data: CertificateDialogData, certificates: Record<string, unknown> = {}) {
   const close = vi.fn();

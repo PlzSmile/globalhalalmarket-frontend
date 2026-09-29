@@ -25,6 +25,8 @@ export interface CertificateDetail extends CertificateListItem {
   readonly reviewed_at: string | null;
   readonly rejection_reason: string | null;
   readonly created_at: string | null;
+  /** Uploaded by the supplier through an upload link (Phase 5b). */
+  readonly from_upload_link: boolean;
 }
 
 export interface CertificateFields {
