@@ -34,4 +34,31 @@ describe('FilePicker', () => {
     expect(el.textContent).toContain('The file is larger than 10 MB.');
     expect(changes).toHaveBeenLastCalledWith(null);
   });
+
+  it('can be set up for CSV files and cleared', () => {
+    const fixture = TestBed.createComponent(FilePicker);
+    fixture.componentRef.setInput('extensions', ['.csv', '.txt']);
+    fixture.componentRef.setInput('mimeTypes', ['text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel']);
+    fixture.componentRef.setInput('typeMessage', 'Choose a CSV file (max 2 MB).');
+    fixture.componentRef.setInput('againLabel', 'Choose another file');
+    fixture.detectChanges();
+    const changes = vi.fn();
+    fixture.componentInstance.fileChange.subscribe(changes);
+    const el = fixture.nativeElement as HTMLElement;
+
+    const csv = new File(['a,b'], 'catalogue.CSV', { type: 'application/vnd.ms-excel' });
+    fixture.componentInstance.pick(csv);
+    fixture.detectChanges();
+    expect(changes).toHaveBeenLastCalledWith(csv);
+    expect(el.textContent).toContain('Choose another file');
+
+    fixture.componentInstance.pick(new File(['%PDF'], 'x.pdf', { type: 'application/pdf' }));
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Choose a CSV file (max 2 MB).');
+
+    fixture.componentInstance.clear();
+    fixture.detectChanges();
+    expect(el.querySelector('[data-test="file-name"]')).toBeNull();
+    expect(el.textContent).not.toContain('Choose a CSV file (max 2 MB).');
+  });
 });
