@@ -61,4 +61,21 @@ describe('FilePicker', () => {
     expect(el.querySelector('[data-test="file-name"]')).toBeNull();
     expect(el.textContent).not.toContain('Choose a CSV file (max 2 MB).');
   });
+
+  it('checks only the extension when no file types are given (browsers report CSV types differently)', () => {
+    const fixture = TestBed.createComponent(FilePicker);
+    fixture.componentRef.setInput('extensions', ['.csv', '.txt']);
+    fixture.componentRef.setInput('mimeTypes', []);
+    fixture.detectChanges();
+    const changes = vi.fn();
+    fixture.componentInstance.fileChange.subscribe(changes);
+
+    for (const type of ['text/x-csv', 'application/x-csv', 'text/comma-separated-values', 'application/octet-stream']) {
+      const file = new File(['a,b'], 'catalogue.csv', { type });
+      fixture.componentInstance.pick(file);
+      expect(changes).toHaveBeenLastCalledWith(file);
+    }
+    fixture.componentInstance.pick(new File(['a,b'], 'catalogue.xlsx', { type: 'text/csv' }));
+    expect(changes).toHaveBeenLastCalledWith(null);
+  });
 });

@@ -57,7 +57,9 @@ export class FilePicker {
       return;
     }
     const name = file.name.toLowerCase();
-    if (!this.extensions().some((ext) => name.endsWith(ext)) || (file.type !== '' && !this.mimeTypes().includes(file.type))) {
+    // An empty mimeTypes list means "extension only" (browsers report CSV files under many different types).
+    const types = this.mimeTypes();
+    if (!this.extensions().some((ext) => name.endsWith(ext)) || (types.length > 0 && file.type !== '' && !types.includes(file.type))) {
       return this.refuse(this.typeMessage());
     }
     if (file.size === 0) {

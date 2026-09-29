@@ -108,7 +108,8 @@ export class CatalogueImport {
   private readonly picker = viewChild(FilePicker);
 
   protected readonly extensions = ['.csv', '.txt'];
-  protected readonly mimeTypes = ['text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel'];
+  /** Extension only: browsers report CSV files under many types; the server checks the content. */
+  protected readonly mimeTypes: readonly string[] = [];
   protected readonly fileMessage = FILE_MESSAGE;
   protected readonly maxBytes = 2 * 1024 * 1024;
 
