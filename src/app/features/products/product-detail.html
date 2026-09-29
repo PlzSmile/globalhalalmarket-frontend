@@ -52,6 +52,7 @@
                   <button mat-menu-item type="button" (click)="deleteIngredient(ingredient)">Delete ingredient everywhere</button>
                 </mat-menu>
               </div>
+              <p class="ingredient__meta" [class.ingredient__cert--expired]="certificateExpired(ingredient)" [attr.data-test]="'cert-' + ingredient.id">{{ certificateText(ingredient) }}</p>
               @if (ingredient.suppliers.length) {
                 <mat-chip-set [attr.aria-label]="'Suppliers of ' + ingredient.name">
                   @for (supplier of ingredient.suppliers; track supplier.id) {

@@ -11,7 +11,7 @@ const STEP_TEXT: Record<OnboardingStepKey, { readonly title: string; readonly te
   team: { title: 'Invite your team', text: 'Add colleagues who look after suppliers and certificates.' },
   products: { title: 'Add your products', text: 'List the products you export.' },
   suppliers: { title: 'Add your suppliers', text: 'Record who supplies each ingredient.' },
-  certificates: { title: 'Request certificates', text: 'Ask suppliers to upload their halal certificates.' },
+  certificates: { title: 'Add certificates', text: "Upload your suppliers' halal certificates (PDF)." },
 };
 
 const STATUS_LABEL: Record<StepStatus, string> = { done: 'done', todo: 'to do', coming_soon: 'coming soon' };
@@ -49,6 +49,8 @@ const STATUS_LABEL: Record<StepStatus, string> = { done: 'done', todo: 'to do', 
                       <a mat-stroked-button routerLink="/products" data-test="add-products">Add product</a>
                     } @else if (step.key === 'suppliers') {
                       <a mat-stroked-button routerLink="/suppliers" data-test="add-suppliers">Add supplier</a>
+                    } @else if (step.key === 'certificates') {
+                      <a mat-stroked-button routerLink="/certificates" data-test="add-certificates">Add certificate</a>
                     }
                   }
                 }

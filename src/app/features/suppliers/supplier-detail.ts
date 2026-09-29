@@ -10,16 +10,20 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { IngredientsApi } from '../../core/api/ingredients-api';
 import { SuppliersApi } from '../../core/api/suppliers-api';
 import { LinkTarget, NamedRef, SupplierDetail } from '../../core/models/catalogue';
+import { CertificateDetail, bodyName } from '../../core/models/certificates';
 import { errorMessage, isNotFound } from '../../shared/forms/error-message';
+import { ukDate } from '../../shared/format/uk-date';
+import { CertificateStatusBadge } from '../../shared/ui/certificate-status-badge';
 import { ConfirmDialog, ConfirmDialogData } from '../../shared/ui/confirm-dialog';
 import { LinkPicker } from '../../shared/ui/link-picker';
+import { CertificateDialog, CertificateDialogData } from '../certificates/certificate-dialog';
 import { SupplierDialog, SupplierDialogData } from './supplier-dialog';
 
 type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { kind: 'ready'; supplier: SupplierDetail };
 
 @Component({
   selector: 'hs-supplier-detail',
-  imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatProgressBarModule, LinkPicker],
+  imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatProgressBarModule, LinkPicker, CertificateStatusBadge],
   template: `
     <a routerLink="/suppliers" class="back">← All suppliers</a>
     @let s = state();
@@ -74,6 +78,30 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
           }
         </mat-card-content>
       </mat-card>
+
+      <mat-card appearance="outlined" class="hs-card" data-test="supplier-certificates">
+        <mat-card-header><mat-card-title><h2 class="card-title">Certificates</h2></mat-card-title></mat-card-header>
+        <mat-card-content>
+          <button mat-stroked-button type="button" class="btn" (click)="addCertificate()" [disabled]="busy()" data-test="add-supplier-certificate">
+            <mat-icon svgIcon="plus" /> Add certificate
+          </button>
+          @if (supplier.certificates?.length) {
+            <ul class="rows">
+              @for (certificate of supplier.certificates; track certificate.id) {
+                <li class="row">
+                  <a [routerLink]="['/certificates', certificate.id]" class="mail">{{ name(certificate) }}</a>
+                  <span class="cert-meta">
+                    <span class="muted">until {{ date(certificate.expires_on) }}</span>
+                    <hs-certificate-status-badge [status]="certificate.status" />
+                  </span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="muted">No certificates yet.</p>
+          }
+        </mat-card-content>
+      </mat-card>
     }
   `,
   styles: `
@@ -86,6 +114,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
     .card-title { font-size: var(--text-xl); }
     .rows { list-style: none; margin: var(--space-4) 0 0; padding: 0; }
     .row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); border-top: 1px solid var(--color-border); padding-block: var(--space-1); }
+    .cert-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); }
     .load-error { display: grid; gap: var(--space-3); justify-items: start; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -101,6 +130,8 @@ export class SupplierDetailPage implements OnInit {
 
   protected readonly state = signal<State>({ kind: 'loading' });
   protected readonly busy = signal(false);
+  protected readonly name = bodyName;
+  protected readonly date = ukDate;
   protected readonly searchIngredients = (text: string): Observable<readonly NamedRef[]> => this.ingredients.search(text);
 
   private get supplierId(): number {
@@ -146,6 +177,21 @@ export class SupplierDetailPage implements OnInit {
       await this.load();
       this.notify(`${ingredient.name} removed.`);
     }, 'The ingredient could not be removed. Please try again.');
+  }
+
+  protected async addCertificate(): Promise<void> {
+    const s = this.state();
+    if (s.kind !== 'ready') {
+      return;
+    }
+    const data: CertificateDialogData = { certificate: null, supplier: { id: s.supplier.id, name: s.supplier.name } };
+    const saved = await firstValueFrom(this.dialog.open<CertificateDialog, CertificateDialogData, CertificateDetail>(CertificateDialog, {
+      data, autoFocus: 'first-tabbable', width: '640px', maxWidth: 'calc(100vw - 32px)',
+    }).afterClosed());
+    if (saved) {
+      await this.load();
+      this.notify('Certificate saved.');
+    }
   }
 
   protected async editSupplier(supplier: SupplierDetail): Promise<void> {

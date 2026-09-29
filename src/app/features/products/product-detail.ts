@@ -14,6 +14,7 @@ import { ProductsApi } from '../../core/api/products-api';
 import { SuppliersApi } from '../../core/api/suppliers-api';
 import { LinkTarget, NamedRef, ProductDetail, ProductIngredient } from '../../core/models/catalogue';
 import { errorMessage, isNotFound } from '../../shared/forms/error-message';
+import { daysUntil, ukDate } from '../../shared/format/uk-date';
 import { ConfirmDialog, ConfirmDialogData } from '../../shared/ui/confirm-dialog';
 import { LinkPicker } from '../../shared/ui/link-picker';
 import { NameDialog, NameDialogData } from '../../shared/ui/name-dialog';
@@ -37,7 +38,8 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
     .ingredient { display: grid; gap: var(--space-2); padding-block: var(--space-3); border-top: 1px solid var(--color-border); }
     .ingredient__top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
     .ingredient__name { font-weight: var(--weight-semibold); }
-    .ingredient__meta { color: var(--color-text-subtle); font-size: var(--text-sm); }
+    .ingredient__meta { color: var(--color-text-subtle); font-size: var(--text-sm); margin: 0; }
+    .ingredient__cert--expired { color: var(--color-danger-fg); }
     .load-error { display: grid; gap: var(--space-3); justify-items: start; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -74,6 +76,21 @@ export class ProductDetailPage implements OnInit {
     } catch (error) {
       this.state.set({ kind: isNotFound(error) ? 'notFound' : 'error' });
     }
+  }
+
+  /** Information only — the red/amber/green rules come in Phase 6. */
+  protected certificateText(ingredient: ProductIngredient): string {
+    const certificate = ingredient.certificate;
+    if (!certificate) {
+      return 'No approved certificate';
+    }
+    return this.certificateExpired(ingredient)
+      ? `Certificate expired on ${ukDate(certificate.expires_on)}`
+      : `Certified until ${ukDate(certificate.expires_on)}`;
+  }
+
+  protected certificateExpired(ingredient: ProductIngredient): boolean {
+    return !!ingredient.certificate && daysUntil(ingredient.certificate.expires_on) < 0;
   }
 
   protected ingredientIds(product: ProductDetail): readonly number[] {

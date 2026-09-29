@@ -129,4 +129,17 @@ describe('ProductDetailPage', () => {
     await page['linkIngredient']({ id: 9 });
     expect(products.linkIngredient).toHaveBeenCalledTimes(1);
   });
+
+  it('shows each ingredient certificate status as information', async () => {
+    const product: ProductDetail = { ...PRODUCT, ingredients: [
+      { ...PRODUCT.ingredients[0], certificate: { id: 11, status: 'approved', expires_on: '2099-03-12' } },
+      { id: 4, name: 'Pepper', products_count: 1, suppliers: [], certificate: { id: 12, status: 'approved', expires_on: '2020-01-05' } },
+      { id: 5, name: 'Sugar', products_count: 1, suppliers: [], certificate: null },
+    ] };
+    const { fixture, el } = setup({ products: { get: vi.fn(() => of(product)) } });
+    await settle(fixture);
+    expect(el.querySelector('[data-test="cert-3"]')?.textContent).toContain('Certified until 12 Mar 2099');
+    expect(el.querySelector('[data-test="cert-4"]')?.textContent).toContain('Certificate expired on 5 Jan 2020');
+    expect(el.querySelector('[data-test="cert-5"]')?.textContent).toContain('No approved certificate');
+  });
 });

@@ -11,7 +11,8 @@ import { IngredientsApi } from '../../core/api/ingredients-api';
 import { SupplierDetail } from '../../core/models/catalogue';
 import { settle } from '../../../testing/settle';
 
-const ACME: SupplierDetail = { id: 5, name: 'Acme Gelatin', contact_email: 'q@acme.test', country: { code: 'GB', name: 'United Kingdom' }, ingredients: [{ id: 3, name: 'Gelatin' }] };
+const ACME: SupplierDetail = { id: 5, name: 'Acme Gelatin', contact_email: 'q@acme.test', country: { code: 'GB', name: 'United Kingdom' }, ingredients: [{ id: 3, name: 'Gelatin' }],
+  certificates: [{ id: 11, status: 'approved', body: null, body_name_other: 'Midlands Halal Board', supplier: { id: 5, name: 'Acme Gelatin' }, certificate_number: 'MHB-1', issued_on: null, expires_on: '2027-03-12', ingredients_count: 1 }] };
 
 function setup(api: Record<string, unknown> = {}) {
   const suppliers = { get: vi.fn(() => of(ACME)), linkIngredient: vi.fn(() => of(ACME)), unlinkIngredient: vi.fn(() => of(undefined)), remove: vi.fn(() => of(undefined)), ...api };
@@ -81,5 +82,18 @@ describe('SupplierDetailPage', () => {
     const { fixture, el } = setup({ get: vi.fn(() => throwError(() => new HttpErrorResponse({ status: 404 }))) });
     await settle(fixture);
     expect(el.textContent).toContain('Supplier not found');
+  });
+
+  it('lists the supplier certificates and adds one with the supplier pre-filled', async () => {
+    const { fixture, page, el } = setup();
+    const dialog = TestBed.inject(MatDialog) as unknown as { open: ReturnType<typeof vi.fn> };
+    await settle(fixture);
+    const card = el.querySelector('[data-test="supplier-certificates"]') as HTMLElement;
+    expect(card.textContent).toContain('Midlands Halal Board');
+    expect(card.textContent).toContain('12 Mar 2027');
+    expect((card.querySelector('a') as HTMLAnchorElement).getAttribute('href')).toContain('/certificates/11');
+    await page['addCertificate']();
+    const options = (dialog.open.mock.calls.at(-1) as unknown[])[1] as { data: { supplier: { id: number } } };
+    expect(options.data.supplier).toEqual({ id: 5, name: 'Acme Gelatin' });
   });
 });

@@ -24,7 +24,7 @@ function render(canManage: boolean, steps: readonly OnboardingStep[] = STEPS) {
 describe('OnboardingCard', () => {
   it('shows all five steps and how many are done', () => {
     const { el } = render(true, [{ key: 'markets', status: 'done' }, ...STEPS.slice(1)]);
-    for (const title of ['Choose your export markets', 'Invite your team', 'Add your products', 'Add your suppliers', 'Request certificates']) {
+    for (const title of ['Choose your export markets', 'Invite your team', 'Add your products', 'Add your suppliers', 'Add certificates']) {
       expect(el.textContent).toContain(title);
     }
     expect(el.textContent).toContain('1 of 5 done');
@@ -62,5 +62,15 @@ describe('OnboardingCard', () => {
     const products = el.querySelector('[data-test="step-products"]') as HTMLElement;
     expect(products.textContent).toContain('Coming soon');
     expect(products.querySelector('button, a')).toBeNull();
+  });
+
+  it('links the certificates step when it is to do', () => {
+    const steps: readonly OnboardingStep[] = [
+      { key: 'markets', status: 'done' }, { key: 'team', status: 'done' },
+      { key: 'products', status: 'done' }, { key: 'suppliers', status: 'done' }, { key: 'certificates', status: 'todo' },
+    ];
+    const { el } = render(false, steps);
+    expect(el.textContent).toContain('Add certificates');
+    expect(el.querySelector('[data-test="add-certificates"]')?.getAttribute('href')).toContain('/certificates');
   });
 });
