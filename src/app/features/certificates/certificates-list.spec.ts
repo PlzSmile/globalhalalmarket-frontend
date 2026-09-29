@@ -92,4 +92,13 @@ describe('CertificatesList', () => {
     await fixture.componentInstance['add']();
     expect(navigate).toHaveBeenLastCalledWith(['/certificates', 7]);
   });
+
+  it('names the expiry filter honestly and keeps card labels in the normal font', async () => {
+    const { fixture, el } = setup(vi.fn(() => of(page([ITEM]))));
+    await settle(fixture);
+    expect(el.textContent).toContain('Expired or expiring within 60 days');
+    const numberCell = el.querySelector('td[data-label="Number"]') as HTMLElement;
+    expect(numberCell.classList.contains('mono')).toBe(false);
+    expect(numberCell.querySelector('.mono')?.textContent).toContain('MHB-1');
+  });
 });

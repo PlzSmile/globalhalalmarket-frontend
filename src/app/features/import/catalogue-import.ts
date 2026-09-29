@@ -32,6 +32,14 @@ const FILE_MESSAGE = 'Choose a CSV file (max 2 MB).';
         @if (result(); as r) {
           <h2 class="card-title">Import finished</h2>
           <p data-test="result">{{ summary(r.counts) }}</p>
+          @if (r.warnings?.length) {
+            <div class="issues" data-test="result-warnings">
+              <p class="notice notice--info">Please check these rows (nothing was overwritten):</p>
+              <ul class="rows">
+                @for (issue of r.warnings; track $index) { <li>Row {{ issue.row }}: {{ issue.message }}</li> }
+              </ul>
+            </div>
+          }
           <div class="actions">
             <a mat-flat-button routerLink="/products" class="btn">View products</a>
             <a mat-stroked-button routerLink="/suppliers" class="btn">View suppliers</a>
@@ -79,7 +87,7 @@ const FILE_MESSAGE = 'Choose a CSV file (max 2 MB).';
               }
               <div class="actions">
                 <button mat-flat-button type="button" class="btn" (click)="runImport()" [disabled]="!p.can_import || busy() !== null" data-test="run-import">Import</button>
-                <button mat-button type="button" class="btn" (click)="reset()">Choose another file</button>
+                <button mat-button type="button" class="btn" (click)="reset()" [disabled]="busy() !== null">Choose another file</button>
               </div>
               @if (busy() === 'importing') { <mat-progress-bar mode="indeterminate" aria-label="Importing" /> }
             </section>

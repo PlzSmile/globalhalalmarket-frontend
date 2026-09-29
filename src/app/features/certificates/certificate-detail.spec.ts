@@ -91,4 +91,12 @@ describe('CertificateDetailPage', () => {
     await settle(fixture);
     expect(el.textContent?.replace(/\s+/g, ' ')).toContain('Ana Reviewer, 29 Sep 2026');
   });
+
+  it('only follows download links to the certificate file route', async () => {
+    const { fixture, page, navigation, snackBar } = setup({ downloadLink: vi.fn(() => of({ url: 'https://evil.example/x.pdf', expires_at: 'soon' })) });
+    await settle(fixture);
+    await page['download']();
+    expect(navigation.assign).not.toHaveBeenCalled();
+    expect(snackBar.open).toHaveBeenCalledWith('The PDF could not be downloaded. Please try again.', 'Close', { duration: 6000 });
+  });
 });

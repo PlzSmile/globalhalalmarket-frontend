@@ -136,4 +136,27 @@ describe('CatalogueImport', () => {
     expect(page['preview']()).toBeNull();
     expect(page['result']()).toBeNull();
   });
+
+  it('keeps "Choose another file" disabled while the import runs', async () => {
+    const pending = new Subject<{ counts: typeof COUNTS }>();
+    const { fixture, page, el } = setup({ import: vi.fn(() => pending.asObservable()) });
+    await settle(fixture);
+    await page['onFile'](csv());
+    const running = page['runImport']();
+    fixture.detectChanges();
+    const again = [...el.querySelectorAll('button')].find((b) => b.textContent?.includes('Choose another file')) as HTMLButtonElement;
+    expect(again.disabled).toBe(true);
+    pending.next({ counts: COUNTS });
+    pending.complete();
+    await running;
+  });
+
+  it('shows warnings that were found at import time on the result card', async () => {
+    const { fixture, page, el } = setup({ import: vi.fn(() => of({ counts: COUNTS, warnings: [{ row: 7, message: 'Acme already has an email; the file\'s value was ignored.' }] })) });
+    await settle(fixture);
+    await page['onFile'](csv());
+    await page['runImport']();
+    await settle(fixture);
+    expect(el.querySelector('[data-test="result-warnings"]')?.textContent).toContain('Row 7: Acme already has an email');
+  });
 });

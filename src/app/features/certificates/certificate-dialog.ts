@@ -96,7 +96,7 @@ function picked(control: AbstractControl<Picked<NamedRef>>): ValidationErrors | 
           @for (i of ingredientOptions(); track i.id) {
             <mat-checkbox [checked]="selected().has(i.id)" (change)="toggleIngredient(i, $event.checked)" [attr.data-test]="'ingredient-' + i.id">{{ i.name }}</mat-checkbox>
           } @empty {
-            <p class="muted">Choose the supplier to see its ingredients, or search below.</p>
+            <p class="muted">{{ supplierChosen() ? 'This supplier has no ingredients linked yet. Search your ingredients below.' : 'Choose the supplier to see its ingredients, or search below.' }}</p>
           }
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Add another of your ingredients</mat-label>
@@ -147,7 +147,7 @@ function picked(control: AbstractControl<Picked<NamedRef>>): ValidationErrors | 
     </form>
   `,
   styles: `
-    .fields { display: grid; gap: var(--space-2); min-width: min(100%, var(--container-form)); }
+    .fields { display: grid; gap: var(--space-2); min-width: min(100%, var(--container-form)); overflow-x: hidden; }
     .fields mat-form-field { width: 100%; }
     .file, .ingredients { display: grid; gap: var(--space-2); margin: 0 0 var(--space-3); }
     .ingredients { border: 0; padding: 0; }
@@ -192,6 +192,7 @@ export class CertificateDialog implements OnInit {
   protected readonly bodyOptions = signal<readonly BodyOption[]>([]);
   protected readonly otherIngredientOptions = signal<readonly NamedRef[]>([]);
   private readonly supplierIngredients = signal<readonly NamedRef[]>([]);
+  protected readonly supplierChosen = signal(false);
   private readonly extraIngredients = signal<readonly NamedRef[]>(this.data.certificate?.ingredients ?? []);
   protected readonly selected = signal<ReadonlyMap<number, string>>(new Map((this.data.certificate?.ingredients ?? []).map((i) => [i.id, i.name])));
 
@@ -345,6 +346,7 @@ export class CertificateDialog implements OnInit {
     try {
       const supplier = await firstValueFrom(this.suppliers.get(supplierId));
       this.supplierIngredients.set(supplier.ingredients);
+      this.supplierChosen.set(true);
     } catch {
       this.supplierIngredients.set([]);
     }

@@ -161,4 +161,13 @@ describe('CertificateDialog', () => {
     expect(api.create).not.toHaveBeenCalled();
     expect(el.textContent).toContain('Enter the date as DD/MM/YYYY.');
   });
+
+  it('explains when the chosen supplier has no ingredients yet', async () => {
+    const { fixture, dialog, suppliers, el } = setup({ certificate: null });
+    await settle(fixture);
+    suppliers.get.mockReturnValue(of({ ...ACME, contact_email: null, country: null, ingredients: [] }));
+    await dialog['onSupplierPicked'](ACME);
+    await settle(fixture);
+    expect(el.textContent).toContain('This supplier has no ingredients linked yet. Search your ingredients below.');
+  });
 });

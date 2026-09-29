@@ -17,4 +17,4 @@ export interface ImportPreview {
   readonly can_import: boolean;
 }
 
-export interface ImportResult { readonly counts: ImportCounts; }
+export interface ImportResult { readonly counts: ImportCounts; readonly warnings?: readonly ImportIssue[]; }

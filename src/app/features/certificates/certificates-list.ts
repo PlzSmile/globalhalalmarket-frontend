@@ -81,7 +81,7 @@ const STATUSES: readonly CertificateStatus[] = ['approved', 'pending', 'rejected
           </ng-container>
           <ng-container matColumnDef="number">
             <th mat-header-cell *matHeaderCellDef scope="col">Number</th>
-            <td mat-cell *matCellDef="let c" data-label="Number" class="mono">{{ c.certificate_number ?? '—' }}</td>
+            <td mat-cell *matCellDef="let c" data-label="Number"><span class="mono">{{ c.certificate_number ?? '—' }}</span></td>
           </ng-container>
           <ng-container matColumnDef="expires">
             <th mat-header-cell *matHeaderCellDef scope="col">Expires</th>
@@ -129,7 +129,7 @@ export class CertificatesList implements OnInit {
   protected readonly columns = ['body', 'supplier', 'number', 'expires', 'status'];
   protected readonly filters: readonly { value: Filter; label: string }[] = [
     { value: 'all', label: 'All' }, { value: 'approved', label: 'Approved' }, { value: 'pending', label: 'Pending' },
-    { value: 'rejected', label: 'Rejected' }, { value: 'expiring', label: 'Expiring within 60 days' },
+    { value: 'rejected', label: 'Rejected' }, { value: 'expiring', label: 'Expired or expiring within 60 days' },
   ];
   protected readonly search = new FormControl('', { nonNullable: true });
   protected readonly query = signal<Query>({ search: '', status: null, expiring: false, page: 1 });

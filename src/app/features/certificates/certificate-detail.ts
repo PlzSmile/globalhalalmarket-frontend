@@ -136,6 +136,9 @@ export class CertificateDetailPage implements OnInit {
   protected async download(): Promise<void> {
     await this.run(async () => {
       const link = await firstValueFrom(this.api.downloadLink(this.certificateId));
+      if (!link.url.startsWith('/files/certificates/')) {
+        throw new Error('Unexpected download link'); // never navigate anywhere else
+      }
       this.navigation.assign(link.url);
     }, 'The PDF could not be downloaded. Please try again.');
   }
