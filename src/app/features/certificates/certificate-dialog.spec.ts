@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
+import { DateAdapter } from '@angular/material/core';
 import { Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { CertificateDialog, CertificateDialogData } from './certificate-dialog';
@@ -137,5 +138,13 @@ describe('CertificateDialog', () => {
     expect(api.create).toHaveBeenCalledTimes(1);
     pending.next({ kind: 'done', certificate: SAVED });
     pending.complete();
+  });
+
+  it('reads typed dates day first (UK): 12/03/2027 is 12 March, not 3 December', async () => {
+    const { fixture } = setup({ certificate: null });
+    await settle(fixture);
+    const adapter = fixture.debugElement.injector.get(DateAdapter<Date>);
+    const date = adapter.parse('12/03/2027', null) as Date;
+    expect([date.getFullYear(), date.getMonth(), date.getDate()]).toEqual([2027, 2, 12]);
   });
 });

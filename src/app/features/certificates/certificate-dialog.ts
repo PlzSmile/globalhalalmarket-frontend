@@ -6,7 +6,7 @@ import { Observable, catchError, debounceTime, distinctUntilChanged, firstValueF
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MAT_DATE_LOCALE, provideNativeDateAdapter } from '@angular/material/core';
+import { DateAdapter, MAT_DATE_LOCALE, provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -19,6 +19,7 @@ import { SuppliersApi } from '../../core/api/suppliers-api';
 import { NamedRef } from '../../core/models/catalogue';
 import { BodyOption, CertificateDetail, CertificateFields } from '../../core/models/certificates';
 import { toIsoDate, fromIsoDate } from '../../shared/format/uk-date';
+import { UkDateAdapter } from '../../shared/format/uk-date-adapter';
 import { collapseSpaces } from '../../shared/forms/normalise';
 import { applyServerErrorsOr, clearServerErrors, serverError } from '../../shared/forms/server-errors';
 import { FilePicker } from '../../shared/ui/file-picker';
@@ -37,7 +38,8 @@ function picked(control: AbstractControl<Picked<NamedRef>>): ValidationErrors | 
 
 @Component({
   selector: 'hs-certificate-dialog',
-  providers: [provideNativeDateAdapter(), { provide: MAT_DATE_LOCALE, useValue: 'en-GB' }],
+  // Typed dates are read day first (UK); the stock native adapter would read 12/03 as 3 December.
+  providers: [provideNativeDateAdapter(), { provide: DateAdapter, useClass: UkDateAdapter }, { provide: MAT_DATE_LOCALE, useValue: 'en-GB' }],
   imports: [
     ReactiveFormsModule, MatAutocompleteModule, MatButtonModule, MatCheckboxModule, MatDatepickerModule, MatDialogModule,
     MatFormFieldModule, MatInputModule, MatProgressBarModule, FilePicker,
