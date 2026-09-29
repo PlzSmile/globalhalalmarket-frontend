@@ -99,4 +99,10 @@ describe('CertificateDetailPage', () => {
     expect(navigation.assign).not.toHaveBeenCalled();
     expect(snackBar.open).toHaveBeenCalledWith('The PDF could not be downloaded. Please try again.', 'Close', { duration: 6000 });
   });
+
+  it('says when the supplier uploaded the certificate through a link', async () => {
+    const { fixture, el } = setup({ get: vi.fn(() => of({ ...CERT, from_upload_link: true, created_at: '2026-09-29T09:00:00+00:00' })) });
+    await settle(fixture);
+    expect(el.querySelector('[data-test="from-link"]')?.textContent).toContain('Uploaded by the supplier through an upload link on 29 Sep 2026');
+  });
 });

@@ -16,7 +16,10 @@ import { ukDate } from '../../shared/format/uk-date';
 import { CertificateStatusBadge } from '../../shared/ui/certificate-status-badge';
 import { ConfirmDialog, ConfirmDialogData } from '../../shared/ui/confirm-dialog';
 import { LinkPicker } from '../../shared/ui/link-picker';
+import { UploadRequestsApi } from '../../core/api/upload-requests-api';
+import { CLOSED_REASON_TEXT, UploadRequestItem } from '../../core/models/upload-requests';
 import { CertificateDialog, CertificateDialogData } from '../certificates/certificate-dialog';
+import { UploadRequestDialog, UploadRequestDialogData } from './upload-request-dialog';
 import { SupplierDialog, SupplierDialogData } from './supplier-dialog';
 
 type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { kind: 'ready'; supplier: SupplierDetail };
@@ -102,6 +105,31 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
           }
         </mat-card-content>
       </mat-card>
+
+      <mat-card appearance="outlined" class="hs-card" data-test="upload-links">
+        <mat-card-header><mat-card-title><h2 class="card-title">Upload links</h2></mat-card-title></mat-card-header>
+        <mat-card-content>
+          <button mat-flat-button type="button" class="btn" (click)="requestCertificates()" [disabled]="busy() || supplier.ingredients.length === 0" data-test="request-certificates">Request certificates</button>
+          @if (supplier.ingredients.length === 0) { <p class="muted">Link ingredients to this supplier first.</p> }
+          @if (requests().length) {
+            <ul class="rows">
+              @for (item of requests(); track item.id) {
+                <li class="row link-row">
+                  <div class="link-row__main">
+                    <span class="link-state link-state--{{ item.status }}">{{ item.status === 'open' ? 'Open' : item.status === 'expired' ? 'Expired' : 'Closed' }}</span>
+                    <span>{{ ingredientNames(item) }}</span>
+                    <span class="muted">sent {{ date(item.created_at) }} · expires {{ date(item.expires_at) }} · {{ item.uploads_count }} of 5 uploaded</span>
+                    @if (item.closed_reason) { <span class="muted">{{ reasonText[item.closed_reason] }}</span> }
+                  </div>
+                  @if (item.status === 'open') {
+                    <button mat-button type="button" class="btn" (click)="cancelLink(item)" [disabled]="busy()">Cancel link</button>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </mat-card-content>
+      </mat-card>
     }
   `,
   styles: `
@@ -115,6 +143,12 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
     .rows { list-style: none; margin: var(--space-4) 0 0; padding: 0; }
     .row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); border-top: 1px solid var(--color-border); padding-block: var(--space-1); }
     .cert-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); }
+    .link-row { align-items: flex-start; flex-wrap: wrap; }
+    .link-row__main { display: grid; gap: var(--space-1); min-width: 0; }
+    .link-state { font-size: var(--text-xs); font-weight: var(--weight-semibold); }
+    .link-state--open { color: var(--color-success-fg); }
+    .link-state--expired { color: var(--color-warning-fg); }
+    .link-state--closed { color: var(--color-text-muted); }
     .load-error { display: grid; gap: var(--space-3); justify-items: start; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -132,6 +166,9 @@ export class SupplierDetailPage implements OnInit {
   protected readonly busy = signal(false);
   protected readonly name = bodyName;
   protected readonly date = ukDate;
+  private readonly uploads = inject(UploadRequestsApi);
+  protected readonly requests = signal<readonly UploadRequestItem[]>([]);
+  protected readonly reasonText = CLOSED_REASON_TEXT;
   protected readonly searchIngredients = (text: string): Observable<readonly NamedRef[]> => this.ingredients.search(text);
 
   private get supplierId(): number {
@@ -140,6 +177,7 @@ export class SupplierDetailPage implements OnInit {
 
   ngOnInit(): void {
     void this.load();
+    void this.loadRequests();
   }
 
   async load(): Promise<void> {
@@ -192,6 +230,41 @@ export class SupplierDetailPage implements OnInit {
       await this.load();
       this.notify('Certificate saved.');
     }
+  }
+
+  private async loadRequests(): Promise<void> {
+    try {
+      this.requests.set(await firstValueFrom(this.uploads.list(this.supplierId)));
+    } catch {
+      this.requests.set([]);
+    }
+  }
+
+  protected async requestCertificates(): Promise<void> {
+    const s = this.state();
+    if (s.kind !== 'ready') {
+      return;
+    }
+    const data: UploadRequestDialogData = { supplier: s.supplier };
+    await firstValueFrom(this.dialog.open(UploadRequestDialog, { data, autoFocus: 'first-tabbable', width: '560px', maxWidth: 'calc(100vw - 32px)' }).afterClosed());
+    await this.loadRequests();
+  }
+
+  protected async cancelLink(item: UploadRequestItem): Promise<void> {
+    const data: ConfirmDialogData = { title: 'Cancel this upload link?', message: 'The supplier will no longer be able to upload with it.', confirmLabel: 'Cancel link' };
+    const confirmed = await firstValueFrom(this.dialog.open(ConfirmDialog, { data, width: '440px', maxWidth: 'calc(100vw - 32px)' }).afterClosed());
+    if (confirmed !== true) {
+      return;
+    }
+    await this.run(async () => {
+      await firstValueFrom(this.uploads.cancel(item.id));
+      await this.loadRequests();
+      this.notify('Upload link cancelled.');
+    }, 'The link could not be cancelled. Please try again.');
+  }
+
+  protected ingredientNames(item: UploadRequestItem): string {
+    return item.ingredients.map((i) => i.name).join(', ');
   }
 
   protected async editSupplier(supplier: SupplierDetail): Promise<void> {

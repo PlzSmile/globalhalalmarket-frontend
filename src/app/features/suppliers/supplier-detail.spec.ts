@@ -9,12 +9,20 @@ import { SupplierDetailPage } from './supplier-detail';
 import { SuppliersApi } from '../../core/api/suppliers-api';
 import { IngredientsApi } from '../../core/api/ingredients-api';
 import { SupplierDetail } from '../../core/models/catalogue';
+import { UploadRequestsApi } from '../../core/api/upload-requests-api';
+import { UploadRequestItem } from '../../core/models/upload-requests';
 import { settle } from '../../../testing/settle';
 
 const ACME: SupplierDetail = { id: 5, name: 'Acme Gelatin', contact_email: 'q@acme.test', country: { code: 'GB', name: 'United Kingdom' }, ingredients: [{ id: 3, name: 'Gelatin' }],
   certificates: [{ id: 11, status: 'approved', body: null, body_name_other: 'Midlands Halal Board', supplier: { id: 5, name: 'Acme Gelatin' }, certificate_number: 'MHB-1', issued_on: null, expires_on: '2027-03-12', ingredients_count: 1 }] };
 
-function setup(api: Record<string, unknown> = {}) {
+const REQUESTS: UploadRequestItem[] = [
+  { id: 2, status: 'open', closed_reason: null, ingredients: [{ id: 3, name: 'Gelatin' }], note: null, expires_at: '2026-10-13T10:00:00+00:00', emailed_to_saved_address: true, uploads_count: 1, created_at: '2026-09-29T10:00:00+00:00', requested_by: { id: 1, name: 'Aisha' } },
+  { id: 1, status: 'closed', closed_reason: 'replaced', ingredients: [{ id: 3, name: 'Gelatin' }], note: null, expires_at: '2026-10-10T10:00:00+00:00', emailed_to_saved_address: false, uploads_count: 0, created_at: '2026-09-26T10:00:00+00:00', requested_by: null },
+];
+
+function setup(api: Record<string, unknown> = {}, uploadsOverrides: Record<string, unknown> = {}) {
+  const uploads = { list: vi.fn(() => of(REQUESTS)), cancel: vi.fn(() => of(undefined)), ...uploadsOverrides };
   const suppliers = { get: vi.fn(() => of(ACME)), linkIngredient: vi.fn(() => of(ACME)), unlinkIngredient: vi.fn(() => of(undefined)), remove: vi.fn(() => of(undefined)), ...api };
   const snackBar = { open: vi.fn() };
   TestBed.configureTestingModule({
@@ -24,6 +32,7 @@ function setup(api: Record<string, unknown> = {}) {
       { provide: IngredientsApi, useValue: { search: vi.fn(() => of([])) } },
       { provide: MatDialog, useValue: { open: vi.fn(() => ({ afterClosed: () => of(true) })) } },
       { provide: MatSnackBar, useValue: snackBar },
+      { provide: UploadRequestsApi, useValue: uploads },
     ],
   });
   const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -31,7 +40,7 @@ function setup(api: Record<string, unknown> = {}) {
   fixture.componentRef.setInput('id', '5');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const page = fixture.componentInstance as unknown as Record<string, any>;
-  return { fixture, page, suppliers, snackBar, navigate, el: fixture.nativeElement as HTMLElement };
+  return { fixture, page, suppliers, snackBar, navigate, uploads, el: fixture.nativeElement as HTMLElement };
 }
 
 describe('SupplierDetailPage', () => {
@@ -95,5 +104,37 @@ describe('SupplierDetailPage', () => {
     await page['addCertificate']();
     const options = (dialog.open.mock.calls.at(-1) as unknown[])[1] as { data: { supplier: { id: number } } };
     expect(options.data.supplier).toEqual({ id: 5, name: 'Acme Gelatin' });
+  });
+
+  it('lists upload links with their state and cancels an open one', async () => {
+    const { fixture, page, uploads, snackBar, el } = setup();
+    await settle(fixture);
+    const card = el.querySelector('[data-test="upload-links"]') as HTMLElement;
+    expect(card.textContent).toContain('Open');
+    expect(card.textContent).toContain('1 of 5 uploaded');
+    expect(card.textContent).toContain('Replaced by a newer link');
+    expect(card.textContent).toContain('13 Oct 2026');
+    await page['cancelLink'](REQUESTS[0]);
+    expect(uploads.cancel).toHaveBeenCalledWith(2);
+    expect(snackBar.open).toHaveBeenCalledWith('Upload link cancelled.', 'Close', { duration: 4000 });
+    expect(uploads.list).toHaveBeenCalledTimes(2);
+  });
+
+  it('opens the request dialog for the supplier and reloads the links afterwards', async () => {
+    const { fixture, page, uploads } = setup();
+    const dialog = TestBed.inject(MatDialog) as unknown as { open: ReturnType<typeof vi.fn> };
+    await settle(fixture);
+    await page['requestCertificates']();
+    const options = (dialog.open.mock.calls.at(-1) as unknown[])[1] as { data: { supplier: { id: number } } };
+    expect(options.data.supplier.id).toBe(5);
+    expect(uploads.list).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks to link ingredients before requesting certificates', async () => {
+    const { fixture, el } = setup({ get: vi.fn(() => of({ ...ACME, ingredients: [] })) });
+    await settle(fixture);
+    const button = el.querySelector('[data-test="request-certificates"]') as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(el.textContent).toContain('Link ingredients to this supplier first.');
   });
 });
