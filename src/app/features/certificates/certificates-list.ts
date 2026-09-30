@@ -177,7 +177,7 @@ export class CertificatesList implements OnInit {
     this.state.set({ kind: 'loading' });
     try {
       const q = this.query();
-      const result = await firstValueFrom(this.api.list({ search: q.search, status: q.status, supplierId: null, expiring: q.expiring, page: q.page }));
+      const result = await firstValueFrom(this.api.list({ search: q.search, status: q.status, supplierId: null, expiring: q.expiring, archived: false, page: q.page }));
       if (request === this.latestRequest) {
         this.state.set({ kind: 'ready', page: result });
       }

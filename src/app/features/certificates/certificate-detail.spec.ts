@@ -18,7 +18,7 @@ const CERT: CertificateDetail = { id: 1, status: 'pending', body: { id: 9, name:
 
 function setup(api: Record<string, unknown> = {}, dialogResult: unknown = true) {
   const certificates = { get: vi.fn(() => of(CERT)), approve: vi.fn(() => of({ ...CERT, status: 'approved' })), reject: vi.fn(() => of({ ...CERT, status: 'rejected' })),
-    remove: vi.fn(() => of(undefined)), downloadLink: vi.fn(() => of({ url: '/files/certificates/1?signature=x', expires_at: 'soon' })), ...api };
+    archive: vi.fn(() => of(undefined)), downloadLink: vi.fn(() => of({ url: '/files/certificates/1?signature=x', expires_at: 'soon' })), ...api };
   const navigation = { assign: vi.fn() };
   const snackBar = { open: vi.fn() };
   const dialog = { open: vi.fn(() => ({ afterClosed: () => of(dialogResult) })) };
@@ -75,7 +75,7 @@ describe('CertificateDetailPage', () => {
     const { fixture, page, certificates, navigate } = setup();
     await settle(fixture);
     await page['deleteCertificate']();
-    expect(certificates.remove).toHaveBeenCalledWith(1);
+    expect(certificates.archive).toHaveBeenCalledWith(1);
     expect(navigate).toHaveBeenCalledWith(['/certificates']);
   });
 

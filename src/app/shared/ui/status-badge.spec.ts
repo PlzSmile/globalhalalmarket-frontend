@@ -20,4 +20,14 @@ describe('StatusBadge', () => {
 
     expect(fixture.nativeElement.textContent.trim()).toBe('OK');
   });
+
+  it('reads amber as still valid and shows an optional detail line', () => {
+    const fixture = TestBed.createComponent(StatusBadge);
+    fixture.componentRef.setInput('status', 'amber');
+    fixture.componentRef.setInput('detail', 'Expires 13 Oct 2026 · 13 days');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.hs-status')?.textContent?.trim()).toBe('Valid · expires soon');
+    expect(fixture.nativeElement.querySelector('.hs-status__detail')?.textContent?.trim()).toBe('Expires 13 Oct 2026 · 13 days');
+  });
 });

@@ -15,6 +15,8 @@ export interface CertificateListItem {
   readonly issued_on: string | null;
   readonly expires_on: string;
   readonly ingredients_count: number;
+  /** Archived (Phase 6a): kept with its PDF, hidden by default, read-only until restored. */
+  readonly archived_at?: string | null;
 }
 
 export interface CertificateDetail extends CertificateListItem {
@@ -45,6 +47,7 @@ export interface CertificateFilters {
   readonly status: CertificateStatus | null;
   readonly supplierId: number | null;
   readonly expiring: boolean;
+  readonly archived: boolean;
   readonly page: number;
 }
 

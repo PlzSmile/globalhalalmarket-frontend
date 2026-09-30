@@ -4,6 +4,8 @@ import { Observable, filter, map } from 'rxjs';
 import { ApiItem } from '../models/auth';
 import { Paginated } from '../models/catalogue';
 import { CertificateDetail, CertificateFields, CertificateFilters, CertificateListItem, DownloadLink, UploadEvent } from '../models/certificates';
+import { ScopeCheck, ScopeCheckResult } from '../models/compliance';
+import { AuthorityCode } from '../models/markets';
 
 @Injectable({ providedIn: 'root' })
 export class CertificatesApi {
@@ -15,6 +17,7 @@ export class CertificatesApi {
     if (filters.status) { params = params.set('status', filters.status); }
     if (filters.supplierId !== null) { params = params.set('supplier_id', String(filters.supplierId)); }
     if (filters.expiring) { params = params.set('expiring', '1'); }
+    if (filters.archived) { params = params.set('archived', '1'); }
     return this.http.get<Paginated<CertificateListItem>>('/api/v1/certificates', { params });
   }
 
@@ -46,8 +49,21 @@ export class CertificatesApi {
     return this.http.patch<ApiItem<CertificateDetail>>(`/api/v1/certificates/${id}`, fields).pipe(map((r) => r.data));
   }
 
-  remove(id: number): Observable<void> {
+  /** "Delete" archives the certificate: the row and the PDF are kept (Phase 6a). */
+  archive(id: number): Observable<void> {
     return this.http.delete<void>(`/api/v1/certificates/${id}`);
+  }
+
+  restore(id: number): Observable<CertificateDetail> {
+    return this.http.post<ApiItem<CertificateDetail>>(`/api/v1/certificates/${id}/restore`, {}).pipe(map((r) => r.data));
+  }
+
+  setScopeCheck(id: number, market: AuthorityCode, result: ScopeCheckResult, note: string | null): Observable<ScopeCheck> {
+    return this.http.put<ApiItem<ScopeCheck>>(`/api/v1/certificates/${id}/scope-checks/${market}`, { result, note }).pipe(map((r) => r.data));
+  }
+
+  clearScopeCheck(id: number, market: AuthorityCode): Observable<void> {
+    return this.http.delete<void>(`/api/v1/certificates/${id}/scope-checks/${market}`);
   }
 
   approve(id: number): Observable<CertificateDetail> {

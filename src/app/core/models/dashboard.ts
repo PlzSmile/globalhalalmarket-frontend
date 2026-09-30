@@ -1,3 +1,4 @@
+import { ComplianceSummary } from './compliance';
 import { AuthorityCode } from './markets';
 
 /** Mirrors GET /api/v1/dashboard (App\Http\Resources\DashboardResource). */
@@ -20,4 +21,5 @@ export interface DashboardData {
   readonly markets: readonly DashboardMarket[];
   readonly onboarding: { readonly steps: readonly OnboardingStep[] };
   readonly product_count: number;
+  readonly compliance: ComplianceSummary;
 }

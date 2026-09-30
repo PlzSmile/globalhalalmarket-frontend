@@ -8,7 +8,8 @@ describe('DashboardApi', () => {
   it('loads the dashboard', () => {
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
     const backend = TestBed.inject(HttpTestingController);
-    const data: DashboardData = { markets: [], onboarding: { steps: [{ key: 'markets', status: 'todo' }] }, product_count: 0 };
+    const data: DashboardData = { markets: [], onboarding: { steps: [{ key: 'markets', status: 'todo' }] }, product_count: 0,
+      compliance: { computed_at: null, summary: { overall: { green: 0, amber: 0, red: 0 }, markets: [] }, upcoming_expiries: [] } };
     let result: DashboardData | undefined;
 
     TestBed.inject(DashboardApi).get().subscribe((r) => (result = r));

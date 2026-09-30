@@ -183,7 +183,7 @@ export class CertificateDetailPage implements OnInit {
       return;
     }
     await this.run(async () => {
-      await firstValueFrom(this.api.remove(this.certificateId));
+      await firstValueFrom(this.api.archive(this.certificateId));
       await this.router.navigate(['/certificates']);
       this.notify('Certificate deleted.');
     }, 'The certificate could not be deleted. Please try again.');

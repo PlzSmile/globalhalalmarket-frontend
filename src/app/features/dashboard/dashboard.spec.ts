@@ -17,6 +17,7 @@ const NEW_COMPANY: DashboardData = {
     { key: 'products', status: 'coming_soon' }, { key: 'suppliers', status: 'coming_soon' }, { key: 'certificates', status: 'coming_soon' },
   ] },
   product_count: 0,
+  compliance: { computed_at: null, summary: { overall: { green: 0, amber: 0, red: 0 }, markets: [] }, upcoming_expiries: [] },
 };
 
 const WITH_MARKETS: DashboardData = {
