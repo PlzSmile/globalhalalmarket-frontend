@@ -18,7 +18,7 @@ const CERT: CertificateDetail = { id: 1, status: 'pending', body: { id: 9, name:
 
 function setup(api: Record<string, unknown> = {}, dialogResult: unknown = true) {
   const certificates = { get: vi.fn(() => of(CERT)), approve: vi.fn(() => of({ ...CERT, status: 'approved' })), reject: vi.fn(() => of({ ...CERT, status: 'rejected' })),
-    archive: vi.fn(() => of(undefined)), downloadLink: vi.fn(() => of({ url: '/files/certificates/1?signature=x', expires_at: 'soon' })), ...api };
+    archive: vi.fn(() => of(undefined)), restore: vi.fn(() => of({ ...CERT, archived_at: null })), downloadLink: vi.fn(() => of({ url: '/files/certificates/1?signature=x', expires_at: 'soon' })), ...api };
   const navigation = { assign: vi.fn() };
   const snackBar = { open: vi.fn() };
   const dialog = { open: vi.fn(() => ({ afterClosed: () => of(dialogResult) })) };
@@ -71,12 +71,28 @@ describe('CertificateDetailPage', () => {
     expect(certificates.reject).toHaveBeenCalledWith(1, 'Unreadable scan');
   });
 
-  it('deletes after confirming and goes back to the list', async () => {
-    const { fixture, page, certificates, navigate } = setup();
+  it('archives after confirming and goes back to the list', async () => {
+    const { fixture, page, certificates, navigate, dialog, snackBar } = setup();
     await settle(fixture);
-    await page['deleteCertificate']();
+    await page['archiveCertificate']();
+    const data = (dialog.open.mock.calls[0] as unknown[])[1] as { data: { title: string; message: string } };
+    expect(data.data.title).toBe('Archive this certificate?');
+    expect(data.data.message).toContain('The PDF and its details are kept');
     expect(certificates.archive).toHaveBeenCalledWith(1);
     expect(navigate).toHaveBeenCalledWith(['/certificates']);
+    expect(snackBar.open).toHaveBeenCalledWith('Certificate archived.', 'Close', { duration: 4000 });
+  });
+
+  it('shows an archived certificate read-only with a restore button', async () => {
+    const archived = { ...CERT, archived_at: '2026-09-30T10:00:00+00:00' };
+    const { fixture, page, certificates, el } = setup({ get: vi.fn(() => of(archived)) });
+    await settle(fixture);
+    expect(el.querySelector('[data-test="archived"]')?.textContent).toContain('Archived on 30 Sep 2026');
+    expect(el.querySelector('[data-test="approve"]')).toBeNull();
+    expect(el.querySelector('[data-test="edit"]')).toBeNull();
+    expect(el.querySelector('[data-test="download"]')).not.toBeNull();
+    await page['restore']();
+    expect(certificates.restore).toHaveBeenCalledWith(1);
   });
 
   it('shows not found', async () => {

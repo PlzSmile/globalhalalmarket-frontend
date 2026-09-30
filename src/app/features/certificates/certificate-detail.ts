@@ -30,7 +30,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
     } @else if (s.kind === 'notFound') {
       <mat-card appearance="outlined" class="hs-card"><mat-card-content class="load-error">
         <h1 class="card-title">Certificate not found</h1>
-        <p class="muted">It may have been deleted.</p>
+        <p class="muted">It may have been removed, or the link is wrong.</p>
         <a mat-stroked-button routerLink="/certificates" class="btn">Back to certificates</a>
       </mat-card-content></mat-card>
     } @else if (s.kind === 'error') {
@@ -45,13 +45,18 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
           <h1 class="page-top__title">{{ name(c) }}</h1>
           @if (!c.body) { <p class="notice notice--info">Not in our list of bodies — counts as not recognised by any authority.</p> }
           <hs-certificate-status-badge [status]="c.status" />
+          @if (c.archived_at) { <p class="notice notice--info" data-test="archived">Archived on {{ date(c.archived_at) }}. It no longer counts for compliance.</p> }
         </div>
         <div class="actions">
           <button mat-flat-button type="button" class="btn" (click)="download()" [disabled]="busy()" data-test="download"><mat-icon svgIcon="file" /> Download PDF</button>
-          @if (c.status !== 'approved') { <button mat-stroked-button type="button" class="btn" (click)="approve()" [disabled]="busy()" data-test="approve">Approve</button> }
-          @if (c.status !== 'rejected') { <button mat-stroked-button type="button" class="btn" (click)="reject()" [disabled]="busy()" data-test="reject">Reject</button> }
-          <button mat-stroked-button type="button" class="btn" (click)="edit(c)" [disabled]="busy()">Edit</button>
-          <button mat-stroked-button type="button" class="btn" (click)="deleteCertificate()" [disabled]="busy()">Delete</button>
+          @if (c.archived_at) {
+            <button mat-stroked-button type="button" class="btn" (click)="restore()" [disabled]="busy()" data-test="restore">Restore</button>
+          } @else {
+            @if (c.status !== 'approved') { <button mat-stroked-button type="button" class="btn" (click)="approve()" [disabled]="busy()" data-test="approve">Approve</button> }
+            @if (c.status !== 'rejected') { <button mat-stroked-button type="button" class="btn" (click)="reject()" [disabled]="busy()" data-test="reject">Reject</button> }
+            <button mat-stroked-button type="button" class="btn" (click)="edit(c)" [disabled]="busy()" data-test="edit">Edit</button>
+            <button mat-stroked-button type="button" class="btn" (click)="archiveCertificate()" [disabled]="busy()" data-test="archive">Archive</button>
+          }
         </div>
       </header>
 
@@ -176,8 +181,12 @@ export class CertificateDetailPage implements OnInit {
     }
   }
 
-  protected async deleteCertificate(): Promise<void> {
-    const data: ConfirmDialogData = { title: 'Delete this certificate?', message: 'The certificate and its PDF are deleted for everyone in your company.', confirmLabel: 'Delete certificate' };
+  protected async archiveCertificate(): Promise<void> {
+    const data: ConfirmDialogData = {
+      title: 'Archive this certificate?',
+      message: 'It is hidden from lists and no longer counts for compliance. The PDF and its details are kept, and you can restore it.',
+      confirmLabel: 'Archive certificate',
+    };
     const confirmed = await firstValueFrom(this.dialog.open(ConfirmDialog, { data, width: '440px', maxWidth: 'calc(100vw - 32px)' }).afterClosed());
     if (confirmed !== true) {
       return;
@@ -185,8 +194,15 @@ export class CertificateDetailPage implements OnInit {
     await this.run(async () => {
       await firstValueFrom(this.api.archive(this.certificateId));
       await this.router.navigate(['/certificates']);
-      this.notify('Certificate deleted.');
-    }, 'The certificate could not be deleted. Please try again.');
+      this.notify('Certificate archived.');
+    }, 'The certificate could not be archived. Please try again.');
+  }
+
+  protected async restore(): Promise<void> {
+    await this.run(async () => {
+      this.state.set({ kind: 'ready', certificate: await firstValueFrom(this.api.restore(this.certificateId)) });
+      this.notify('Certificate restored.');
+    }, 'The certificate could not be restored. Please try again.');
   }
 
   private async run(action: () => Promise<void>, fallback: string): Promise<void> {

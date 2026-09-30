@@ -23,8 +23,8 @@ import { EmptyState } from '../../shared/ui/empty-state';
 import { CertificateDialog, CertificateDialogData } from './certificate-dialog';
 
 type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Paginated<CertificateListItem> };
-type Filter = 'all' | CertificateStatus | 'expiring';
-interface Query { readonly search: string; readonly status: CertificateStatus | null; readonly expiring: boolean; readonly page: number; }
+type Filter = 'all' | CertificateStatus | 'expiring' | 'archived';
+interface Query { readonly search: string; readonly status: CertificateStatus | null; readonly expiring: boolean; readonly archived: boolean; readonly page: number; }
 
 const STATUSES: readonly CertificateStatus[] = ['approved', 'pending', 'rejected'];
 
@@ -130,9 +130,10 @@ export class CertificatesList implements OnInit {
   protected readonly filters: readonly { value: Filter; label: string }[] = [
     { value: 'all', label: 'All' }, { value: 'approved', label: 'Approved' }, { value: 'pending', label: 'Pending' },
     { value: 'rejected', label: 'Rejected' }, { value: 'expiring', label: 'Expired or expiring within 60 days' },
+    { value: 'archived', label: 'Archived' },
   ];
   protected readonly search = new FormControl('', { nonNullable: true });
-  protected readonly query = signal<Query>({ search: '', status: null, expiring: false, page: 1 });
+  protected readonly query = signal<Query>({ search: '', status: null, expiring: false, archived: false, page: 1 });
   protected readonly state = signal<State>({ kind: 'loading' });
   protected readonly name = bodyName;
   protected readonly date = ukDate;
@@ -152,6 +153,7 @@ export class CertificatesList implements OnInit {
       search: collapseSpaces(params.get('search') ?? '').slice(0, 100),
       status: STATUSES.includes(status as CertificateStatus) ? (status as CertificateStatus) : null,
       expiring: params.get('expiring') === '1',
+      archived: params.get('archived') === '1',
       page: Number.isInteger(page) && page > 0 ? page : 1,
     });
     this.search.setValue(this.query().search, { emitEvent: false });
@@ -160,16 +162,16 @@ export class CertificatesList implements OnInit {
 
   protected activeFilter(): Filter {
     const q = this.query();
-    return q.expiring ? 'expiring' : (q.status ?? 'all');
+    return q.archived ? 'archived' : q.expiring ? 'expiring' : (q.status ?? 'all');
   }
 
   protected isUnfiltered(): boolean {
     const q = this.query();
-    return !q.search && !q.status && !q.expiring;
+    return !q.search && !q.status && !q.expiring && !q.archived;
   }
 
   protected setFilter(filter: Filter): void {
-    this.go({ ...this.query(), status: STATUSES.includes(filter as CertificateStatus) ? (filter as CertificateStatus) : null, expiring: filter === 'expiring', page: 1 });
+    this.go({ ...this.query(), status: STATUSES.includes(filter as CertificateStatus) ? (filter as CertificateStatus) : null, expiring: filter === 'expiring', archived: filter === 'archived', page: 1 });
   }
 
   async load(): Promise<void> {
@@ -177,7 +179,7 @@ export class CertificatesList implements OnInit {
     this.state.set({ kind: 'loading' });
     try {
       const q = this.query();
-      const result = await firstValueFrom(this.api.list({ search: q.search, status: q.status, supplierId: null, expiring: q.expiring, archived: false, page: q.page }));
+      const result = await firstValueFrom(this.api.list({ search: q.search, status: q.status, supplierId: null, expiring: q.expiring, archived: q.archived, page: q.page }));
       if (request === this.latestRequest) {
         this.state.set({ kind: 'ready', page: result });
       }
@@ -206,7 +208,7 @@ export class CertificatesList implements OnInit {
     this.query.set(query);
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { search: query.search || null, status: query.status, expiring: query.expiring ? 1 : null, page: query.page > 1 ? query.page : null },
+      queryParams: { search: query.search || null, status: query.status, expiring: query.expiring ? 1 : null, archived: query.archived ? 1 : null, page: query.page > 1 ? query.page : null },
       replaceUrl: true,
     });
     void this.load();

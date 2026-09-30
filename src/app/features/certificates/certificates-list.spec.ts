@@ -49,7 +49,7 @@ describe('CertificatesList', () => {
     fixture.componentInstance['setFilter']('rejected');
     await settle(fixture);
     expect(list).toHaveBeenLastCalledWith({ search: '', status: 'rejected', supplierId: null, expiring: false, archived: false, page: 1 });
-    expect(navigate).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: { search: null, status: 'rejected', expiring: null, page: null } }));
+    expect(navigate).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: { search: null, status: 'rejected', expiring: null, archived: null, page: null } }));
     fixture.componentInstance['setFilter']('expiring');
     await settle(fixture);
     expect(list).toHaveBeenLastCalledWith({ search: '', status: null, supplierId: null, expiring: true, archived: false, page: 1 });
@@ -100,5 +100,22 @@ describe('CertificatesList', () => {
     const numberCell = el.querySelector('td[data-label="Number"]') as HTMLElement;
     expect(numberCell.classList.contains('mono')).toBe(false);
     expect(numberCell.querySelector('.mono')?.textContent).toContain('MHB-1');
+  });
+
+  it('shows archived certificates only under the Archived filter', async () => {
+    const list = vi.fn(() => of(page([ITEM])));
+    const { fixture, navigate } = setup(list);
+    await settle(fixture);
+    fixture.componentInstance['setFilter']('archived');
+    await settle(fixture);
+    expect(list).toHaveBeenLastCalledWith({ search: '', status: null, supplierId: null, expiring: false, archived: true, page: 1 });
+    expect(navigate).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: { search: null, status: null, expiring: null, archived: 1, page: null } }));
+  });
+
+  it('reads the Archived filter from the URL', async () => {
+    const list = vi.fn(() => of(page([ITEM])));
+    const { fixture } = setup(list, { archived: '1' });
+    await settle(fixture);
+    expect(list).toHaveBeenCalledWith(expect.objectContaining({ archived: true }));
   });
 });
