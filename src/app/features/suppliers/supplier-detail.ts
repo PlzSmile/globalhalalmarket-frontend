@@ -118,7 +118,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
                   <div class="link-row__main">
                     <span class="link-state link-state--{{ item.status }}">{{ item.status === 'open' ? 'Open' : item.status === 'expired' ? 'Expired' : 'Closed' }}</span>
                     <span>{{ ingredientNames(item) }}</span>
-                    <span class="muted">sent {{ date(item.created_at) }} · expires {{ date(item.expires_at) }} · {{ item.uploads_count }} of 5 uploaded</span>
+                    <span class="muted">sent {{ date(item.created_at) }} · expires {{ date(item.expires_at) }} · {{ item.uploads_count }} of {{ item.max_uploads }} uploaded</span>
                     @if (item.closed_reason) { <span class="muted">{{ reasonText[item.closed_reason] }}</span> }
                   </div>
                   @if (item.status === 'open') {
@@ -245,7 +245,7 @@ export class SupplierDetailPage implements OnInit {
     if (s.kind !== 'ready') {
       return;
     }
-    const data: UploadRequestDialogData = { supplier: s.supplier };
+    const data: UploadRequestDialogData = { supplier: s.supplier, hasOpenLink: this.requests().some((r) => r.status === 'open') };
     await firstValueFrom(this.dialog.open(UploadRequestDialog, { data, autoFocus: 'first-tabbable', width: '560px', maxWidth: 'calc(100vw - 32px)' }).afterClosed());
     await this.loadRequests();
   }

@@ -14,7 +14,11 @@ import { SentUploadRequest } from '../../core/models/upload-requests';
 import { errorMessage } from '../../shared/forms/error-message';
 import { collapseSpaces } from '../../shared/forms/normalise';
 
-export interface UploadRequestDialogData { readonly supplier: SupplierDetail; }
+export interface UploadRequestDialogData {
+  readonly supplier: SupplierDetail;
+  /** The supplier already has an open link (sending a new one replaces it). */
+  readonly hasOpenLink?: boolean;
+}
 
 /** Send an upload link; the link is shown once afterwards (copy for WhatsApp/Teams). */
 @Component({
@@ -24,7 +28,13 @@ export interface UploadRequestDialogData { readonly supplier: SupplierDetail; }
     <h2 mat-dialog-title>Request certificates</h2>
     @if (sent(); as s) {
       <mat-dialog-content class="fields">
-        <p>{{ s.emailed_to_saved_address ? 'Sent by email to ' + data.supplier.contact_email + '.' : 'Not emailed.' }}</p>
+        @if (s.emailed_to_saved_address) {
+          <p>Sent by email to {{ data.supplier.contact_email }}.</p>
+        } @else if (emailWanted()) {
+          <p class="notice notice--warning" role="alert">The email could not be sent — copy the link and send it yourself.</p>
+        } @else {
+          <p>Not emailed.</p>
+        }
         <p class="notice notice--warning">Anyone with this link can upload certificates for this supplier until it closes. Share it only with the supplier.</p>
         <mat-form-field appearance="outline">
           <mat-label>Upload link</mat-label>
@@ -39,6 +49,7 @@ export interface UploadRequestDialogData { readonly supplier: SupplierDetail; }
       <form (ngSubmit)="submit()" novalidate>
         <mat-dialog-content class="fields">
           @if (formError(); as message) { <p class="notice notice--error" role="alert">{{ message }}</p> }
+          @if (data.hasOpenLink) { <p class="notice notice--info" data-test="replaces">Sending a new link stops the open link for this supplier.</p> }
           <fieldset class="ingredients">
             <legend class="field-label">Ingredients that need a certificate</legend>
             @for (ingredient of data.supplier.ingredients; track ingredient.id) {
@@ -85,6 +96,8 @@ export class UploadRequestDialog {
   protected readonly busy = signal(false);
   protected readonly formError = signal<string | null>(null);
   protected readonly sent = signal<SentUploadRequest | null>(null);
+  /** Whether the user asked for the email (to tell a failed email apart from "not emailed"). */
+  protected readonly emailWanted = signal(false);
 
   protected toggle(id: number, checked: boolean): void {
     const next = new Set(this.selected());
@@ -109,10 +122,12 @@ export class UploadRequestDialog {
     this.formError.set(null);
     try {
       const note = collapseSpaces(this.note.value);
+      const sendEmail = this.data.supplier.contact_email !== null && this.sendEmail.value;
+      this.emailWanted.set(sendEmail);
       const sent = await firstValueFrom(this.api.send(this.data.supplier.id, {
         ingredient_ids: this.data.supplier.ingredients.map((i) => i.id).filter((id) => this.selected().has(id)),
         note: note === '' ? null : note,
-        send_email: this.data.supplier.contact_email !== null && this.sendEmail.value,
+        send_email: sendEmail,
       }));
       this.sent.set(sent);
       this.snackBar.open('Upload link sent.', 'Close', { duration: 4000 });

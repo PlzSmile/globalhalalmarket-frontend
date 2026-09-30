@@ -13,6 +13,7 @@ export interface UploadRequestItem {
   readonly expires_at: string;
   readonly emailed_to_saved_address: boolean;
   readonly uploads_count: number;
+  readonly max_uploads: number;
   readonly created_at: string | null;
   readonly requested_by: NamedRef | null;
 }

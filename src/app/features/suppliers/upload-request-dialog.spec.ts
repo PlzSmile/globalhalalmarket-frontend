@@ -13,14 +13,14 @@ import { settle } from '../../../testing/settle';
 const ACME: SupplierDetail = { id: 5, name: 'Acme Gelatin', contact_email: 'q@acme.test', country: null,
   ingredients: [{ id: 1, name: 'Gelatin' }, { id: 2, name: 'Salt' }], certificates: [] };
 const SENT = { id: 9, status: 'open', closed_reason: null, ingredients: [{ id: 1, name: 'Gelatin' }], note: null, expires_at: '2026-10-13T10:00:00+00:00',
-  emailed_to_saved_address: true, uploads_count: 0, created_at: null, requested_by: null, link: 'https://halalsecure.test/upload/abc' };
+  emailed_to_saved_address: true, uploads_count: 0, max_uploads: 5, created_at: null, requested_by: null, link: 'https://halalsecure.test/upload/abc' };
 
-function setup(supplier: SupplierDetail = ACME, send = vi.fn(() => of(SENT))) {
+function setup(supplier: SupplierDetail = ACME, send = vi.fn(() => of(SENT)), hasOpenLink = false) {
   const snackBar = { open: vi.fn() };
   const clipboard = { copy: vi.fn(() => true) };
   TestBed.configureTestingModule({
     providers: [
-      { provide: MAT_DIALOG_DATA, useValue: { supplier } },
+      { provide: MAT_DIALOG_DATA, useValue: { supplier, hasOpenLink } },
       { provide: MatDialogRef, useValue: { close: vi.fn() } },
       { provide: UploadRequestsApi, useValue: { send } },
       { provide: MatSnackBar, useValue: snackBar },
@@ -86,5 +86,19 @@ describe('UploadRequestDialog', () => {
     await dialog['submit']();
     fixture.detectChanges();
     expect(el.textContent).toContain('This supplier has no email address.');
+  });
+
+  it('says when the email could not be sent', async () => {
+    const { fixture, dialog, el } = setup(ACME, vi.fn(() => of({ ...SENT, emailed_to_saved_address: false })));
+    await settle(fixture);
+    await dialog['submit']();
+    await settle(fixture);
+    expect(el.textContent).toContain('The email could not be sent — copy the link and send it yourself.');
+  });
+
+  it('warns that a new link replaces the open one', async () => {
+    const { fixture, el } = setup(ACME, vi.fn(() => of(SENT)), true);
+    await settle(fixture);
+    expect(el.querySelector('[data-test="replaces"]')?.textContent).toContain('Sending a new link stops the open link for this supplier.');
   });
 });

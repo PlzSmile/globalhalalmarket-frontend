@@ -66,7 +66,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
             <dt>Scope</dt><dd>{{ c.scope ?? '—' }}</dd>
             <dt>Covers</dt><dd>{{ c.ingredients.length ? ingredientNames(c) : 'Covers no ingredients — edit to choose them' }}</dd>
             <dt>File</dt><dd>{{ c.file.original_name }} · {{ size(c.file.size) }}</dd>
-@if (c.from_upload_link) {
+            @if (c.from_upload_link) {
               <dt>Source</dt><dd data-test="from-link">Uploaded by the supplier through an upload link on {{ date(c.created_at) }}</dd>
             }
             @if (c.reviewed_by) { <dt>Reviewed</dt><dd>{{ c.reviewed_by.name }}{{ c.reviewed_at ? ', ' + date(c.reviewed_at) : '' }}</dd> }

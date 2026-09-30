@@ -17,8 +17,8 @@ const ACME: SupplierDetail = { id: 5, name: 'Acme Gelatin', contact_email: 'q@ac
   certificates: [{ id: 11, status: 'approved', body: null, body_name_other: 'Midlands Halal Board', supplier: { id: 5, name: 'Acme Gelatin' }, certificate_number: 'MHB-1', issued_on: null, expires_on: '2027-03-12', ingredients_count: 1 }] };
 
 const REQUESTS: UploadRequestItem[] = [
-  { id: 2, status: 'open', closed_reason: null, ingredients: [{ id: 3, name: 'Gelatin' }], note: null, expires_at: '2026-10-13T10:00:00+00:00', emailed_to_saved_address: true, uploads_count: 1, created_at: '2026-09-29T10:00:00+00:00', requested_by: { id: 1, name: 'Aisha' } },
-  { id: 1, status: 'closed', closed_reason: 'replaced', ingredients: [{ id: 3, name: 'Gelatin' }], note: null, expires_at: '2026-10-10T10:00:00+00:00', emailed_to_saved_address: false, uploads_count: 0, created_at: '2026-09-26T10:00:00+00:00', requested_by: null },
+  { id: 2, status: 'open', closed_reason: null, ingredients: [{ id: 3, name: 'Gelatin' }], note: null, expires_at: '2026-10-13T10:00:00+00:00', emailed_to_saved_address: true, uploads_count: 1, max_uploads: 5, created_at: '2026-09-29T10:00:00+00:00', requested_by: { id: 1, name: 'Aisha' } },
+  { id: 1, status: 'closed', closed_reason: 'replaced', ingredients: [{ id: 3, name: 'Gelatin' }], note: null, expires_at: '2026-10-10T10:00:00+00:00', emailed_to_saved_address: false, uploads_count: 0, max_uploads: 5, created_at: '2026-09-26T10:00:00+00:00', requested_by: null },
 ];
 
 function setup(api: Record<string, unknown> = {}, uploadsOverrides: Record<string, unknown> = {}) {
@@ -127,6 +127,7 @@ describe('SupplierDetailPage', () => {
     await page['requestCertificates']();
     const options = (dialog.open.mock.calls.at(-1) as unknown[])[1] as { data: { supplier: { id: number } } };
     expect(options.data.supplier.id).toBe(5);
+    expect((options.data as unknown as { hasOpenLink: boolean }).hasOpenLink).toBe(true);
     expect(uploads.list).toHaveBeenCalledTimes(2);
   });
 
