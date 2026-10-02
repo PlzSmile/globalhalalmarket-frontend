@@ -21,6 +21,7 @@ import { ComplianceCell, ComplianceFilters, ComplianceStatus, ProductComplianceR
 import { DashboardMarket } from '../../core/models/dashboard';
 import { AuthorityCode } from '../../core/models/markets';
 import { collapseSpaces } from '../../shared/forms/normalise';
+import { ukDate } from '../../shared/format/uk-date';
 import { StatusBadge } from '../../shared/ui/status-badge';
 import { ComplianceReasonsDialog, ComplianceReasonsDialogData } from './compliance-reasons-dialog';
 import { statusDetail } from './compliance-format';
@@ -101,7 +102,7 @@ const EMPTY: ComplianceFilters = { market: null, status: null, supplier: null, s
               <th mat-header-cell *matHeaderCellDef scope="col">{{ m.market }} · {{ m.authority }}</th>
               <td mat-cell *matCellDef="let row" [attr.data-label]="m.market + ' · ' + m.authority">
                 @let c = cell(row, m.code);
-                <button type="button" class="cell-button" (click)="openReasons(row, m.code)" [attr.aria-label]="'Why? ' + row.name + ' in ' + m.market" data-test="cell">
+                <button type="button" class="cell-button" (click)="openReasons(row, m.code)" [attr.aria-label]="cellLabel(row, m, c)" data-test="cell">
                   @if (c?.status; as status) {
                     <hs-status-badge [status]="status" [reason]="c?.reason ?? null" [detail]="detail(c)" />
                   } @else {
@@ -178,7 +179,20 @@ export class ComplianceMatrix implements OnInit {
     return row.cells.find((c) => c.market === market);
   }
 
-  protected detail(cell: ComplianceCell | undefined): string | null {
+  /** A button's label replaces its content for screen readers, so the label carries the status, expiry and reason. */
+  protected cellLabel(row: ProductComplianceRow, market: DashboardMarket, cell: ComplianceCell | undefined): string {
+    const parts = [`${row.name} in ${market.market}: ${cell?.status ? STATUS_LABELS[cell.status] : 'Not calculated yet'}`];
+    if (cell?.status && cell.status !== 'red' && cell.next_expiry_on) {
+      parts.push(cell.status === 'amber' ? `Expires ${ukDate(cell.next_expiry_on)}` : `Valid until ${ukDate(cell.next_expiry_on)}`);
+    }
+    if (cell?.status && cell.reason) {
+      parts.push(cell.reason);
+    }
+    parts.push('Show why');
+    return parts.join('. ');
+  }
+
+    protected detail(cell: ComplianceCell | undefined): string | null {
     return cell ? statusDetail(cell.status, cell.next_expiry_on) : null;
   }
 

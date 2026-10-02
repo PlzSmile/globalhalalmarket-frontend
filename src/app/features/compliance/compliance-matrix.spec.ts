@@ -97,4 +97,13 @@ describe('ComplianceMatrix', () => {
     await settle(failing.fixture);
     expect(failing.el.textContent).toContain("We couldn't load the products.");
   });
+
+  it('reads each cell to screen readers with its status, reason and expiry', async () => {
+    const { fixture, el } = await setup();
+    await settle(fixture);
+    const cells = el.querySelectorAll('[data-test="cell"]');
+    expect(cells[0].getAttribute('aria-label')).toBe('Beef sausage in Malaysia: Valid · expires soon. Expires 13 Oct 2026. Gelatin — Acme Gelatin: valid, certificate expires on 13 Oct 2026. Show why');
+    expect(cells[1].getAttribute('aria-label')).toBe('Beef sausage in UAE: Action needed. Gelatin — Halal Food Council: not listed by MoIAT. Show why');
+    expect(cells[2].getAttribute('aria-label')).toBe('Apple juice in Malaysia: Not calculated yet. Show why');
+  });
 });
