@@ -13,7 +13,7 @@ import { settle } from '../../../testing/settle';
 const ACME: SupplierDetail = { id: 5, name: 'Acme Gelatin', contact_email: 'q@acme.test', country: null,
   ingredients: [{ id: 1, name: 'Gelatin' }, { id: 2, name: 'Salt' }], certificates: [] };
 const SENT = { id: 9, status: 'open', closed_reason: null, ingredients: [{ id: 1, name: 'Gelatin' }], note: null, expires_at: '2026-10-13T10:00:00+00:00',
-  emailed_to_saved_address: true, uploads_count: 0, max_uploads: 5, created_at: null, requested_by: null, link: 'https://halalsecure.test/upload/abc' };
+  emailed_to_saved_address: true, uploads_count: 0, max_uploads: 5, created_at: null, requested_by: null, link: 'https://globalhalalmarket.test/upload/abc' };
 
 function setup(supplier: SupplierDetail = ACME, send = vi.fn(() => of(SENT)), hasOpenLink = false) {
   const snackBar = { open: vi.fn() };
@@ -45,7 +45,7 @@ describe('UploadRequestDialog', () => {
 
     expect(send).toHaveBeenCalledWith(5, { ingredient_ids: [1], note: 'Please send the 2026 one', send_email: true });
     expect(snackBar.open).toHaveBeenCalledWith('Upload link sent.', 'Close', { duration: 4000 });
-    expect((el.querySelector('[data-test="link"]') as HTMLInputElement).value).toBe('https://halalsecure.test/upload/abc');
+    expect((el.querySelector('[data-test="link"]') as HTMLInputElement).value).toBe('https://globalhalalmarket.test/upload/abc');
     expect(el.textContent).toContain('Sent by email to q@acme.test.');
     expect(el.textContent).toContain('Anyone with this link can upload certificates for this supplier until it closes. Share it only with the supplier.');
   });
@@ -56,7 +56,7 @@ describe('UploadRequestDialog', () => {
     await dialog['submit']();
     await settle(fixture);
     dialog['copy']();
-    expect(clipboard.copy).toHaveBeenCalledWith('https://halalsecure.test/upload/abc');
+    expect(clipboard.copy).toHaveBeenCalledWith('https://globalhalalmarket.test/upload/abc');
     expect(snackBar.open).toHaveBeenLastCalledWith('Link copied.', 'Close', { duration: 3000 });
   });
 

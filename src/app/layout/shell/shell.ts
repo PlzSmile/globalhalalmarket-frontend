@@ -56,7 +56,7 @@ export class Shell {
   constructor() {
     // Arriving from the verification email link: /dashboard?verified=1
     if (inject(ActivatedRoute).snapshot.queryParamMap.get('verified') === '1') {
-      inject(MatSnackBar).open('Your email is verified. Welcome to HalalSecure!', 'Close', { duration: 6000 });
+      inject(MatSnackBar).open('Your email is verified. Welcome to Global Halal Market!', 'Close', { duration: 6000 });
     }
   }
 

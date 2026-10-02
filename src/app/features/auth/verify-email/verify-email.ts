@@ -13,7 +13,7 @@ const COOLDOWN_SECONDS = 60;
   imports: [MatButtonModule, MatIconModule],
   template: `
     <h1 class="auth-title">Check your inbox</h1>
-    <p class="auth-subtitle">We sent a verification link to <strong>{{ auth.user()?.email }}</strong>. Click it to start using HalalSecure.</p>
+    <p class="auth-subtitle">We sent a verification link to <strong>{{ auth.user()?.email }}</strong>. Click it to start using Global Halal Market.</p>
 
     @if (message(); as text) { <p class="notice notice--info" role="status">{{ text }}</p> }
 

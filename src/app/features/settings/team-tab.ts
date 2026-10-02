@@ -71,7 +71,7 @@ export class TeamTab implements OnInit {
   }
 
   async remove(member: TeamMember): Promise<void> {
-    if (!(await this.confirm({ title: `Remove ${member.name}?`, message: `${member.email} will lose access to HalalSecure straight away.`, confirmLabel: 'Remove' }))) return;
+    if (!(await this.confirm({ title: `Remove ${member.name}?`, message: `${member.email} will lose access to Global Halal Market straight away.`, confirmLabel: 'Remove' }))) return;
     try {
       await firstValueFrom(this.api.remove(member.id));
       this.snackBar.open(`${member.name} was removed.`, 'Close', { duration: 4000 });
