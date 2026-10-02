@@ -73,4 +73,28 @@
       }
     </mat-card-content>
   </mat-card>
+
+  <mat-card appearance="outlined" class="hs-card" data-test="compliance-card">
+    <mat-card-header><mat-card-title><h2 class="card-title">Compliance by market</h2></mat-card-title></mat-card-header>
+    <mat-card-content>
+      @let b = breakdown();
+      @if (b.kind === 'loading') {
+        <mat-progress-bar mode="indeterminate" aria-label="Loading compliance" />
+      } @else if (b.kind === 'error') {
+        <div class="compliance-error">
+          <p role="alert">We couldn't load the compliance details.</p>
+          <button mat-stroked-button type="button" class="btn" (click)="loadCompliance()">Try again</button>
+        </div>
+      } @else if (!b.markets.length) {
+        <p class="muted">Choose your export markets on the dashboard to see results.</p>
+      } @else {
+        <hs-compliance-breakdown [markets]="b.markets" [canManage]="auth.canManageTeam()" (changed)="loadCompliance()" />
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card appearance="outlined" class="hs-card">
+    <mat-card-header><mat-card-title><h2 class="card-title">History</h2></mat-card-title></mat-card-header>
+    <mat-card-content><hs-compliance-history [productId]="numericId()" [version]="complianceVersion()" /></mat-card-content>
+  </mat-card>
 }

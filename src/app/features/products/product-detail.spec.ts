@@ -9,6 +9,8 @@ import { ProductDetailPage } from './product-detail';
 import { ProductsApi } from '../../core/api/products-api';
 import { IngredientsApi } from '../../core/api/ingredients-api';
 import { SuppliersApi } from '../../core/api/suppliers-api';
+import { ComplianceApi } from '../../core/api/compliance-api';
+import { AuthService } from '../../core/auth/auth.service';
 import { ProductDetail } from '../../core/models/catalogue';
 import { settle } from '../../../testing/settle';
 
@@ -29,6 +31,12 @@ function setup(overrides: { products?: Record<string, unknown>; ingredients?: Re
       { provide: ProductsApi, useValue: products },
       { provide: IngredientsApi, useValue: ingredients },
       { provide: SuppliersApi, useValue: { search: vi.fn(() => of([])) } },
+      { provide: ComplianceApi, useValue: {
+        product: vi.fn(() => of([{ market: 'JAKIM', authority: 'JAKIM', status: 'red', next_expiry_on: null, reasons: ['Gelatin — No supplier linked — link a supplier'], ingredients: [] }])),
+        history: vi.fn(() => of({ data: [], meta: { current_page: 1, last_page: 1, per_page: 25, total: 0 } })),
+        statusOn: vi.fn(),
+      } },
+      { provide: AuthService, useValue: { canManageTeam: () => true } },
       { provide: MatDialog, useValue: dialog },
       { provide: MatSnackBar, useValue: snackBar },
     ],
@@ -141,5 +149,16 @@ describe('ProductDetailPage', () => {
     expect(el.querySelector('[data-test="cert-3"]')?.textContent).toContain('Certified until 12 Mar 2099');
     expect(el.querySelector('[data-test="cert-4"]')?.textContent).toContain('Certificate expired on 5 Jan 2020');
     expect(el.querySelector('[data-test="cert-5"]')?.textContent).toContain('No approved certificate');
+  });
+
+  it('shows the compliance card and reloads it after a change', async () => {
+    const { fixture, el } = setup();
+    await settle(fixture);
+    const compliance = TestBed.inject(ComplianceApi) as unknown as { product: ReturnType<typeof vi.fn> };
+    expect(el.querySelector('[data-test="compliance-card"]')?.textContent).toContain('No supplier linked — link a supplier');
+    const calls = compliance.product.mock.calls.length;
+    await (fixture.componentInstance as unknown as { load: () => Promise<void> }).load();
+    await settle(fixture);
+    expect(compliance.product.mock.calls.length).toBeGreaterThan(calls);
   });
 });

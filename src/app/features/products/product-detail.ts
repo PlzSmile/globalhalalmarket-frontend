@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Observable, firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,22 +9,27 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ComplianceApi } from '../../core/api/compliance-api';
 import { IngredientsApi } from '../../core/api/ingredients-api';
 import { ProductsApi } from '../../core/api/products-api';
 import { SuppliersApi } from '../../core/api/suppliers-api';
+import { AuthService } from '../../core/auth/auth.service';
 import { LinkTarget, NamedRef, ProductDetail, ProductIngredient } from '../../core/models/catalogue';
+import { MarketBreakdown } from '../../core/models/compliance';
 import { errorMessage, isNotFound } from '../../shared/forms/error-message';
 import { daysUntil, ukDate } from '../../shared/format/uk-date';
 import { ConfirmDialog, ConfirmDialogData } from '../../shared/ui/confirm-dialog';
 import { LinkPicker } from '../../shared/ui/link-picker';
 import { NameDialog, NameDialogData } from '../../shared/ui/name-dialog';
+import { ComplianceBreakdown } from '../compliance/compliance-breakdown';
+import { ComplianceHistory } from '../compliance/compliance-history';
 import { ProductDialog, ProductDialogData } from './product-dialog';
 
 type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { kind: 'ready'; product: ProductDetail };
 
 @Component({
   selector: 'hs-product-detail',
-  imports: [RouterLink, MatButtonModule, MatCardModule, MatChipsModule, MatIconModule, MatMenuModule, MatProgressBarModule, LinkPicker],
+  imports: [RouterLink, MatButtonModule, MatCardModule, MatChipsModule, MatIconModule, MatMenuModule, MatProgressBarModule, LinkPicker, ComplianceBreakdown, ComplianceHistory],
   templateUrl: './product-detail.html',
   styles: `
     :host { display: grid; gap: var(--space-4); }
@@ -41,6 +46,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
     .ingredient__meta { color: var(--color-text-subtle); font-size: var(--text-sm); margin: 0; }
     .ingredient__cert--expired { color: var(--color-danger-fg); }
     .load-error { display: grid; gap: var(--space-3); justify-items: start; }
+    .compliance-error { display: grid; gap: var(--space-3); justify-items: start; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -56,6 +62,29 @@ export class ProductDetailPage implements OnInit {
 
   protected readonly state = signal<State>({ kind: 'loading' });
   protected readonly busy = signal(false);
+  protected readonly auth = inject(AuthService);
+  private readonly compliance = inject(ComplianceApi);
+  protected readonly numericId = computed(() => Number(this.id()));
+  protected readonly breakdown = signal<{ kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; markets: readonly MarketBreakdown[] }>({ kind: 'loading' });
+  protected readonly complianceVersion = signal(0);
+
+  constructor() {
+    // Every successful load or change of the product recalculated compliance on the server: refresh the card.
+    effect(() => {
+      if (this.state().kind === 'ready') {
+        untracked(() => void this.loadCompliance());
+      }
+    });
+  }
+
+  async loadCompliance(): Promise<void> {
+    try {
+      this.breakdown.set({ kind: 'ready', markets: await firstValueFrom(this.compliance.product(this.numericId())) });
+      this.complianceVersion.update((v) => v + 1);
+    } catch {
+      this.breakdown.set({ kind: 'error' });
+    }
+  }
   protected readonly searchIngredients = (text: string): Observable<readonly NamedRef[]> => this.ingredients.search(text);
   protected readonly searchSuppliers = (text: string): Observable<readonly NamedRef[]> => this.suppliers.search(text);
 
