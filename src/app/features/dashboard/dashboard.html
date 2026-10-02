@@ -58,4 +58,67 @@
       <a mat-flat-button routerLink="/products" class="empty-action">Add product</a>
     </hs-empty-state>
   }
+
+  @if (s.data.markets.length && s.data.product_count > 0) {
+    @let c = s.data.compliance;
+    <p class="muted updated" data-test="updated">{{ c.computed_at ? 'Updated ' + dateTime(c.computed_at) : 'Not calculated yet' }}</p>
+
+    <div class="compliance">
+      <mat-card appearance="outlined" class="hs-card">
+        <mat-card-header><mat-card-title><h2 class="card-title">What is safe to ship</h2></mat-card-title></mat-card-header>
+        <mat-card-content class="summary">
+          <div class="summary__row">
+            <span class="summary__label">All markets</span>
+            <div class="summary__counts">
+              @for (st of statuses; track st) {
+                <button mat-stroked-button type="button" class="count" (click)="showStatus(null, st)" [attr.data-test]="'count-all-' + st">
+                  <hs-status-badge [status]="st" /> <strong>{{ c.summary.overall[st] }}</strong>
+                </button>
+              }
+            </div>
+          </div>
+          @for (m of c.summary.markets; track m.code) {
+            <div class="summary__row">
+              <span class="summary__label">{{ marketName(m.code) }}</span>
+              <div class="summary__counts">
+                @for (st of statuses; track st) {
+                  <button mat-stroked-button type="button" class="count" (click)="showStatus(m.code, st)" [attr.data-test]="'count-' + m.code + '-' + st">
+                    <hs-status-badge [status]="st" /> <strong>{{ m[st] }}</strong>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="hs-card">
+        <mat-card-header><mat-card-title><h2 class="card-title">Expiring in the next 60 days</h2></mat-card-title></mat-card-header>
+        <mat-card-content>
+          @if (c.upcoming_expiries.length) {
+            <ul class="expiries">
+              @for (e of c.upcoming_expiries; track $index) {
+                <li class="expiry">
+                  <span class="expiry__date">{{ date(e.date) }} · {{ daysText(e.days_left) }}</span>
+                  @if (e.kind === 'certificate') {
+                    <a [routerLink]="['/certificates', e.certificate_id]" class="expiry__link">{{ e.supplier }} — {{ e.body }} certificate</a>
+                  } @else {
+                    <span>{{ e.body }} — {{ e.authority }} recognition</span>
+                  }
+                  <span class="subtle">{{ e.products }} {{ e.products === 1 ? 'product' : 'products' }}</span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="muted">Nothing expires in the next 60 days.</p>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <mat-card appearance="outlined" class="hs-card" id="matrix">
+      <mat-card-header><mat-card-title><h2 class="card-title">Products by market</h2></mat-card-title></mat-card-header>
+      <mat-card-content><hs-compliance-matrix [markets]="s.data.markets" /></mat-card-content>
+    </mat-card>
+  }
 }

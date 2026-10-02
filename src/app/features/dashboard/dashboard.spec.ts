@@ -1,11 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { Dashboard } from './dashboard';
 import { DashboardApi } from '../../core/api/dashboard-api';
+import { ComplianceApi } from '../../core/api/compliance-api';
+import { SuppliersApi } from '../../core/api/suppliers-api';
 import { AuthService } from '../../core/auth/auth.service';
 import { DashboardData } from '../../core/models/dashboard';
 import { settle } from '../../../testing/settle';
@@ -26,6 +28,19 @@ const WITH_MARKETS: DashboardData = {
   onboarding: { steps: NEW_COMPANY.onboarding.steps.map((s) => (s.key === 'markets' ? { ...s, status: 'done' as const } : s)) },
 };
 
+const WITH_RESULTS: DashboardData = {
+  ...WITH_MARKETS,
+  product_count: 2,
+  compliance: {
+    computed_at: '2026-09-30T10:12:00',
+    summary: { overall: { green: 1, amber: 0, red: 1 }, markets: [{ code: 'JAKIM', green: 1, amber: 0, red: 1 }] },
+    upcoming_expiries: [
+      { kind: 'certificate', date: '2026-10-13', days_left: 13, certificate_id: 9, supplier: 'Acme Gelatin', body: 'Halal Food Council', products: 2 },
+      { kind: 'recognition', date: '2026-11-02', days_left: 33, body: 'Halal Food Council', authority: 'MoIAT', products: 1 },
+    ],
+  },
+};
+
 function setup(get: ReturnType<typeof vi.fn>, afterClosed: unknown = undefined, canManage = true) {
   const snackBar = { open: vi.fn() };
   const dialog = { open: vi.fn(() => ({ afterClosed: () => of(afterClosed) })) };
@@ -33,6 +48,8 @@ function setup(get: ReturnType<typeof vi.fn>, afterClosed: unknown = undefined, 
     providers: [
       provideRouter([]),
       { provide: DashboardApi, useValue: { get } },
+      { provide: ComplianceApi, useValue: { products: vi.fn(() => of({ data: [], meta: { current_page: 1, last_page: 1, per_page: 25, total: 0 } })) } },
+      { provide: SuppliersApi, useValue: { search: vi.fn(() => of([])), get: vi.fn() } },
       { provide: AuthService, useValue: { canManageTeam: () => canManage } },
       { provide: MatDialog, useValue: dialog },
       { provide: MatSnackBar, useValue: snackBar },
@@ -110,5 +127,24 @@ describe('Dashboard', () => {
     const { fixture, el } = setup(vi.fn(() => of(WITH_MARKETS)), undefined, false);
     await settle(fixture);
     expect(el.querySelector('[data-test="edit-markets"]')).toBeNull();
+  });
+
+  it('shows the summary, the expiries and the updated time', async () => {
+    const { fixture, el } = setup(vi.fn(() => of(WITH_RESULTS)));
+    await settle(fixture);
+    expect(el.querySelector('[data-test="updated"]')?.textContent).toContain('Updated 30 Sep 2026, 10:12');
+    expect(el.querySelector('[data-test="count-all-red"]')?.textContent).toContain('1');
+    expect(el.textContent).toContain('13 Oct 2026 · 13 days');
+    expect(el.textContent).toContain('Acme Gelatin — Halal Food Council certificate');
+    expect(el.textContent).toContain('Halal Food Council — MoIAT recognition');
+    expect(el.querySelector('hs-compliance-matrix')).not.toBeNull();
+  });
+
+  it('a summary number filters the matrix through the URL', async () => {
+    const { fixture, el } = setup(vi.fn(() => of(WITH_RESULTS)));
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    await settle(fixture);
+    (el.querySelector('[data-test="count-JAKIM-red"]') as HTMLButtonElement).click();
+    expect(navigate).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: { market: 'JAKIM', status: 'red', page: null }, queryParamsHandling: 'merge' }));
   });
 });
