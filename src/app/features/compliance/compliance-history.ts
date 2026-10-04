@@ -74,7 +74,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Pa
   styles: `
     :host { display: grid; gap: var(--space-3); }
     .on-date { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-    .btn { min-height: 44px; }
+    .btn { min-height: var(--touch-target); }
     .on-result { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
     .on-result__title { font-size: var(--text-base); margin: 0; }
     .entries { list-style: none; margin: 0; padding: 0; display: grid; }
@@ -110,11 +110,19 @@ export class ComplianceHistory {
     });
   }
 
+  private latestRequest = 0;
+
   async load(): Promise<void> {
+    const request = ++this.latestRequest;
     try {
-      this.state.set({ kind: 'ready', page: await firstValueFrom(this.api.history(this.productId(), this.page())) });
+      const page = await firstValueFrom(this.api.history(this.productId(), this.page()));
+      if (request === this.latestRequest) { // an older, slower answer never replaces a newer one
+        this.state.set({ kind: 'ready', page });
+      }
     } catch {
-      this.state.set({ kind: 'error' });
+      if (request === this.latestRequest) {
+        this.state.set({ kind: 'error' });
+      }
     }
   }
 

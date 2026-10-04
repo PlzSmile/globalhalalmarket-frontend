@@ -64,13 +64,15 @@ import { PASSWORD_MIN, matchesField } from '../../shared/forms/validators';
               <mat-label>New password</mat-label>
               <input matInput type="password" formControlName="password" autocomplete="new-password" required />
               <mat-hint>At least {{ passwordMin }} characters.</mat-hint>
-              @if (password.controls.password.hasError('minlength')) { <mat-error>Use at least {{ passwordMin }} characters.</mat-error> }
+              @if (password.controls.password.hasError('required')) { <mat-error>Enter a new password.</mat-error> }
+              @else if (password.controls.password.hasError('minlength')) { <mat-error>Use at least {{ passwordMin }} characters.</mat-error> }
               @else if (serverError(password.controls.password); as message) { <mat-error>{{ message }}</mat-error> }
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Confirm new password</mat-label>
               <input matInput type="password" formControlName="password_confirmation" autocomplete="new-password" required />
-              @if (password.controls.password_confirmation.hasError('mismatch')) { <mat-error>The passwords do not match.</mat-error> }
+              @if (password.controls.password_confirmation.hasError('required')) { <mat-error>Type the new password again.</mat-error> }
+              @else if (password.controls.password_confirmation.hasError('mismatch')) { <mat-error>The passwords do not match.</mat-error> }
             </mat-form-field>
             <p class="muted">Other devices where you are logged in will be signed out.</p>
             <button mat-flat-button type="submit" [disabled]="savingPassword()">Change password</button>

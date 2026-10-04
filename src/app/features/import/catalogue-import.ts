@@ -98,12 +98,12 @@ const FILE_MESSAGE = 'Choose a CSV file (max 2 MB).';
   `,
   styles: `
     :host { display: grid; gap: var(--space-4); }
-    .back, .template { display: inline-flex; align-items: center; min-height: 44px; }
+    .back, .template { display: inline-flex; align-items: center; min-height: var(--touch-target); }
     .page-top__title { font-size: var(--text-3xl); }
     .stack, .preview, .issues { display: grid; gap: var(--space-3); }
     .card-title { font-size: var(--text-xl); }
     .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-    .btn { min-height: 44px; }
+    .btn { min-height: var(--touch-target); }
     .rows { margin: 0; padding-inline-start: var(--space-5); display: grid; gap: var(--space-1); overflow-wrap: anywhere; }
     .notice { margin: 0; }
   `,

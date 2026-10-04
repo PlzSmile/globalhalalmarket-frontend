@@ -7,6 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
+import { actionError } from '../../shared/forms/error-message';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { TeamApi } from '../../core/api/team-api';
@@ -65,6 +66,8 @@ export class TeamTab implements OnInit {
     try {
       await firstValueFrom(this.api.updateRole(member.id, role));
       this.snackBar.open(`${member.name} is now ${ROLE_LABELS[role]}.`, 'Close', { duration: 4000 });
+    } catch (error) {
+      this.fail(error, 'The role could not be changed. Please try again.');
     } finally {
       await this.load();
     }
@@ -75,6 +78,8 @@ export class TeamTab implements OnInit {
     try {
       await firstValueFrom(this.api.remove(member.id));
       this.snackBar.open(`${member.name} was removed.`, 'Close', { duration: 4000 });
+    } catch (error) {
+      this.fail(error, 'This person could not be removed. Please try again.');
     } finally {
       await this.load();
     }
@@ -84,6 +89,8 @@ export class TeamTab implements OnInit {
     try {
       await firstValueFrom(this.api.resendInvitation(invitation.id));
       this.snackBar.open(`A new link was sent to ${invitation.email}.`, 'Close', { duration: 4000 });
+    } catch (error) {
+      this.fail(error, 'The invitation could not be sent again. Please try again.');
     } finally {
       await this.load();
     }
@@ -93,9 +100,15 @@ export class TeamTab implements OnInit {
     if (!(await this.confirm({ title: 'Cancel invitation?', message: `The link sent to ${invitation.email} will stop working.`, confirmLabel: 'Cancel invitation' }))) return;
     try {
       await firstValueFrom(this.api.cancelInvitation(invitation.id));
+    } catch (error) {
+      this.fail(error, 'The invitation could not be cancelled. Please try again.');
     } finally {
       await this.load();
     }
+  }
+
+  private fail(error: unknown, fallback: string): void {
+    this.snackBar.open(actionError(error, fallback), 'Close', { duration: 6000 });
   }
 
   private async confirm(data: ConfirmDialogData): Promise<boolean> {

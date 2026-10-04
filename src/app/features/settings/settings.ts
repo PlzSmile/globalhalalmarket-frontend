@@ -23,7 +23,7 @@ const TABS = ['profile', 'team', 'markets'] as const;
     :host ::ng-deep .settings-grid { display: grid; gap: var(--space-4); padding-top: var(--space-4); max-width: var(--container-narrow); }
     :host ::ng-deep .settings-form { display: grid; gap: var(--space-2); justify-items: start; }
     :host ::ng-deep .settings-form mat-form-field { width: 100%; }
-    :host ::ng-deep .team__invite { margin-inline-start: auto; min-height: 44px; }
+    :host ::ng-deep .team__invite { margin-inline-start: auto; min-height: var(--touch-target); }
     :host ::ng-deep .team__role { min-width: 8rem; }
     :host ::ng-deep .team__invites { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
     :host ::ng-deep .team__invite-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2);

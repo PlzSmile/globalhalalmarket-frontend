@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FormControl, FormRecord, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -40,16 +40,16 @@ import { applyServerErrorsOr } from '../../shared/forms/server-errors';
     .picker { display: grid; gap: var(--space-4); }
     .picker__list { border: 0; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
     .picker__row { display: grid; gap: var(--space-1); padding-block: var(--space-2); border-bottom: 1px solid var(--color-border); }
-    .picker__row mat-checkbox { min-height: 44px; display: flex; align-items: center; }
+    .picker__row mat-checkbox { min-height: var(--touch-target); display: flex; align-items: center; }
     .picker__name { font-weight: var(--weight-semibold); }
     .picker__note { color: var(--color-text-muted); font-size: var(--text-sm); padding-inline-start: var(--space-10); }
     .picker__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
-    .picker__actions button { min-height: 44px; }
+    .picker__actions button { min-height: var(--touch-target); }
     @media (max-width: 767px) { .picker__actions > * { flex: 1 1 100%; } .picker__note { padding-inline-start: 0; } }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MarketPicker implements OnInit {
+export class MarketPicker {
   readonly markets = input.required<readonly MarketOption[]>();
   readonly readonly = input(false);
   readonly saved = output<readonly MarketOption[]>();
@@ -59,13 +59,32 @@ export class MarketPicker implements OnInit {
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  ngOnInit(): void {
-    for (const option of this.markets()) {
-      this.form.addControl(option.code, new FormControl(option.selected, { nonNullable: true }));
-    }
-    if (this.readonly()) {
-      this.form.disable();
-    }
+  constructor() {
+    // Follows its inputs (not only the first values): a new market list or role is shown at once.
+    effect(() => {
+      const markets = this.markets();
+      const readonly = this.readonly();
+      untracked(() => {
+        for (const code of Object.keys(this.form.controls)) {
+          if (!markets.some((m) => m.code === code)) {
+            this.form.removeControl(code);
+          }
+        }
+        for (const option of markets) {
+          const control = this.form.controls[option.code];
+          if (control) {
+            control.setValue(option.selected);
+          } else {
+            this.form.addControl(option.code, new FormControl(option.selected, { nonNullable: true }));
+          }
+        }
+        if (readonly) {
+          this.form.disable();
+        } else {
+          this.form.enable();
+        }
+      });
+    });
   }
 
   async save(): Promise<void> {

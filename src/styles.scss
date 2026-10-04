@@ -57,6 +57,13 @@ p { margin: 0; }
 a { color: var(--color-link); }
 :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 
+/* Icon buttons (paginator arrows, show password, theme switch …): full touch-target size; Material's default is 40px. */
+.mat-mdc-icon-button.mat-mdc-icon-button { --mat-icon-button-state-layer-size: var(--touch-target); width: var(--touch-target); height: var(--touch-target); }
+
+/* Autocomplete in a dialog on a phone: long names wrap instead of scrolling sideways. */
+.mat-mdc-autocomplete-panel { overflow-x: hidden; max-width: calc(100vw - var(--space-8)); }
+.mat-mdc-autocomplete-panel .mat-mdc-option .mdc-list-item__primary-text { white-space: normal; overflow-wrap: anywhere; }
+
 .visually-hidden {
   position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;

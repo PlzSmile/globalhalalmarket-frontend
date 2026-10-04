@@ -57,10 +57,16 @@ export class Dashboard implements OnInit {
     if (this.state().kind !== 'ready') {
       this.state.set({ kind: 'loading' });
     }
+    const refreshing = this.state().kind === 'ready';
     try {
       this.state.set({ kind: 'ready', data: await firstValueFrom(this.api.get()) });
     } catch {
-      this.state.set({ kind: 'error' });
+      if (refreshing) {
+        // Keep the numbers on screen; the change itself was saved.
+        this.snackBar.open('Saved, but the dashboard could not be refreshed. Reload the page to see the latest numbers.', 'Close', { duration: 6000 });
+      } else {
+        this.state.set({ kind: 'error' });
+      }
     }
   }
 

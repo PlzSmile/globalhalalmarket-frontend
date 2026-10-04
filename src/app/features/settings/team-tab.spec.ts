@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { vi } from 'vitest';
 import { TeamTab } from './team-tab';
 import { TeamApi } from '../../core/api/team-api';
@@ -15,10 +17,11 @@ const TEAM: Team = {
   invitations: [{ id: 9, email: 'new@example.com', role: 'admin', expires_at: '2026-10-04T10:00:00+00:00', invited_by: 'Aisha' }],
 };
 
-async function render(canManage: boolean) {
+async function render(canManage: boolean, api: Record<string, unknown> = {}, snackBar = { open: vi.fn() }) {
   TestBed.configureTestingModule({
     providers: [
-      { provide: TeamApi, useValue: { team: vi.fn(() => of(TEAM)) } },
+      { provide: TeamApi, useValue: { team: vi.fn(() => of(TEAM)), ...api } },
+      { provide: MatSnackBar, useValue: snackBar },
       { provide: AuthService, useValue: { canManageTeam: () => canManage } },
     ],
   });
@@ -43,5 +46,15 @@ describe('TeamTab', () => {
     const fixture = await render(false);
     expect(fixture.nativeElement.querySelector('[data-test="invite"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('[data-test="remove"]')).toBeNull();
+  });
+
+  it('says why a team action failed', async () => {
+    const snackBar = { open: vi.fn() };
+    const updateRole = vi.fn(() => throwError(() => new HttpErrorResponse({ status: 403 })));
+    const fixture = await render(true, { updateRole }, snackBar);
+
+    await fixture.componentInstance.changeRole(TEAM.members[2], 'admin');
+
+    expect(snackBar.open).toHaveBeenCalledWith('You do not have permission to do that. Ask an owner or admin.', 'Close', { duration: 6000 });
   });
 });

@@ -151,11 +151,11 @@ function picked(control: AbstractControl<Picked<NamedRef>>): ValidationErrors | 
     .fields mat-form-field { width: 100%; }
     .file, .ingredients { display: grid; gap: var(--space-2); margin: 0 0 var(--space-3); }
     .ingredients { border: 0; padding: 0; }
-    .ingredients mat-checkbox { min-height: 44px; display: flex; align-items: center; }
+    .ingredients mat-checkbox { min-height: var(--touch-target); display: flex; align-items: center; }
     .field-label { font-weight: var(--weight-semibold); }
     .row { display: grid; gap: var(--space-2); grid-template-columns: minmax(0, 1fr); }
     @media (min-width: 600px) { .row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    .btn { min-height: 44px; }
+    .btn { min-height: var(--touch-target); }
     .link { justify-self: start; margin-top: calc(-1 * var(--space-2)); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

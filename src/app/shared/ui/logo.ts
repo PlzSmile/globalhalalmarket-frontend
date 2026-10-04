@@ -15,7 +15,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   `,
   styles: `
     .logo { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--color-text); text-decoration: none;
-      font-weight: var(--weight-bold); font-size: var(--text-lg); min-height: 44px; white-space: nowrap; }
+      font-weight: var(--weight-bold); font-size: var(--text-lg); min-height: var(--touch-target); white-space: nowrap; }
     .logo svg { width: 28px; height: 28px; color: var(--color-primary); }
     .logo__accent { color: var(--color-primary); }
   `,

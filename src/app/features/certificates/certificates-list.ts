@@ -108,11 +108,11 @@ const STATUSES: readonly CertificateStatus[] = ['approved', 'pending', 'rejected
     .page-top__title { font-size: var(--text-3xl); }
     .filters { display: grid; gap: var(--space-3); }
     /* Touch targets ≥ 44 px (Material chips default to 32 px). */
-    .filters mat-chip-option { --mat-chip-container-height: 44px; }
+    .filters mat-chip-option { --mat-chip-container-height: var(--touch-target); }
     .search { width: min(100%, var(--container-form)); }
-    .btn { min-height: 44px; }
+    .btn { min-height: var(--touch-target); }
     .table-card { overflow: hidden; }
-    .row-link { display: inline-flex; align-items: center; min-height: 44px; font-weight: var(--weight-semibold); }
+    .row-link { display: inline-flex; align-items: center; min-height: var(--touch-target); font-weight: var(--weight-semibold); }
     .note { margin-inline-start: var(--space-2); font-size: var(--text-xs); font-weight: var(--weight-semibold); }
     .note--danger { color: var(--color-danger-fg); }
     .note--warning { color: var(--color-warning-fg); }

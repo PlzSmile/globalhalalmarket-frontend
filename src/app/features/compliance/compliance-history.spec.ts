@@ -59,4 +59,25 @@ describe('ComplianceHistory', () => {
     await settle(fixture);
     expect(el.textContent).toContain('before or equal to today');
   });
+
+  it('an older, slower answer never replaces a newer one', async () => {
+    const slow = new (await import('rxjs')).Subject<typeof HISTORY>();
+    const newer = { ...HISTORY, meta: { ...HISTORY.meta, total: 99 } };
+    const history = vi.fn().mockReturnValueOnce(slow).mockReturnValueOnce(of(newer));
+    TestBed.configureTestingModule({ providers: [{ provide: ComplianceApi, useValue: { history, statusOn: vi.fn() } }] });
+    const fixture = TestBed.createComponent(ComplianceHistory);
+    fixture.componentRef.setInput('productId', 3);
+    fixture.componentRef.setInput('version', 1);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const component = fixture.componentInstance as unknown as Record<string, any>;
+    await settle(fixture);
+    fixture.componentRef.setInput('version', 2);
+    await settle(fixture);
+
+    slow.next(HISTORY); // the first request answers last
+    slow.complete();
+    await settle(fixture);
+
+    expect(component['state']().page.meta.total).toBe(99);
+  });
 });

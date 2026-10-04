@@ -161,4 +161,15 @@ describe('ProductDetailPage', () => {
     await settle(fixture);
     expect(compliance.product.mock.calls.length).toBeGreaterThan(calls);
   });
+
+  it('loads the history once when the page opens, and again after a change', async () => {
+    const { fixture } = setup();
+    await settle(fixture);
+    const compliance = TestBed.inject(ComplianceApi) as unknown as { history: ReturnType<typeof vi.fn> };
+    expect(compliance.history).toHaveBeenCalledTimes(1);
+
+    await (fixture.componentInstance as unknown as { load: () => Promise<void> }).load();
+    await settle(fixture);
+    expect(compliance.history).toHaveBeenCalledTimes(2);
+  });
 });

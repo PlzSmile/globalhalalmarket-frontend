@@ -34,7 +34,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; markets:
       </mat-card>
     </div>
   `,
-  styles: `.retry { min-height: 44px; }`,
+  styles: `.retry { min-height: var(--touch-target); }`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MarketsTab implements OnInit {

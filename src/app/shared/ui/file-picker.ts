@@ -23,7 +23,7 @@ import { fileSize } from '../format/uk-date';
   `,
   styles: `
     .picker { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
-    .btn { min-height: 44px; }
+    .btn { min-height: var(--touch-target); }
     .picked { color: var(--color-text-muted); font-size: var(--text-sm); word-break: break-all; }
     .notice { flex-basis: 100%; margin: 0; }
   `,

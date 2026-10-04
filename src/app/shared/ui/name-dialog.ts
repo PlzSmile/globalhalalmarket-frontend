@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { HttpErrorResponse } from '@angular/common/http';
 import { applyServerErrorsOr, clearServerErrors, serverError } from '../forms/server-errors';
 import { collapseSpaces } from '../forms/normalise';
 
@@ -40,7 +41,7 @@ export interface NameDialogData {
       </mat-dialog-actions>
     </form>
   `,
-  styles: `.field { width: 100%; } .btn { min-height: 44px; }`,
+  styles: `.field { width: 100%; } .btn { min-height: var(--touch-target); }`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NameDialog {
@@ -67,7 +68,9 @@ export class NameDialog {
       await firstValueFrom(this.data.save(name));
       this.dialogRef.close(true);
     } catch (error) {
-      this.formError.set(applyServerErrorsOr(this.form, error, 'This could not be saved. Please try again.'));
+      this.formError.set(error instanceof HttpErrorResponse && error.status === 404
+        ? 'This was deleted a moment ago (perhaps in another tab). Close this and refresh the page.'
+        : applyServerErrorsOr(this.form, error, 'This could not be saved. Please try again.'));
     } finally {
       this.busy.set(false);
     }

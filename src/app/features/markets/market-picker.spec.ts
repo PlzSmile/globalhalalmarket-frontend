@@ -85,4 +85,16 @@ describe('MarketPicker', () => {
     expect(checkbox(el, 'BPJPH').disabled).toBe(true);
     expect(el.querySelector('[data-test="save-markets"]')).toBeNull();
   });
+
+  it('follows later changes to its inputs', () => {
+    const { fixture, el } = render();
+    fixture.componentRef.setInput('markets', OPTIONS.map((o) => ({ ...o, selected: o.code === 'JAKIM' })));
+    fixture.detectChanges();
+    expect(checkbox(el, 'BPJPH').checked).toBe(false);
+    expect(checkbox(el, 'JAKIM').checked).toBe(true);
+
+    fixture.componentRef.setInput('readonly', true);
+    fixture.detectChanges();
+    expect(checkbox(el, 'JAKIM').disabled).toBe(true);
+  });
 });

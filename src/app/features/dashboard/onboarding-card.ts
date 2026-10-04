@@ -76,7 +76,7 @@ const STATUS_LABEL: Record<StepStatus, string> = { done: 'done', todo: 'to do', 
     .step__text, .step__hint { color: var(--color-text-muted); font-size: var(--text-sm); }
     .step__done { color: var(--color-success-fg); font-weight: var(--weight-semibold); font-size: var(--text-sm); }
     .step__action { grid-column: 2; display: flex; flex-wrap: wrap; gap: var(--space-2); }
-    .step__action a, .step__action button { min-height: 44px; width: 100%; }
+    .step__action a, .step__action button { min-height: var(--touch-target); width: 100%; }
     @media (min-width: 768px) {
       .step { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
       .step__action { grid-column: 3; }

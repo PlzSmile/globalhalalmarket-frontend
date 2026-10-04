@@ -59,4 +59,13 @@ describe('LinkPicker', () => {
     expect(picked).toEqual([]);
     expect(picker['text'].disabled).toBe(true);
   });
+
+  it('searches again on focus, so a record created a moment ago shows without typing', () => {
+    const { search, picker } = render();
+    picker['onFocus']();
+    vi.advanceTimersByTime(250);
+    picker['onFocus']();
+    vi.advanceTimersByTime(250);
+    expect(search).toHaveBeenCalledTimes(2);
+  });
 });

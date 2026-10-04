@@ -29,12 +29,11 @@ export class AuthService {
       this.state.set(await firstValueFrom(this.api.me()));
     } catch (error) {
       if (!(error instanceof HttpErrorResponse) || error.status !== 401) {
-        throw error;
+        throw error; // offline / server error: not remembered, so the next navigation asks again
       }
       this.state.set(null);
-    } finally {
-      this.loaded = true;
     }
+    this.loaded = true;
     return this.state();
   }
 

@@ -24,7 +24,7 @@ const PRESENTATION: Record<ComplianceStatus, { readonly tone: string; readonly l
     @if (detail(); as text) { <span class="hs-status__detail">{{ text }}</span> }
   `,
   styles: `
-    :host { display: inline-grid; gap: 2px; justify-items: start; }
+    :host { display: inline-grid; gap: var(--space-half); justify-items: start; }
     .hs-status__detail { font-size: var(--text-xs); color: var(--color-text-muted); }
     .hs-status {
       --mat-chip-container-height: 26px;

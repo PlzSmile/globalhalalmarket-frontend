@@ -33,11 +33,11 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
   templateUrl: './product-detail.html',
   styles: `
     :host { display: grid; gap: var(--space-4); }
-    .back { display: inline-flex; align-items: center; min-height: 44px; }
+    .back { display: inline-flex; align-items: center; min-height: var(--touch-target); }
     .page-top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
     .page-top__title { font-size: var(--text-3xl); }
     .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-    .btn { min-height: 44px; }
+    .btn { min-height: var(--touch-target); }
     .card-title { font-size: var(--text-xl); }
     .ingredients { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: grid; }
     .ingredient { display: grid; gap: var(--space-2); padding-block: var(--space-3); border-top: 1px solid var(--color-border); }
@@ -78,9 +78,12 @@ export class ProductDetailPage implements OnInit {
   }
 
   async loadCompliance(): Promise<void> {
+    const refreshing = this.breakdown().kind === 'ready'; // the history loads by itself the first time
     try {
       this.breakdown.set({ kind: 'ready', markets: await firstValueFrom(this.compliance.product(this.numericId())) });
-      this.complianceVersion.update((v) => v + 1);
+      if (refreshing) {
+        this.complianceVersion.update((v) => v + 1);
+      }
     } catch {
       this.breakdown.set({ kind: 'error' });
     }

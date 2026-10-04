@@ -56,4 +56,14 @@ describe('AuthService', () => {
     await result.catch(() => undefined);
     expect(service.user()).toBeNull();
   });
+
+  it('does not remember a network failure at startup as "logged out"', async () => {
+    const first = service.ensureLoaded();
+    http.expectOne('/api/v1/me').error(new ProgressEvent('error'), { status: 0 });
+    await expect(first).rejects.toBeTruthy();
+
+    const second = service.ensureLoaded(); // the next navigation tries again
+    http.expectOne('/api/v1/me').flush({ data: USER });
+    expect(await second).toEqual(USER);
+  });
 });

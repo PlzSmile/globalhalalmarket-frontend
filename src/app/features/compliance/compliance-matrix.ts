@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
@@ -127,14 +127,14 @@ const EMPTY: ComplianceFilters = { market: null, status: null, supplier: null, s
     /* Tablet/desktop: the table scrolls sideways inside the card, never the page; the product column stays put. */
     .matrix-scroll { overflow-x: auto; }
     .matrix { min-width: 100%; }
-    .row-link { display: inline-flex; align-items: center; min-height: 44px; font-weight: var(--weight-semibold); }
+    .row-link { display: inline-flex; align-items: center; min-height: var(--touch-target); font-weight: var(--weight-semibold); }
     .cell-button {
-      display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: var(--space-1) 0;
+      display: inline-flex; align-items: center; min-height: var(--touch-target); min-width: var(--touch-target); padding: var(--space-1) 0;
       background: none; border: 0; color: inherit; font: inherit; text-align: start; cursor: pointer;
     }
     .cell-button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; border-radius: var(--radius-sm); }
     .load-error { display: grid; gap: var(--space-3); justify-items: start; }
-    .btn { min-height: 44px; }
+    .btn { min-height: var(--touch-target); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -146,6 +146,8 @@ export class ComplianceMatrix implements OnInit {
   private readonly api = inject(ComplianceApi);
   private readonly suppliers = inject(SuppliersApi);
   private readonly dialog = inject(MatDialog);
+  /** A decision in the reasons dialog changed the results (the dashboard refreshes its summary). */
+  readonly changed = output<void>();
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly statuses = STATUSES;
@@ -220,13 +222,20 @@ export class ComplianceMatrix implements OnInit {
 
   protected async openReasons(row: ProductComplianceRow, market: AuthorityCode): Promise<void> {
     const data: ComplianceReasonsDialogData = { productId: row.id, productName: row.name, market };
-    await firstValueFrom(this.dialog.open(ComplianceReasonsDialog, { data, autoFocus: 'dialog', width: '760px', maxWidth: 'calc(100vw - 32px)' }).afterClosed());
-    await this.load(); // a scope decision in the dialog may have changed the results
+    const ref = this.dialog.open(ComplianceReasonsDialog, { data, autoFocus: 'dialog', width: '760px', maxWidth: 'calc(100vw - 32px)' });
+    await firstValueFrom(ref.afterClosed());
+    // Only a scope decision changes the results: then refresh in place (focus and scroll stay) and tell the page.
+    if (ref.componentInstance?.changed()) {
+      await this.load({ quiet: true });
+      this.changed.emit();
+    }
   }
 
-  async load(): Promise<void> {
+  async load(options: { quiet?: boolean } = {}): Promise<void> {
     const request = ++this.latestRequest;
-    this.state.set({ kind: 'loading' });
+    if (!options.quiet || this.state().kind !== 'ready') {
+      this.state.set({ kind: 'loading' });
+    }
     try {
       const page = await firstValueFrom(this.api.products(this.filters()));
       if (request === this.latestRequest) {

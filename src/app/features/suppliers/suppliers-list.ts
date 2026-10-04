@@ -90,9 +90,9 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Pa
     .page-top__title { font-size: var(--text-3xl); }
     .page-top__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
     .search { width: min(100%, var(--container-form)); }
-    .btn { min-height: 44px; }
+    .btn { min-height: var(--touch-target); }
     .table-card { overflow: hidden; }
-    .row-link { display: inline-flex; align-items: center; min-height: 44px; font-weight: var(--weight-semibold); }
+    .row-link { display: inline-flex; align-items: center; min-height: var(--touch-target); font-weight: var(--weight-semibold); }
     .load-error { display: grid; gap: var(--space-3); justify-items: start; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

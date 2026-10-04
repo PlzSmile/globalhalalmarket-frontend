@@ -50,10 +50,10 @@ export interface ScopeCheckDialogData {
   styles: `
     .content { display: grid; gap: var(--space-3); }
     .choices { display: grid; gap: var(--space-2); }
-    .choices mat-radio-button { display: flex; align-items: center; min-height: 44px; }
+    .choices mat-radio-button { display: flex; align-items: center; min-height: var(--touch-target); }
     .note { width: 100%; }
     .field-error { color: var(--color-danger-fg); font-size: var(--text-sm); margin: 0; }
-    .btn { min-height: 44px; }
+    .btn { min-height: var(--touch-target); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

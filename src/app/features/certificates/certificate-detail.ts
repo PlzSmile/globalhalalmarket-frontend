@@ -83,16 +83,16 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
   `,
   styles: `
     :host { display: grid; gap: var(--space-4); }
-    .back { display: inline-flex; align-items: center; min-height: 44px; }
+    .back { display: inline-flex; align-items: center; min-height: var(--touch-target); }
     .page-top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
     .page-top__title { font-size: var(--text-3xl); margin-bottom: var(--space-2); }
     .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-    .btn { min-height: 44px; }
+    .btn { min-height: var(--touch-target); }
     .card-title { font-size: var(--text-xl); }
     .facts { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-1) var(--space-4); margin: 0; }
     .facts dt { color: var(--color-text-muted); font-size: var(--text-sm); }
     .facts dd { margin: 0 0 var(--space-3); }
-    .facts a { display: inline-flex; align-items: center; min-height: 44px; }
+    .facts a { display: inline-flex; align-items: center; min-height: var(--touch-target); }
     @media (min-width: 768px) { .facts { grid-template-columns: 12rem minmax(0, 1fr); } .facts dd { margin: 0; } }
     .note { margin-inline-start: var(--space-2); font-size: var(--text-xs); font-weight: var(--weight-semibold); }
     .note--danger { color: var(--color-danger-fg); }

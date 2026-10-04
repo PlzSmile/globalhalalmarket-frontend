@@ -53,4 +53,10 @@ describe('NameDialog', () => {
     expect(text).toContain('Enter the reason.');
     expect(text).not.toContain('Enter a name.');
   });
+
+  it('says when the item was deleted meanwhile', async () => {
+    const { dialog } = render(vi.fn(() => throwError(() => new HttpErrorResponse({ status: 404 }))));
+    await dialog['save']();
+    expect(dialog['formError']()).toBe('This was deleted a moment ago (perhaps in another tab). Close this and refresh the page.');
+  });
 });

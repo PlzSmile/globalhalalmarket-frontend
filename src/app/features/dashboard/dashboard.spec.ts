@@ -11,6 +11,8 @@ import { SuppliersApi } from '../../core/api/suppliers-api';
 import { AuthService } from '../../core/auth/auth.service';
 import { DashboardData } from '../../core/models/dashboard';
 import { settle } from '../../../testing/settle';
+import { By } from '@angular/platform-browser';
+import { ComplianceMatrix } from '../compliance/compliance-matrix';
 
 const NEW_COMPANY: DashboardData = {
   markets: [],
@@ -146,5 +148,28 @@ describe('Dashboard', () => {
     await settle(fixture);
     (el.querySelector('[data-test="count-JAKIM-red"]') as HTMLButtonElement).click();
     expect(navigate).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: { market: 'JAKIM', status: 'red', page: null }, queryParamsHandling: 'merge' }));
+  });
+
+  it('keeps the data and says so when the refresh after saving markets fails', async () => {
+    const get = vi.fn().mockReturnValueOnce(of(NEW_COMPANY)).mockReturnValueOnce(throwError(() => new Error('offline')));
+    const { fixture, snackBar, el } = setup(get, [{ code: 'JAKIM' }]);
+    await settle(fixture);
+
+    await fixture.componentInstance.chooseMarkets();
+    await settle(fixture);
+
+    expect(el.querySelector('[data-test="retry"]')).toBeNull();
+    expect(snackBar.open).toHaveBeenCalledWith('Saved, but the dashboard could not be refreshed. Reload the page to see the latest numbers.', 'Close', { duration: 6000 });
+  });
+
+  it('refreshes the summary when a decision in the matrix changed the results', async () => {
+    const get = vi.fn(() => of(WITH_RESULTS));
+    const { fixture } = setup(get);
+    await settle(fixture);
+
+    fixture.debugElement.query(By.directive(ComplianceMatrix)).componentInstance.changed.emit();
+    await settle(fixture);
+
+    expect(get).toHaveBeenCalledTimes(2);
   });
 });

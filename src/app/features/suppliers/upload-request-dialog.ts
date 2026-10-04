@@ -77,9 +77,9 @@ export interface UploadRequestDialogData {
     .fields { display: grid; gap: var(--space-3); min-width: min(100%, var(--container-form)); }
     .fields mat-form-field { width: 100%; }
     .ingredients { border: 0; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
-    .ingredients mat-checkbox { min-height: 44px; display: flex; align-items: center; }
+    .ingredients mat-checkbox { min-height: var(--touch-target); display: flex; align-items: center; }
     .field-label { font-weight: var(--weight-semibold); }
-    .btn { min-height: 44px; }
+    .btn { min-height: var(--touch-target); }
     .notice { margin: 0; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

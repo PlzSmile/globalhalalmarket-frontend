@@ -42,7 +42,7 @@ export class LinkPicker {
   protected readonly text = new FormControl<string>('', { nonNullable: true });
   private readonly typed = signal('');
   private readonly results = signal<readonly NamedRef[]>([]);
-  private readonly queries = new Subject<string>();
+  private readonly queries = new Subject<{ value: string; force: boolean }>();
 
   protected readonly options = computed(() => {
     const exclude = new Set(this.excludeIds());
@@ -64,14 +64,15 @@ export class LinkPicker {
     this.text.valueChanges.pipe(takeUntilDestroyed()).subscribe((value) => {
       if (typeof value === 'string') {
         this.typed.set(value);
-        this.queries.next(value);
+        this.queries.next({ value, force: false });
       }
     });
     this.queries.pipe(
       debounceTime(250),
-      map((value) => collapseSpaces(value)),
-      distinctUntilChanged(),
-      switchMap((value) => this.search()(value).pipe(catchError(() => of([] as readonly NamedRef[])))),
+      map((query) => ({ value: collapseSpaces(query.value), force: query.force })),
+      // Same text again is skipped while typing, but a focus always asks again (a record may have been created).
+      distinctUntilChanged((a, b) => !b.force && a.value === b.value),
+      switchMap((query) => this.search()(query.value).pipe(catchError(() => of([] as readonly NamedRef[])))),
       takeUntilDestroyed(),
     ).subscribe((results) => this.results.set(results));
 
@@ -79,7 +80,7 @@ export class LinkPicker {
   }
 
   protected onFocus(): void {
-    this.queries.next(this.text.value);
+    this.queries.next({ value: this.text.value, force: true });
   }
 
   protected select(choice: Choice): void {

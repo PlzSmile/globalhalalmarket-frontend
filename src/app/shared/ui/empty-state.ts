@@ -17,7 +17,7 @@ import { MatIconModule } from '@angular/material/icon';
     .empty { display: grid; justify-items: center; gap: var(--space-3); text-align: center;
       padding: var(--space-10) var(--space-6); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-lg);
       background: var(--color-surface); }
-    .empty__icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: var(--radius-pill);
+    .empty__icon { display: grid; place-items: center; width: var(--size-icon-xl); height: var(--size-icon-xl); border-radius: var(--radius-pill);
       background: var(--color-primary-soft); color: var(--color-primary); }
     .empty__title { font-size: var(--text-xl); }
     .empty__text { color: var(--color-text-muted); max-width: 48ch; }

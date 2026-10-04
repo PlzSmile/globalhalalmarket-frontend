@@ -73,14 +73,14 @@ let nextId = 0;
     .ingredient__name { font-weight: var(--weight-semibold); }
     .cert { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-muted); }
     .cert__title { margin: 0; font-size: var(--text-sm); }
-    .cert__title a { display: inline-flex; align-items: center; min-height: 44px; }
+    .cert__title a { display: inline-flex; align-items: center; min-height: var(--touch-target); }
     .scopes { display: grid; gap: var(--space-2); margin: 0; grid-template-columns: minmax(0, 1fr); }
     .scopes dt { color: var(--color-text-subtle); font-size: var(--text-xs); }
     .scopes dd { margin: 0; font-size: var(--text-sm); }
     @media (min-width: 768px) { .scopes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     .decision { margin: 0; font-size: var(--text-sm); }
     .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-    .btn { min-height: 44px; }
+    .btn { min-height: var(--touch-target); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

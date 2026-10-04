@@ -44,7 +44,7 @@ const SKU_PATTERN = /^[A-Za-z0-9._\-/ ]+$/;
       </mat-dialog-actions>
     </form>
   `,
-  styles: `.fields { display: grid; gap: var(--space-2); min-width: min(100%, var(--container-form)); } .fields mat-form-field { width: 100%; } .btn { min-height: 44px; }`,
+  styles: `.fields { display: grid; gap: var(--space-2); min-width: min(100%, var(--container-form)); } .fields mat-form-field { width: 100%; } .btn { min-height: var(--touch-target); }`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductDialog {

@@ -25,8 +25,8 @@ const PAGE = { data: [
 ], meta: { current_page: 1, last_page: 1, per_page: 25, total: 2 } };
 
 /** Uses the real router: the URL is the matrix's only source of filters. */
-async function setup(url = '/', products = vi.fn(() => of(PAGE))) {
-  const dialog = { open: vi.fn(() => ({ afterClosed: () => of(undefined) })) };
+async function setup(url = '/', products = vi.fn(() => of(PAGE)), changedInDialog = false) {
+  const dialog = { open: vi.fn(() => ({ afterClosed: () => of(undefined), componentInstance: { changed: () => changedInDialog } })) };
   const suppliers = { search: vi.fn(() => of([{ id: 7, name: 'Acme Gelatin' }])), get: vi.fn(() => of({ id: 7, name: 'Acme Gelatin' })) };
   TestBed.configureTestingModule({
     providers: [
@@ -105,5 +105,32 @@ describe('ComplianceMatrix', () => {
     expect(cells[0].getAttribute('aria-label')).toBe('Beef sausage in Malaysia: Valid · expires soon. Expires 13 Oct 2026. Gelatin — Acme Gelatin: valid, certificate expires on 13 Oct 2026. Show why');
     expect(cells[1].getAttribute('aria-label')).toBe('Beef sausage in UAE: Action needed. Gelatin — Halal Food Council: not listed by MoIAT. Show why');
     expect(cells[2].getAttribute('aria-label')).toBe('Apple juice in Malaysia: Not calculated yet. Show why');
+  });
+
+  it('closing the reasons without a decision keeps the table as it is', async () => {
+    const { fixture, matrix, products } = await setup();
+    await settle(fixture);
+
+    await matrix['openReasons'](PAGE.data[0], 'MOIAT');
+
+    expect(products).toHaveBeenCalledTimes(1); // no reload: focus and scroll stay where they were
+  });
+
+  it('after a decision it refreshes quietly and tells the page the results changed', async () => {
+    const { fixture, matrix, products, el } = await setup('/', vi.fn(() => of(PAGE)), true);
+    await settle(fixture);
+    const changed = vi.fn();
+    fixture.componentInstance.changed.subscribe(changed);
+    const states: string[] = [];
+    const original = matrix['state'].set.bind(matrix['state']);
+    matrix['state'].set = (s: { kind: string }) => { states.push(s.kind); original(s); };
+
+    await matrix['openReasons'](PAGE.data[0], 'MOIAT');
+    await settle(fixture);
+
+    expect(products).toHaveBeenCalledTimes(2);
+    expect(states).not.toContain('loading'); // the table stays on screen while refreshing
+    expect(changed).toHaveBeenCalled();
+    expect(el.querySelectorAll('[data-test="cell"]').length).toBe(4);
   });
 });

@@ -32,7 +32,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; markets:
         <p role="alert">We couldn't load the reasons.</p>
         <button mat-stroked-button type="button" class="btn" (click)="load()">Try again</button>
       } @else {
-        <hs-compliance-breakdown [markets]="s.markets" [market]="data.market" [canManage]="auth.canManageTeam()" (changed)="load()" />
+        <hs-compliance-breakdown [markets]="s.markets" [market]="data.market" [canManage]="auth.canManageTeam()" (changed)="onChanged()" />
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -40,7 +40,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; markets:
       <button mat-flat-button type="button" class="btn" mat-dialog-close>Close</button>
     </mat-dialog-actions>
   `,
-  styles: `.btn { min-height: 44px; }`,
+  styles: `.btn { min-height: var(--touch-target); }`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ComplianceReasonsDialog implements OnInit {
@@ -49,6 +49,13 @@ export class ComplianceReasonsDialog implements OnInit {
   private readonly api = inject(ComplianceApi);
 
   protected readonly state = signal<State>({ kind: 'loading' });
+  /** True once a decision here changed the results; read by the matrix after closing. */
+  readonly changed = signal(false);
+
+  protected onChanged(): void {
+    this.changed.set(true);
+    void this.load();
+  }
 
   ngOnInit(): void {
     void this.load();

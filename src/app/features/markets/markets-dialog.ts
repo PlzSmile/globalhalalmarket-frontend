@@ -35,7 +35,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; markets:
   styles: `
     .intro { margin-bottom: var(--space-4); }
     /* Projected into the picker, so the picker's own button styles do not reach it. */
-    .picker-cancel, .dialog-btn { min-height: 44px; }
+    .picker-cancel, .dialog-btn { min-height: var(--touch-target); }
     @media (max-width: 767px) { .picker-cancel { flex: 1 1 100%; } }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
