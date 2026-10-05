@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-import { of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ComplianceMatrix } from './compliance-matrix';
 import { ComplianceApi } from '../../core/api/compliance-api';
@@ -26,7 +26,14 @@ const PAGE = { data: [
 
 /** Uses the real router: the URL is the matrix's only source of filters. */
 async function setup(url = '/', products = vi.fn(() => of(PAGE)), changedInDialog = false) {
-  const dialog = { open: vi.fn(() => ({ afterClosed: () => of(undefined), componentInstance: { changed: () => changedInDialog } })) };
+  // Like Material: the component is cleared as soon as the dialog has closed (before afterClosed's subscribers resume).
+  const dialog = { open: vi.fn(() => {
+    const ref: { componentInstance: { changed: () => boolean } | null; afterClosed: () => unknown } = {
+      componentInstance: { changed: () => changedInDialog },
+      afterClosed: () => new Observable((sub) => { ref.componentInstance = null; sub.next(undefined); sub.complete(); }),
+    };
+    return ref;
+  }) };
   const suppliers = { search: vi.fn(() => of([{ id: 7, name: 'Acme Gelatin' }])), get: vi.fn(() => of({ id: 7, name: 'Acme Gelatin' })) };
   TestBed.configureTestingModule({
     providers: [

@@ -223,9 +223,11 @@ export class ComplianceMatrix implements OnInit {
   protected async openReasons(row: ProductComplianceRow, market: AuthorityCode): Promise<void> {
     const data: ComplianceReasonsDialogData = { productId: row.id, productName: row.name, market };
     const ref = this.dialog.open(ComplianceReasonsDialog, { data, autoFocus: 'dialog', width: '760px', maxWidth: 'calc(100vw - 32px)' });
+    // Keep the component: Material clears ref.componentInstance as soon as the dialog has closed.
+    const dialog = ref.componentInstance;
     await firstValueFrom(ref.afterClosed());
     // Only a scope decision changes the results: then refresh in place (focus and scroll stay) and tell the page.
-    if (ref.componentInstance?.changed()) {
+    if (dialog?.changed()) {
       await this.load({ quiet: true });
       this.changed.emit();
     }
