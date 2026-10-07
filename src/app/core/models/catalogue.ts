@@ -28,6 +28,8 @@ export interface SupplierListItem { readonly id: number; readonly name: string; 
 export interface SupplierDetail {
   readonly id: number; readonly name: string; readonly contact_email: string | null;
   readonly country: Country | null; readonly ingredients: readonly NamedRef[];
+  /** Phase 6b: ask automatically for the renewed certificate 30 days before expiry (default true). */
+  readonly auto_chase?: boolean;
   readonly certificates?: readonly CertificateListItem[];
 }
-export interface SupplierInput { readonly name: string; readonly contact_email: string | null; readonly country_code: string | null; }
+export interface SupplierInput { readonly name: string; readonly contact_email: string | null; readonly country_code: string | null; readonly auto_chase?: boolean; }

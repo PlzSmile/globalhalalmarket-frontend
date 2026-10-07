@@ -3,6 +3,9 @@ export type UserRole = 'owner' | 'admin' | 'member';
 export type AssignableRole = Exclude<UserRole, 'owner'>;
 
 export interface CompanySummary { readonly id: number; readonly name: string; }
+/** Phase 6b: reminder settings (GET/PATCH /api/v1/company…). */
+export interface CompanyReminders { readonly certificates: boolean; readonly recognitions: boolean; readonly auto_chase_suppliers: boolean; }
+export interface CompanyDetail extends CompanySummary { readonly reminders?: CompanyReminders; }
 
 export interface CurrentUser {
   readonly id: number;

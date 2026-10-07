@@ -39,6 +39,7 @@
         </button>
       }
       <span class="shell__company">{{ auth.user()?.company?.name }}</span>
+      <hs-notifications-bell />
       <button mat-icon-button type="button" (click)="theme.toggle()"
               [matTooltip]="theme.theme() === 'dark' ? 'Light theme' : 'Dark theme'"
               [attr.aria-pressed]="theme.theme() === 'dark'"

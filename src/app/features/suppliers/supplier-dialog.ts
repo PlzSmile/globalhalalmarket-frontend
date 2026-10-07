@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators, FormControl } from '@angular/forms';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
@@ -23,7 +24,7 @@ function countryPicked(control: AbstractControl<Country | string>): ValidationEr
 
 @Component({
   selector: 'hs-supplier-dialog',
-  imports: [ReactiveFormsModule, MatAutocompleteModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule],
+  imports: [ReactiveFormsModule, MatAutocompleteModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatCheckboxModule],
   template: `
     <h2 mat-dialog-title>{{ data.supplier ? 'Edit supplier' : 'Add supplier' }}</h2>
     <form [formGroup]="form" (ngSubmit)="save()" novalidate>
@@ -53,6 +54,9 @@ function countryPicked(control: AbstractControl<Country | string>): ValidationEr
           @if (form.controls.country.hasError('country')) { <mat-error>Choose a country from the list.</mat-error> }
           @else if (serverError(form.controls.country); as message) { <mat-error>{{ message }}</mat-error> }
         </mat-form-field>
+        <mat-checkbox [formControl]="autoChase" class="chase" data-test="auto-chase">
+          Ask this supplier automatically for the renewed certificate, 30 days before it expires (needs a contact email).
+        </mat-checkbox>
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <button mat-button type="button" class="btn" mat-dialog-close>Cancel</button>
@@ -60,7 +64,7 @@ function countryPicked(control: AbstractControl<Country | string>): ValidationEr
       </mat-dialog-actions>
     </form>
   `,
-  styles: `.fields { display: grid; gap: var(--space-2); min-width: min(100%, var(--container-form)); } .fields mat-form-field { width: 100%; } .btn { min-height: var(--touch-target); }`,
+  styles: `.chase { display: block; margin-top: var(--space-2); } .fields { display: grid; gap: var(--space-2); min-width: min(100%, var(--container-form)); } .fields mat-form-field { width: 100%; } .btn { min-height: var(--touch-target); }`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SupplierDialog {
@@ -70,6 +74,8 @@ export class SupplierDialog {
   private readonly fb = inject(NonNullableFormBuilder);
   protected readonly serverError = serverError;
   protected readonly busy = signal(false);
+  /** Phase 6b: a separate control (the main form keeps its shape). */
+  protected readonly autoChase = new FormControl(this.data.supplier?.auto_chase ?? true, { nonNullable: true });
   protected readonly formError = signal<string | null>(null);
 
   protected readonly form = this.fb.group({
@@ -105,7 +111,7 @@ export class SupplierDialog {
     this.busy.set(true);
     try {
       const picked = this.form.controls.country.value;
-      const input = { name, contact_email: email === '' ? null : email, country_code: typeof picked === 'object' ? picked.code : null };
+      const input = { name, contact_email: email === '' ? null : email, country_code: typeof picked === 'object' ? picked.code : null, auto_chase: this.autoChase.value };
       const supplier = this.data.supplier;
       this.dialogRef.close(await firstValueFrom(supplier ? this.api.update(supplier.id, input) : this.api.create(input)));
     } catch (error) {

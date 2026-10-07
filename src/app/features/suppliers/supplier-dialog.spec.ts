@@ -32,7 +32,7 @@ describe('SupplierDialog', () => {
     const { close, dialog } = setup({ supplier: null }, { create });
     dialog['form'].setValue({ name: ' Acme ', contact_email: ' ', country: GB });
     await dialog['save']();
-    expect(create).toHaveBeenCalledWith({ name: 'Acme', contact_email: null, country_code: 'GB' });
+    expect(create).toHaveBeenCalledWith({ name: 'Acme', contact_email: null, country_code: 'GB', auto_chase: true });
     expect(close).toHaveBeenCalledWith(SAVED);
   });
 
@@ -43,7 +43,7 @@ describe('SupplierDialog', () => {
     expect(dialog['filteredCountries']()).toEqual([]);
     dialog['form'].setValue({ name: 'Acme', contact_email: '', country: '' });
     await dialog['save']();
-    expect(create).toHaveBeenCalledWith({ name: 'Acme', contact_email: null, country_code: null });
+    expect(create).toHaveBeenCalledWith({ name: 'Acme', contact_email: null, country_code: null, auto_chase: true });
   });
 
   it('filters countries by the typed text', () => {
@@ -70,7 +70,18 @@ describe('SupplierDialog', () => {
     dialog['form'].controls.name.setValue('Zed');
     await dialog['save']();
     fixture.detectChanges();
-    expect(update).toHaveBeenCalledWith(5, { name: 'Zed', contact_email: 'q@acme.test', country_code: 'GB' });
+    expect(update).toHaveBeenCalledWith(5, { name: 'Zed', contact_email: 'q@acme.test', country_code: 'GB', auto_chase: true });
     expect(el.textContent).toContain('You already have a supplier called Zed.');
+  });
+
+  it('can stop automatic requests for a renewed certificate, and shows the saved choice when editing', async () => {
+    const update = vi.fn(() => of({ ...SAVED, auto_chase: false }));
+    const { dialog, el } = setup({ supplier: { ...SAVED, auto_chase: false } }, { update });
+    expect(dialog['autoChase'].value).toBe(false);
+    expect(el.textContent).toContain('Ask this supplier automatically for the renewed certificate');
+
+    dialog['autoChase'].setValue(true);
+    await dialog['save']();
+    expect(update).toHaveBeenCalledWith(5, expect.objectContaining({ auto_chase: true }));
   });
 });
