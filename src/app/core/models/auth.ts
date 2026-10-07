@@ -5,7 +5,10 @@ export type AssignableRole = Exclude<UserRole, 'owner'>;
 export interface CompanySummary { readonly id: number; readonly name: string; }
 /** Phase 6b: reminder settings (GET/PATCH /api/v1/company…). */
 export interface CompanyReminders { readonly certificates: boolean; readonly recognitions: boolean; readonly auto_chase_suppliers: boolean; }
-export interface CompanyDetail extends CompanySummary { readonly reminders?: CompanyReminders; }
+/** Phase 6c: plan and free access (free_until null with free = until an admin ends it). */
+export type PlanKey = 'starter' | 'pro' | 'consultant';
+export interface CompanyAccess { readonly plan: PlanKey | null; readonly plan_label: string | null; readonly free: boolean; readonly free_until: string | null; readonly offer: string | null; }
+export interface CompanyDetail extends CompanySummary { readonly reminders?: CompanyReminders; readonly access?: CompanyAccess; }
 
 export interface CurrentUser {
   readonly id: number;
@@ -38,7 +41,7 @@ export interface Team { readonly members: readonly TeamMember[]; readonly invita
 export interface InvitationPreview { readonly company_name: string; readonly email: string; readonly role: AssignableRole; }
 
 export interface LoginRequest { email: string; password: string; remember: boolean; }
-export interface RegisterRequest { name: string; email: string; password: string; password_confirmation: string; company_name: string; }
+export interface RegisterRequest { name: string; email: string; password: string; password_confirmation: string; company_name: string; offer_code?: string; }
 export interface ResetPasswordRequest { token: string; email: string; password: string; password_confirmation: string; }
 export interface AcceptInvitationRequest { name: string; password: string; password_confirmation: string; }
 export interface PasswordChangeRequest { current_password: string; password: string; password_confirmation: string; }

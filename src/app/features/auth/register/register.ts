@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -28,6 +28,8 @@ export class Register {
     password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN)]],
     password_confirmation: ['', [Validators.required, matchesField('password')]],
     company_name: ['', [Validators.required, Validators.maxLength(120)]],
+    // Phase 6c: optional promotion code; ?offer=CODE links fill it in.
+    offer_code: [(inject(ActivatedRoute).snapshot.queryParamMap.get('offer') ?? '').trim().toUpperCase().slice(0, 40), [Validators.maxLength(40)]],
   });
   protected readonly busy = signal(false);
   protected readonly formError = signal<string | null>(null);
@@ -49,7 +51,9 @@ export class Register {
     this.busy.set(true);
     this.formError.set(null);
     try {
-      await this.auth.register(this.form.getRawValue());
+      const { offer_code, ...details } = this.form.getRawValue();
+      const code = offer_code.trim().toUpperCase();
+      await this.auth.register(code ? { ...details, offer_code: code } : details);
       await this.router.navigateByUrl('/verify-email');
     } catch (error) {
       this.formError.set(applyServerErrors(this.form, error));

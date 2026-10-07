@@ -46,6 +46,13 @@
     @else if (serverError(form.controls.company_name); as message) { <mat-error>{{ message }}</mat-error> }
   </mat-form-field>
 
+  <mat-form-field appearance="outline">
+    <mat-label>Offer code (optional)</mat-label>
+    <input matInput formControlName="offer_code" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+    <mat-hint>Only if you were given one.</mat-hint>
+    @if (serverError(form.controls.offer_code); as message) { <mat-error>{{ message }}</mat-error> }
+  </mat-form-field>
+
   <button mat-flat-button class="auth-submit" type="submit" [disabled]="busy()">Create account</button>
   @if (busy()) { <mat-progress-bar mode="indeterminate" aria-label="Creating your account" /> }
 </form>
