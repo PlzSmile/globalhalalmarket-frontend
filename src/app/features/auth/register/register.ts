@@ -8,6 +8,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AuthService } from '../../../core/auth/auth.service';
+import { PromoApi } from '../../../core/api/promo-api';
+import { Promo } from '../../../core/models/promo';
 import { applyServerErrors, clearServerErrors, serverError } from '../../../shared/forms/server-errors';
 import { PASSWORD_MIN, matchesField } from '../../../shared/forms/validators';
 
@@ -35,11 +37,22 @@ export class Register {
   protected readonly formError = signal<string | null>(null);
   protected readonly showPassword = signal(false);
   protected readonly serverError = serverError;
+  protected readonly promo = signal<Promo | null>(null);
+  protected readonly offerCode = signal('');
 
   constructor() {
+    const destroyRef = inject(DestroyRef);
     this.form.controls.password.valueChanges
-      .pipe(takeUntilDestroyed(inject(DestroyRef)))
+      .pipe(takeUntilDestroyed(destroyRef))
       .subscribe(() => this.form.controls.password_confirmation.updateValueAndValidity({ emitEvent: false }));
+    this.offerCode.set(this.form.controls.offer_code.value);
+    this.form.controls.offer_code.valueChanges.pipe(takeUntilDestroyed(destroyRef)).subscribe((code) => this.offerCode.set(code));
+    inject(PromoApi).current().pipe(takeUntilDestroyed(destroyRef)).subscribe((promo) => this.promo.set(promo));
+  }
+
+  /** Fill in the advertised promotion code. */
+  protected usePromo(code: string): void {
+    this.form.controls.offer_code.setValue(code);
   }
 
   async submit(): Promise<void> {

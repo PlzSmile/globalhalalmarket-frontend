@@ -1,6 +1,15 @@
 <h1 class="auth-title">Create your account</h1>
 <p class="auth-subtitle">Free while we are in early access. No card needed.</p>
 
+@if (promo(); as p) {
+  <div class="notice notice--info" data-test="promo">
+    <p>{{ p.text }}</p>
+    @if (p.code && offerCode().trim().toUpperCase() !== p.code) {
+      <button mat-stroked-button type="button" data-test="use-promo" (click)="usePromo(p.code)">Use code {{ p.code }}</button>
+    }
+  </div>
+}
+
 @if (formError(); as message) { <p class="notice notice--error" role="alert">{{ message }}</p> }
 
 <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
