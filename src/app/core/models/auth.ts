@@ -5,9 +5,9 @@ export type AssignableRole = Exclude<UserRole, 'owner'>;
 export interface CompanySummary { readonly id: number; readonly name: string; }
 /** Phase 6b: reminder settings (GET/PATCH /api/v1/company…). */
 export interface CompanyReminders { readonly certificates: boolean; readonly recognitions: boolean; readonly auto_chase_suppliers: boolean; }
-/** Phase 6c: plan and free access (free_until null with free = until an admin ends it). */
+/** Phase 6c: plan and free access. free_until is the day free access ends (null with free = until an admin ends it). */
 export type PlanKey = 'starter' | 'pro' | 'consultant';
-export interface CompanyAccess { readonly plan: PlanKey | null; readonly plan_label: string | null; readonly free: boolean; readonly free_until: string | null; readonly offer: string | null; }
+export interface CompanyAccess { readonly plan: PlanKey | null; readonly plan_label: string | null; readonly free: boolean; readonly free_until: string | null; }
 export interface CompanyDetail extends CompanySummary { readonly reminders?: CompanyReminders; readonly access?: CompanyAccess; }
 
 export interface CurrentUser {

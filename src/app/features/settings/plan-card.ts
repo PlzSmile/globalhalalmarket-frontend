@@ -15,8 +15,8 @@ import { CompanyAccess } from '../../core/models/auth';
         <mat-card-header><mat-card-title>Plan</mat-card-title></mat-card-header>
         <mat-card-content>
           @if (a.plan_label && a.free) {
-            <p class="plan__line">Free {{ a.plan_label }} plan@if (a.free_until) { until {{ a.free_until | date: 'd MMMM y' }}}</p>
-            @if (a.free_until) { <p class="plan__hint">We email you 14 and 3 days before it ends.</p> }
+            <p class="plan__line">Free {{ a.plan_label }} plan@if (a.free_until) {, ends on {{ a.free_until | date: 'd MMMM y' }}}</p>
+            @if (a.free_until) { <p class="plan__hint">Owners and admins get an email 14 and 3 days before it ends; everyone sees a notice in the app.</p> }
           } @else if (a.plan_label && a.free_until) {
             <p class="plan__line">Your free {{ a.plan_label }} plan ended on {{ a.free_until | date: 'd MMMM y' }}.</p>
           } @else {
