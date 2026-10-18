@@ -5,12 +5,13 @@ import { MarketsTab } from './markets-tab';
 import { RemindersTab } from './reminders-tab';
 import { ProfileTab } from './profile-tab';
 import { TeamTab } from './team-tab';
+import { BillingTab } from './billing-tab';
 
-const TABS = ['profile', 'team', 'markets', 'reminders'] as const;
+const TABS = ['profile', 'team', 'markets', 'reminders', 'billing'] as const;
 
 @Component({
   selector: 'hs-settings',
-  imports: [MatTabsModule, ProfileTab, TeamTab, MarketsTab, RemindersTab],
+  imports: [MatTabsModule, ProfileTab, TeamTab, MarketsTab, RemindersTab, BillingTab],
   template: `
     <h1 class="page-title">Settings</h1>
     <mat-tab-group [selectedIndex]="initialTab" mat-stretch-tabs="false" animationDuration="0ms">
@@ -18,6 +19,7 @@ const TABS = ['profile', 'team', 'markets', 'reminders'] as const;
       <mat-tab label="Team"><hs-team-tab /></mat-tab>
       <mat-tab label="Markets"><hs-markets-tab /></mat-tab>
       <mat-tab label="Reminders"><hs-reminders-tab /></mat-tab>
+      <mat-tab label="Billing"><ng-template matTabContent><hs-billing-tab /></ng-template></mat-tab>
     </mat-tab-group>
   `,
   styles: `
@@ -35,6 +37,6 @@ const TABS = ['profile', 'team', 'markets', 'reminders'] as const;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Settings {
-  /** ?tab=profile|team|markets|reminders opens that tab (links from the dashboard); anything else opens Profile. */
+  /** ?tab=profile|team|markets|reminders|billing opens that tab (links from the dashboard); anything else opens Profile. */
   protected readonly initialTab = Math.max(0, TABS.indexOf(inject(ActivatedRoute).snapshot.queryParamMap.get('tab') as (typeof TABS)[number]));
 }

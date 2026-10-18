@@ -1,13 +1,11 @@
 import { Routes } from '@angular/router';
-import { Shell } from './layout/shell/shell';
-import { AuthLayout } from './layout/auth-layout/auth-layout';
 import { authGuard, guestGuard, unverifiedGuard } from './core/auth/guards';
 
 export const routes: Routes = [
   {
     // Login, sign-up, password and invitation screens (matched before the Shell's catch-all).
     path: '',
-    component: AuthLayout,
+    // Both layouts are lazy: keeps the first download small (the Shell brings sidenav, lists, menus and forms).    loadComponent: () => import('./layout/auth-layout/auth-layout').then((m) => m.AuthLayout),
     children: [
       { path: 'login', title: 'Log in · Global Halal Market', canActivate: [guestGuard], loadComponent: () => import('./features/auth/login/login').then((m) => m.Login) },
       { path: 'register', title: 'Create account · Global Halal Market', canActivate: [guestGuard], loadComponent: () => import('./features/auth/register/register').then((m) => m.Register) },
@@ -19,7 +17,7 @@ export const routes: Routes = [
   },
   {
     path: '',
-    component: Shell,
+    loadComponent: () => import('./layout/shell/shell').then((m) => m.Shell),
     canActivate: [authGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },

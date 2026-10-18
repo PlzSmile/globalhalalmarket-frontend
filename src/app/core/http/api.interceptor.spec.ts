@@ -94,13 +94,13 @@ describe('apiInterceptor', () => {
     expect(failed).toBe(true);
   });
 
-  it('explains rate limits and server errors in a snackbar', () => {
+  it('explains rate limits and server errors in a snackbar', async () => {
     http.get('/api/v1/team').subscribe({ error: () => undefined });
     backend.expectOne('/api/v1/team').flush({}, { status: 429, statusText: 'Too Many Requests' });
-    expect(snackBar.open).toHaveBeenCalledWith('Too many attempts. Please wait a minute and try again.', 'Close', { duration: 6000 });
+    await vi.waitFor(() => expect(snackBar.open).toHaveBeenCalledWith('Too many attempts. Please wait a minute and try again.', 'Close', { duration: 6000 }));
 
     http.get('/api/v1/team').subscribe({ error: () => undefined });
     backend.expectOne('/api/v1/team').flush({}, { status: 500, statusText: 'Server Error' });
-    expect(snackBar.open).toHaveBeenCalledWith('Something went wrong. Please try again.', 'Close', { duration: 6000 });
+    await vi.waitFor(() => expect(snackBar.open).toHaveBeenCalledWith('Something went wrong. Please try again.', 'Close', { duration: 6000 }));
   });
 });

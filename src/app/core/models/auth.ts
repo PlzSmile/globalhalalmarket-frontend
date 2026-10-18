@@ -7,7 +7,17 @@ export interface CompanySummary { readonly id: number; readonly name: string; }
 export interface CompanyReminders { readonly certificates: boolean; readonly recognitions: boolean; readonly auto_chase_suppliers: boolean; }
 /** Phase 6c: plan and free access. free_until is the day free access ends (null with free = until an admin ends it). */
 export type PlanKey = 'starter' | 'pro' | 'consultant';
-export interface CompanyAccess { readonly plan: PlanKey | null; readonly plan_label: string | null; readonly free: boolean; readonly free_until: string | null; }
+/** Phase 6c free access + Phase 7a access state (plan = the plan whose limits apply today). */
+export interface CompanyAccess {
+  readonly state: 'subscribed' | 'free' | 'trial' | 'read_only';
+  readonly plan: PlanKey;
+  readonly plan_label: string;
+  readonly ends_on: string | null;
+  readonly can_write: boolean;
+  readonly past_due: boolean;
+  readonly free: boolean;
+  readonly free_until: string | null;
+}
 export interface CompanyDetail extends CompanySummary { readonly reminders?: CompanyReminders; readonly access?: CompanyAccess; }
 
 export interface CurrentUser {

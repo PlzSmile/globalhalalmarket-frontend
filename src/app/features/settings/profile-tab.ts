@@ -11,14 +11,12 @@ import { AuthService } from '../../core/auth/auth.service';
 import { MeApi } from '../../core/api/me-api';
 import { applyServerErrors, clearServerErrors, serverError } from '../../shared/forms/server-errors';
 import { PASSWORD_MIN, matchesField } from '../../shared/forms/validators';
-import { PlanCard } from './plan-card';
 
 @Component({
   selector: 'hs-profile-tab',
-  imports: [ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatInputModule, PlanCard],
+  imports: [ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatInputModule],
   template: `
     <div class="settings-grid">
-      <hs-plan-card />
       <mat-card appearance="outlined" class="hs-card">
         <mat-card-header><mat-card-title>Your details</mat-card-title></mat-card-header>
         <mat-card-content>

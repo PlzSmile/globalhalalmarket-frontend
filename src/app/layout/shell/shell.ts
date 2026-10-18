@@ -16,6 +16,7 @@ import { ThemeService } from '../../core/theme/theme.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { IconName } from '../../core/icons/icons';
 import { Logo } from '../../shared/ui/logo';
+import { AccessBanner } from '../../shared/ui/access-banner';
 
 interface NavItem {
   readonly label: string;
@@ -30,7 +31,7 @@ const LARGE_SCREEN = '(min-width: 1200px)';
   selector: 'hs-shell',
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive,
-    MatSidenavModule, MatToolbarModule, MatListModule, MatIconModule, MatButtonModule, MatMenuModule, MatTooltipModule, Logo, NotificationsBell,
+    MatSidenavModule, MatToolbarModule, MatListModule, MatIconModule, MatButtonModule, MatMenuModule, MatTooltipModule, Logo, NotificationsBell, AccessBanner,
   ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
