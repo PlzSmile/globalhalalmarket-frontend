@@ -139,6 +139,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
     .page-top__title { font-size: var(--text-3xl); }
     .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
     .btn { min-height: var(--touch-target); }
+    .btn + .muted { margin-top: var(--space-2); }
     .card-title { font-size: var(--text-xl); }
     .rows { list-style: none; margin: var(--space-4) 0 0; padding: 0; }
     .row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); border-top: 1px solid var(--color-border); padding-block: var(--space-1); }

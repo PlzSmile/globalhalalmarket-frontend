@@ -76,15 +76,44 @@ a { color: var(--color-link); }
 .skip-link:focus { top: var(--space-2); }
 .muted { color: var(--color-text-muted); }
 .subtle { color: var(--color-text-subtle); font-size: var(--text-sm); }
-.mono { font-family: var(--font-mono); font-size: 0.92em; }
+.mono { font-family: var(--font-mono); font-size: max(0.92em, var(--text-sm)); }
+
+/* Phones feel like a mobile app (CLAUDE.md rule 3, docs/Design.md §6): 16px text, nothing below 14px,
+   buttons keep Material's 14px label but are at least the touch-target height. */
+@media (max-width: 767px) {
+  body { font-size: var(--text-base); }
+  html { --text-xs: var(--text-sm); --mat-form-field-subscript-text-size: var(--text-sm); }
+  .mat-mdc-button-base:not(.mat-mdc-icon-button) { min-height: var(--touch-target); }
+
+  /* Hints and errors take their real height (a 2-line hint pushes the next field down instead of overlapping it),
+     with the same minimum room Material reserves. */
+  .mat-mdc-form-field-subscript-wrapper { min-height: var(--space-5); }
+  .mat-mdc-form-field .mat-mdc-form-field-subscript-wrapper.mat-mdc-form-field-bottom-align::before,
+  .mat-mdc-form-field-subscript-wrapper .mat-mdc-form-field-bottom-align::before { display: none; }
+  .mat-mdc-form-field-subscript-wrapper .mat-mdc-form-field-hint-wrapper,
+  .mat-mdc-form-field-subscript-wrapper .mat-mdc-form-field-error-wrapper { position: static; }
+
+  /* Dialogs become an app-style sheet: full width at the bottom, actions within thumb reach.
+     !important: the overlay sets its position and the dialog's size as inline styles. */
+  .cdk-global-overlay-wrapper:has(> .mat-mdc-dialog-panel) { align-items: flex-end !important; }
+  .cdk-overlay-pane.mat-mdc-dialog-panel { width: 100% !important; max-width: 100% !important; max-height: 92dvh; }
+  .mat-mdc-dialog-panel .mat-mdc-dialog-surface {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
 
 // Cards: flat, bordered surface (matches the public site cards).
 .mat-mdc-card.hs-card {
   --mat-card-outlined-container-color: var(--color-surface);
   --mat-card-outlined-outline-color: var(--color-border);
   --mat-card-outlined-container-shape: var(--radius-lg);
+  --mat-card-title-text-size: var(--text-lg);
+  --mat-card-title-text-weight: var(--weight-semibold);
   box-shadow: var(--shadow-sm);
 }
+/* Room between a card title and its content (an outlined field's floating label would touch the title). */
+.mat-mdc-card.hs-card .mat-mdc-card-header + .mat-mdc-card-content { padding-top: var(--space-4); }
 
 // Responsive data tables: on small screens each row becomes a card (cells show their column name).
 @media (max-width: 767px) {
@@ -95,7 +124,7 @@ a { color: var(--color-link); }
     padding: 0; border: 0; min-height: 0;
   }
   .hs-responsive-table .mat-mdc-cell[data-label]::before {
-    content: attr(data-label); color: var(--color-text-subtle); font-size: var(--text-xs); font-weight: var(--weight-medium);
+    content: attr(data-label); color: var(--color-text-subtle); font-size: var(--text-sm); font-weight: var(--weight-medium);
   }
   .hs-responsive-table .hs-cell--primary { display: block; }
 }

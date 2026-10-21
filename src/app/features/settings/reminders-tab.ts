@@ -15,23 +15,25 @@ type Setting = keyof CompanyReminders;
   selector: 'hs-reminders-tab',
   imports: [MatCardModule, MatSlideToggleModule],
   template: `
-    <mat-card appearance="outlined" class="settings-card">
-      <mat-card-header><mat-card-title>Reminders</mat-card-title></mat-card-header>
-      <mat-card-content>
-        <p class="lead">We email owners and admins one summary in the morning when something expires in 60, 30 or 7 days. Everyone sees reminders under the bell.</p>
-        @if (!auth.canManageTeam()) { <p class="note">Only owners and admins can change these.</p> }
-        @if (settings(); as s) {
-          <div class="toggles">
-            @for (row of rows; track row.key) {
-              <mat-slide-toggle [checked]="s[row.key]" [disabled]="!auth.canManageTeam() || busy()" (change)="change(row.key, $event.checked)" [attr.data-test]="'toggle-' + row.key">
-                <span class="toggle__label">{{ row.label }}</span>
-                <span class="toggle__hint">{{ row.hint }}</span>
-              </mat-slide-toggle>
-            }
-          </div>
-        }
-      </mat-card-content>
-    </mat-card>
+    <div class="settings-grid">
+      <mat-card appearance="outlined" class="hs-card">
+        <mat-card-header><mat-card-title>Reminders</mat-card-title></mat-card-header>
+        <mat-card-content>
+          <p class="lead">We email owners and admins one summary in the morning when something expires in 60, 30 or 7 days. Everyone sees reminders under the bell.</p>
+          @if (!auth.canManageTeam()) { <p class="note">Only owners and admins can change these.</p> }
+          @if (settings(); as s) {
+            <div class="toggles">
+              @for (row of rows; track row.key) {
+                <mat-slide-toggle [checked]="s[row.key]" [disabled]="!auth.canManageTeam() || busy()" (change)="change(row.key, $event.checked)" [attr.data-test]="'toggle-' + row.key">
+                  <span class="toggle__label">{{ row.label }}</span>
+                  <span class="toggle__hint">{{ row.hint }}</span>
+                </mat-slide-toggle>
+              }
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
   `,
   styles: `
     .lead, .note { color: var(--color-text-muted); margin: 0 0 var(--space-4); }

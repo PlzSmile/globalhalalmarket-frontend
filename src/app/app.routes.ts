@@ -5,7 +5,8 @@ export const routes: Routes = [
   {
     // Login, sign-up, password and invitation screens (matched before the Shell's catch-all).
     path: '',
-    // Both layouts are lazy: keeps the first download small (the Shell brings sidenav, lists, menus and forms).    loadComponent: () => import('./layout/auth-layout/auth-layout').then((m) => m.AuthLayout),
+    // Both layouts are lazy: keeps the first download small (the Shell brings sidenav, lists, menus and forms).
+    loadComponent: () => import('./layout/auth-layout/auth-layout').then((m) => m.AuthLayout),
     children: [
       { path: 'login', title: 'Log in · Global Halal Market', canActivate: [guestGuard], loadComponent: () => import('./features/auth/login/login').then((m) => m.Login) },
       { path: 'register', title: 'Create account · Global Halal Market', canActivate: [guestGuard], loadComponent: () => import('./features/auth/register/register').then((m) => m.Register) },
