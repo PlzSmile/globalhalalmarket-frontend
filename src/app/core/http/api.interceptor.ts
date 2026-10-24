@@ -3,7 +3,7 @@ import {
   HttpErrorResponse, HttpEvent, HttpEventType, HttpHeaders, HttpInterceptorFn, HttpRequest, HttpXsrfTokenExtractor,
 } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, catchError, filter, switchMap, take, throwError } from 'rxjs';
+import { Observable, catchError, filter, from, switchMap, take, throwError } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { AccessService } from '../billing/access.service';
 import { PlanLimitError } from '../models/billing';
@@ -34,6 +34,15 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
   const handle = (error: unknown, canRetry: boolean): Observable<HttpEvent<unknown>> => {
     if (!(error instanceof HttpErrorResponse)) {
       return throwError(() => error);
+    }
+
+    // File downloads (responseType 'blob', e.g. the audit pack): the JSON error body arrives as a Blob — read it first.
+    if (typeof Blob !== 'undefined' && error.error instanceof Blob) {
+      return from(error.error.text()).pipe(switchMap((text) => {
+        let body: unknown = text;
+        try { body = JSON.parse(text); } catch { /* not JSON: keep the text */ }
+        return handle(new HttpErrorResponse({ error: body, headers: error.headers, status: error.status, statusText: error.statusText, url: error.url ?? undefined }), canRetry);
+      }));
     }
 
     if (error.status === 419 && canRetry) {

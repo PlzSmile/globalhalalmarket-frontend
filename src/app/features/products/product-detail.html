@@ -22,6 +22,20 @@
       <p class="muted">SKU: <span class="mono">{{ product.sku ?? 'none' }}</span></p>
     </div>
     <div class="actions">
+      @let packMarkets = auditPackMarkets();
+      @if (packMarkets.length) {
+        <button mat-flat-button type="button" class="btn" [matMenuTriggerFor]="packMenu" [disabled]="downloading()" data-test="audit-pack"
+                title="Summary PDF, CSV and the certificate files for one market">
+          {{ downloading() ? 'Preparing…' : 'Audit pack (ZIP)' }}
+        </button>
+        <mat-menu #packMenu="matMenu">
+          @for (m of packMarkets; track m.market) {
+            <button mat-menu-item type="button" (click)="downloadAuditPack(m.market)" [attr.data-test]="'audit-pack-' + m.market">
+              {{ marketLabel(m.market) }}
+            </button>
+          }
+        </mat-menu>
+      }
       <button mat-stroked-button type="button" class="btn" (click)="editProduct(product)" [disabled]="busy()">Edit</button>
       <button mat-stroked-button type="button" class="btn" (click)="deleteProduct()" [disabled]="busy()" data-test="delete-product">Delete</button>
     </div>

@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { ApiItem } from '../models/auth';
 import { Paginated } from '../models/catalogue';
 import { ComplianceFilters, HistoryEntry, MarketBreakdown, ProductComplianceRow, StatusOnDate } from '../models/compliance';
+import { AuthorityCode } from '../models/markets';
 
 @Injectable({ providedIn: 'root' })
 export class ComplianceApi {
@@ -24,6 +25,12 @@ export class ComplianceApi {
 
   history(id: number, page: number): Observable<Paginated<HistoryEntry>> {
     return this.http.get<Paginated<HistoryEntry>>(`/api/v1/compliance/products/${id}/history`, { params: new HttpParams().set('page', String(page)) });
+  }
+
+  /** Phase 7b: the audit pack of one product for one market (ZIP: summary PDF + CSV + certificate files). */
+  auditPack(id: number, market: AuthorityCode, format: 'zip' | 'pdf' | 'csv' = 'zip'): Observable<HttpResponse<Blob>> {
+    const params = new HttpParams().set('market', market).set('format', format);
+    return this.http.get(`/api/v1/products/${id}/audit-pack`, { params, responseType: 'blob', observe: 'response' });
   }
 
   statusOn(id: number, isoDate: string): Observable<StatusOnDate> {

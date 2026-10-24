@@ -56,6 +56,17 @@ describe('apiInterceptor billing answers', () => {
     expect(dialog.open).toHaveBeenCalledWith(PlanLimitDialog, expect.objectContaining({ data: { message: 'Your Starter plan allows 50 suppliers.', isOwner: true } }));
   });
 
+  it('reads a plan limit that arrives as a file download (audit pack) and opens the same dialog', async () => {
+    let received: unknown;
+    http.get('/api/v1/products/7/audit-pack', { responseType: 'blob' }).subscribe({ error: (e: { error: unknown }) => (received = e.error) });
+    const body = { code: 'plan_limit', limit: 'audit_pack', allowed: 0, message: 'The audit pack is part of the Pro and Consultant plans.' };
+    backend.expectOne('/api/v1/products/7/audit-pack').flush(new Blob([JSON.stringify(body)], { type: 'application/json' }), { status: 422, statusText: 'Unprocessable' });
+
+    await vi.waitFor(() => expect(dialog.open).toHaveBeenCalled());
+    expect(dialog.open).toHaveBeenCalledWith(PlanLimitDialog, expect.objectContaining({ data: { message: body.message, isOwner: true } }));
+    expect(received).toEqual(body); // the caller gets the parsed answer too
+  });
+
   it('leaves ordinary validation errors to the form', async () => {
     http.post('/api/v1/suppliers', {}).subscribe({ error: () => undefined });
     backend.expectOne('/api/v1/suppliers').flush({ message: 'The name field is required.', errors: { name: ['Required'] } }, { status: 422, statusText: 'Unprocessable' });

@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ProductDetailPage } from './product-detail';
@@ -20,7 +20,7 @@ const PRODUCT: ProductDetail = {
 };
 const NOT_FOUND = new HttpErrorResponse({ status: 404 });
 
-function setup(overrides: { products?: Record<string, unknown>; ingredients?: Record<string, unknown>; confirm?: unknown } = {}) {
+function setup(overrides: { products?: Record<string, unknown>; ingredients?: Record<string, unknown>; confirm?: unknown; auditPack?: unknown } = {}) {
   const products = { get: vi.fn(() => of(PRODUCT)), linkIngredient: vi.fn(() => of(PRODUCT)), unlinkIngredient: vi.fn(() => of(undefined)), remove: vi.fn(() => of(undefined)), ...overrides.products };
   const ingredients = { remove: vi.fn(() => of({ unlinked_products: 2, unlinked_suppliers: 1 })), linkSupplier: vi.fn(() => of({})), unlinkSupplier: vi.fn(() => of(undefined)), rename: vi.fn(() => of({})), search: vi.fn(() => of([])), ...overrides.ingredients };
   const dialog = { open: vi.fn(() => ({ afterClosed: () => of(overrides.confirm ?? true) })) };
@@ -35,6 +35,7 @@ function setup(overrides: { products?: Record<string, unknown>; ingredients?: Re
         product: vi.fn(() => of([{ market: 'JAKIM', authority: 'JAKIM', status: 'red', next_expiry_on: null, reasons: ['Gelatin — No supplier linked — link a supplier'], ingredients: [] }])),
         history: vi.fn(() => of({ data: [], meta: { current_page: 1, last_page: 1, per_page: 25, total: 0 } })),
         statusOn: vi.fn(),
+        auditPack: overrides.auditPack ?? vi.fn(() => throwError(() => new HttpErrorResponse({ status: 500 }))),
       } },
       { provide: AuthService, useValue: { canManageTeam: () => true } },
       { provide: MatDialog, useValue: dialog },
@@ -171,5 +172,38 @@ describe('ProductDetailPage', () => {
     await (fixture.componentInstance as unknown as { load: () => Promise<void> }).load();
     await settle(fixture);
     expect(compliance.history).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('ProductDetailPage audit pack (Phase 7b)', () => {
+  it('offers the audit pack per market and saves the ZIP', async () => {
+    const auditPack = vi.fn(() => of(new HttpResponse({ body: new Blob(['zip']), headers: new HttpHeaders({ 'Content-Disposition': 'attachment; filename="pack.zip"' }) })));
+    Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:x'), revokeObjectURL: vi.fn() });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    const { fixture, page, el } = setup({ auditPack });
+    await settle(fixture);
+    await settle(fixture); // the compliance breakdown loads after the product
+
+    expect(el.querySelector('[data-test="audit-pack"]')?.textContent).toContain('Audit pack');
+    await page['downloadAuditPack']('JAKIM');
+
+    expect(auditPack).toHaveBeenCalledWith(7, 'JAKIM');
+    expect(click).toHaveBeenCalledTimes(1);
+    expect(page['downloading']()).toBe(false);
+    click.mockRestore();
+  });
+
+  it('says so when the pack cannot be made', async () => {
+    const { fixture, page, snackBar } = setup();
+    await settle(fixture);
+    await page['downloadAuditPack']('JAKIM');
+    expect(snackBar.open).toHaveBeenCalledWith('The audit pack could not be created. Please try again.', 'Close', { duration: 6000 });
+  });
+
+  it('leaves a plan limit to the upgrade dialog', async () => {
+    const limited = setup({ auditPack: vi.fn(() => throwError(() => new HttpErrorResponse({ status: 422 }))) });
+    await settle(limited.fixture);
+    await limited.page['downloadAuditPack']('JAKIM');
+    expect(limited.snackBar.open).not.toHaveBeenCalled();
   });
 });

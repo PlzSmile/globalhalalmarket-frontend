@@ -16,6 +16,9 @@ import { SuppliersApi } from '../../core/api/suppliers-api';
 import { AuthService } from '../../core/auth/auth.service';
 import { LinkTarget, NamedRef, ProductDetail, ProductIngredient } from '../../core/models/catalogue';
 import { MarketBreakdown } from '../../core/models/compliance';
+import { AuthorityCode } from '../../core/models/markets';
+import { saveDownload } from '../../shared/format/save-download';
+import { HttpErrorResponse } from '@angular/common/http';
 import { errorMessage, isNotFound } from '../../shared/forms/error-message';
 import { daysUntil, ukDate } from '../../shared/format/uk-date';
 import { ConfirmDialog, ConfirmDialogData } from '../../shared/ui/confirm-dialog';
@@ -88,7 +91,31 @@ export class ProductDetailPage implements OnInit {
       this.breakdown.set({ kind: 'error' });
     }
   }
-  protected readonly searchIngredients = (text: string): Observable<readonly NamedRef[]> => this.ingredients.search(text);
+  protected readonly downloading = signal(false);
+  protected readonly auditPackMarkets = computed(() => {
+    const b = this.breakdown();
+    return b.kind === 'ready' ? b.markets : [];
+  });
+
+  protected marketLabel(code: AuthorityCode): string {
+    return { BPJPH: 'Indonesia · BPJPH', JAKIM: 'Malaysia · JAKIM', MOIAT: 'UAE · MoIAT' }[code] ?? code;
+  }
+
+  /** Phase 7b: the audit pack for one market. A plan without it gets the upgrade dialog (shared error handler). */
+  async downloadAuditPack(market: AuthorityCode): Promise<void> {
+    this.downloading.set(true);
+    try {
+      saveDownload(await firstValueFrom(this.compliance.auditPack(this.numericId(), market)), `audit-pack-${market}.zip`);
+    } catch (error) {
+      if (!(error instanceof HttpErrorResponse) || error.status !== 422) {
+        this.snackBar.open('The audit pack could not be created. Please try again.', 'Close', { duration: 6000 });
+      }
+    } finally {
+      this.downloading.set(false);
+    }
+  }
+
+  protected readonly searchIngredients =(text: string): Observable<readonly NamedRef[]> => this.ingredients.search(text);
   protected readonly searchSuppliers = (text: string): Observable<readonly NamedRef[]> => this.suppliers.search(text);
 
   private get productId(): number {
