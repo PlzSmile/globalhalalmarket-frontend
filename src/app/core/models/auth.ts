@@ -27,7 +27,13 @@ export interface CurrentUser {
   readonly role: UserRole;
   readonly email_verified: boolean;
   readonly company: CompanySummary;
+  /** Phase 7c: a consultant can switch between their own company and its clients. */
+  readonly can_switch_companies?: boolean;
+  readonly viewing_client?: boolean;
 }
+
+export interface SwitchableCompany { readonly id: number; readonly name: string; readonly is_client: boolean; readonly current: boolean; }
+export interface SwitchableCompanies { readonly data: readonly SwitchableCompany[]; readonly meta: { readonly can_manage: boolean; readonly max_clients: number }; }
 
 export interface TeamMember {
   readonly id: number;

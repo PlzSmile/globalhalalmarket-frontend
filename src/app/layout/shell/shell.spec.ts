@@ -18,7 +18,7 @@ describe('Shell', () => {
   it('shows the real company name', () => {
     const fixture = TestBed.createComponent(Shell);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.shell__company').textContent).toContain('Khan Foods');
+    expect(fixture.nativeElement.querySelector('.switcher__name').textContent).toContain('Khan Foods');
   });
 
   it('logs out and goes to the login page', async () => {

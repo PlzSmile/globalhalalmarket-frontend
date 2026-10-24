@@ -38,7 +38,7 @@
           <mat-icon svgIcon="menu" />
         </button>
       }
-      <span class="shell__company">{{ auth.user()?.company?.name }}</span>
+      <hs-company-switcher />
       <hs-notifications-bell />
       <button mat-icon-button type="button" (click)="theme.toggle()"
               [matTooltip]="theme.theme() === 'dark' ? 'Light theme' : 'Dark theme'"

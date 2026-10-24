@@ -1,5 +1,5 @@
 {
-  "/api": { "target": "http://localhost:8000", "secure": false, "changeOrigin": true },
-  "/sanctum": { "target": "http://localhost:8000", "secure": false, "changeOrigin": true },
-  "/files": { "target": "http://localhost:8000", "secure": false, "changeOrigin": true }
+  "/api": { "target": "http://127.0.0.1:8010", "secure": false, "changeOrigin": true },
+  "/sanctum": { "target": "http://127.0.0.1:8010", "secure": false, "changeOrigin": true },
+  "/files": { "target": "http://127.0.0.1:8010", "secure": false, "changeOrigin": true }
 }
