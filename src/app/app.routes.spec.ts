@@ -16,6 +16,10 @@ describe('app routes', () => {
     }
   });
 
+  it('sends the bare address to the dashboard before any layout can match it', () => {
+    expect(routes[0]).toEqual({ path: '', pathMatch: 'full', redirectTo: 'dashboard' });
+  });
+
   it('shows the tracker pages inside the shell', async () => {
     for (const path of ['dashboard', 'settings', 'products', 'suppliers', 'certificates']) {
       expect(await layoutFor(path)).toBe(Shell);

@@ -2,6 +2,9 @@ import { Routes } from '@angular/router';
 import { authGuard, guestGuard, unverifiedGuard } from './core/auth/guards';
 
 export const routes: Routes = [
+  // The bare address (/app/) must go to the dashboard (or, logged out, on to the login form). Without this the empty
+  // path matched the auth layout below, which has no page for it: an empty card.
+  { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
   {
     // Login, sign-up, password and invitation screens (matched before the Shell's catch-all).
     path: '',
