@@ -6,12 +6,14 @@ import { RemindersTab } from './reminders-tab';
 import { ProfileTab } from './profile-tab';
 import { TeamTab } from './team-tab';
 import { BillingTab } from './billing-tab';
+import { ActivityTab } from './activity-tab';
+import { AuthService } from '../../core/auth/auth.service';
 
-const TABS = ['profile', 'team', 'markets', 'reminders', 'billing'] as const;
+const TABS = ['profile', 'team', 'markets', 'reminders', 'billing', 'activity'] as const;
 
 @Component({
   selector: 'hs-settings',
-  imports: [MatTabsModule, ProfileTab, TeamTab, MarketsTab, RemindersTab, BillingTab],
+  imports: [MatTabsModule, ProfileTab, TeamTab, MarketsTab, RemindersTab, BillingTab, ActivityTab],
   template: `
     <h1 class="page-title">Settings</h1>
     <mat-tab-group [selectedIndex]="initialTab" mat-stretch-tabs="false" animationDuration="0ms">
@@ -20,6 +22,9 @@ const TABS = ['profile', 'team', 'markets', 'reminders', 'billing'] as const;
       <mat-tab label="Markets"><hs-markets-tab /></mat-tab>
       <mat-tab label="Reminders"><hs-reminders-tab /></mat-tab>
       <mat-tab label="Billing"><ng-template matTabContent><hs-billing-tab /></ng-template></mat-tab>
+      @if (auth.canManageTeam()) {
+        <mat-tab label="Activity"><ng-template matTabContent><hs-activity-tab /></ng-template></mat-tab>
+      }
     </mat-tab-group>
   `,
   styles: `
@@ -37,6 +42,7 @@ const TABS = ['profile', 'team', 'markets', 'reminders', 'billing'] as const;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Settings {
-  /** ?tab=profile|team|markets|reminders|billing opens that tab (links from the dashboard); anything else opens Profile. */
+  protected readonly auth = inject(AuthService);
+  /** ?tab=profile|team|markets|reminders|billing|activity opens that tab (links from the dashboard); anything else opens Profile. */
   protected readonly initialTab = Math.max(0, TABS.indexOf(inject(ActivatedRoute).snapshot.queryParamMap.get('tab') as (typeof TABS)[number]));
 }
