@@ -65,6 +65,10 @@
               "outputPath": {
                 "base": "../backend/public/app",
                 "browser": ""
+              },
+              "index": {
+                "input": "src/index.html",
+                "output": "shell.html"
               }
             }
           },
