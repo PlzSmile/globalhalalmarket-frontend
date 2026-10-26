@@ -63,9 +63,10 @@
             },
             "backend": {
               "outputPath": {
-                "base": "../backend/public/app",
+                "base": "../backend/public/tracker-app",
                 "browser": ""
               },
+              "deployUrl": "/tracker-app/",
               "index": {
                 "input": "src/index.html",
                 "output": "shell.html"
