@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CertificatesApi } from '../../core/api/certificates-api';
 import { BrowserNavigation } from '../../core/browser/navigation';
@@ -21,7 +22,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
 
 @Component({
   selector: 'hs-certificate-detail',
-  imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatProgressBarModule, CertificateStatusBadge],
+  imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatProgressBarModule, MatProgressSpinnerModule, CertificateStatusBadge],
   template: `
     <a routerLink="/certificates" class="back">← All certificates</a>
     @let s = state();
@@ -46,7 +47,17 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
           @if (!c.body) { <p class="notice notice--info">Not in our list of bodies — counts as not recognised by any authority.</p> }
           <hs-certificate-status-badge [status]="c.status" />
           @switch (c.file.scan) {
-            @case ('pending') { <p class="notice notice--info" data-test="scan-pending">Checking the file for viruses… You can download it in about a minute.</p> }
+            @case ('pending') {
+              <div class="notice notice--info scan" role="status" data-test="scan-pending">
+                @if (scanWatching()) {
+                  <p>Checking the file for viruses… {{ scanSecondsLeft() > 0 ? 'about ' + scanSecondsLeft() + ' seconds left' : 'almost done, it is taking a little longer than usual' }}</p>
+                  <mat-progress-bar mode="determinate" [value]="scanProgress()" aria-label="Virus check progress" />
+                  <p class="scan__hint">This page updates by itself. You can leave it and come back later.</p>
+                } @else {
+                  <p>The virus check is taking longer than usual. Please check again in a few minutes.</p>
+                }
+              </div>
+            }
             @case ('infected') { <p class="notice notice--error" data-test="scan-infected">The file failed the virus check and was deleted. Ask the supplier for a new copy.</p> }
             @case ('failed') { <p class="notice notice--warning" data-test="scan-failed">The file could not be checked for viruses, so it cannot be opened yet. We have been told and are looking into it.</p> }
           }
@@ -54,8 +65,15 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
         </div>
         <div class="actions">
           @if (fileOpens(c)) {
-            <button mat-flat-button type="button" class="btn" (click)="download()" [disabled]="busy()" data-test="download"><mat-icon svgIcon="file" /> Download PDF</button>
-          } @else if (c.file.scan === 'pending') {
+            <button mat-flat-button type="button" class="btn" (click)="download()" [disabled]="busy() || downloading()" data-test="download">
+              @if (downloading()) {
+                <mat-progress-spinner class="btn-spinner" mode="indeterminate" diameter="18" aria-hidden="true" />
+              } @else {
+                <mat-icon svgIcon="file" />
+              }
+              {{ downloading() ? 'Downloading…' : 'Download PDF' }}
+            </button>
+          } @else if (c.file.scan === 'pending' && !scanWatching()) {
             <button mat-stroked-button type="button" class="btn" (click)="load()" [disabled]="busy()" data-test="scan-refresh">Check again</button>
           }
           @if (c.archived_at) {
@@ -106,6 +124,10 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
     .note { margin-inline-start: var(--space-2); font-size: var(--text-xs); font-weight: var(--weight-semibold); }
     .note--danger { color: var(--color-danger-fg); }
     .note--warning { color: var(--color-warning-fg); }
+    .scan { display: grid; gap: var(--space-2); }
+    .scan p { margin: 0; }
+    .scan__hint { font-size: var(--text-sm); color: var(--color-text-muted); }
+    .btn-spinner { display: inline-block; vertical-align: middle; margin-inline-end: var(--space-2); --mat-progress-spinner-active-indicator-color: currentColor; }
     .load-error { display: grid; gap: var(--space-3); justify-items: start; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -119,8 +141,34 @@ export class CertificateDetailPage implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
 
+  /** Usual time from upload to AWS's virus check result (first check after 20 s; the server worker starts each minute). */
+  static readonly SCAN_EXPECTED_SECONDS = 90;
+  static readonly SCAN_POLL_MS = 10_000;
+  static readonly SCAN_POLL_LIMIT_MS = 10 * 60_000;
+  /** The browser handles the file itself, so "Downloading…" shows for a short moment after the link opened. */
+  static readonly DOWNLOAD_FEEDBACK_MS = 3_000;
+
   protected readonly state = signal<State>({ kind: 'loading' });
   protected readonly busy = signal(false);
+  protected readonly downloading = signal(false);
+  protected readonly scanWatching = signal(false);
+  private readonly now = signal(Date.now());
+  private readonly destroyRef = inject(DestroyRef);
+  private scanTicker: ReturnType<typeof setInterval> | null = null;
+  private scanWatchStartedAt = 0;
+  private lastScanPollAt = 0;
+  private scanPolling = false;
+
+  /** An estimate from the upload time (AWS gives no progress): never shows 100% before the result is there. */
+  private readonly scanElapsedSeconds = computed(() => {
+    const s = this.state();
+    const uploaded = s.kind === 'ready' && s.certificate.created_at ? Date.parse(s.certificate.created_at) : NaN;
+    const from = Number.isNaN(uploaded) ? this.scanWatchStartedAt : uploaded;
+    return Math.max(0, (this.now() - from) / 1000);
+  });
+  protected readonly scanProgress = computed(() =>
+    Math.min(95, Math.max(5, Math.round((this.scanElapsedSeconds() / CertificateDetailPage.SCAN_EXPECTED_SECONDS) * 100))));
+  protected readonly scanSecondsLeft = computed(() => Math.max(0, Math.ceil(CertificateDetailPage.SCAN_EXPECTED_SECONDS - this.scanElapsedSeconds())));
   protected readonly name = bodyName;
   protected readonly date = ukDate;
   protected readonly size = fileSize;
@@ -128,6 +176,10 @@ export class CertificateDetailPage implements OnInit {
 
   private get certificateId(): number {
     return Number(this.id());
+  }
+
+  constructor() {
+    this.destroyRef.onDestroy(() => this.stopScanWatch());
   }
 
   ngOnInit(): void {
@@ -143,6 +195,57 @@ export class CertificateDetailPage implements OnInit {
     } catch (error) {
       this.state.set({ kind: isNotFound(error) ? 'notFound' : 'error' });
     }
+    this.watchScan();
+  }
+
+  /** While AWS checks the file: a 1-second clock for the progress bar and a quiet re-check every 10 s, up to 10 minutes. */
+  private watchScan(): void {
+    const s = this.state();
+    if (s.kind !== 'ready' || s.certificate.file.scan !== 'pending' || this.scanTicker !== null) {
+      return;
+    }
+    this.scanWatchStartedAt = this.lastScanPollAt = Date.now();
+    this.now.set(Date.now());
+    this.scanWatching.set(true);
+    this.scanTicker = setInterval(() => void this.scanTick(), 1000);
+  }
+
+  private async scanTick(): Promise<void> {
+    const now = Date.now();
+    this.now.set(now);
+    if (now - this.scanWatchStartedAt >= CertificateDetailPage.SCAN_POLL_LIMIT_MS) {
+      this.stopScanWatch();
+      return;
+    }
+    if (this.scanPolling || now - this.lastScanPollAt < CertificateDetailPage.SCAN_POLL_MS) {
+      return;
+    }
+    this.scanPolling = true;
+    this.lastScanPollAt = now;
+    try {
+      const certificate = await firstValueFrom(this.api.get(this.certificateId));
+      if (this.state().kind === 'ready' && this.scanTicker !== null) {
+        this.state.set({ kind: 'ready', certificate });
+        if (certificate.file.scan !== 'pending') {
+          this.stopScanWatch();
+          if (certificate.file.scan === 'clean') {
+            this.notify('File checked: no viruses found. You can download it now.');
+          }
+        }
+      }
+    } catch {
+      // a failed re-check is tried again on the next round
+    } finally {
+      this.scanPolling = false;
+    }
+  }
+
+  private stopScanWatch(): void {
+    if (this.scanTicker !== null) {
+      clearInterval(this.scanTicker);
+      this.scanTicker = null;
+    }
+    this.scanWatching.set(false);
   }
 
   /** Files from before the virus check status (no scan field) were checked during their upload. */
@@ -156,13 +259,24 @@ export class CertificateDetailPage implements OnInit {
 
   /** A fresh 5-minute link each time; the browser downloads it (attachment), the page stays. Never stored. */
   protected async download(): Promise<void> {
+    if (this.downloading()) {
+      return;
+    }
+    this.downloading.set(true);
+    let started = false;
     await this.run(async () => {
       const link = await firstValueFrom(this.api.downloadLink(this.certificateId));
       if (!link.url.startsWith('/files/certificates/')) {
         throw new Error('Unexpected download link'); // never navigate anywhere else
       }
       this.navigation.assign(link.url);
+      started = true;
     }, 'The PDF could not be downloaded. Please try again.');
+    if (started) {
+      setTimeout(() => this.downloading.set(false), CertificateDetailPage.DOWNLOAD_FEEDBACK_MS);
+    } else {
+      this.downloading.set(false);
+    }
   }
 
   protected async approve(): Promise<void> {

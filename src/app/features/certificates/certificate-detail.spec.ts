@@ -121,16 +121,70 @@ describe('CertificateDetailPage', () => {
     await settle(fixture);
     expect(el.querySelector('[data-test="from-link"]')?.textContent).toContain('Uploaded by the supplier through an upload link on 29 Sep 2026');
   });
-  it('hides the download while the file is being virus-checked and checks again on request', async () => {
-    const pending = { ...CERT, file: { ...CERT.file, scan: 'pending' as const } };
-    const get = vi.fn(() => of(pending));
-    const { fixture, el } = setup({ get });
+  it('shows the virus check progress, re-checks by itself and offers the download once the file is clean', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-10-30T21:00:30Z'));
+      const pending = { ...CERT, created_at: '2026-10-30T21:00:00Z', file: { ...CERT.file, scan: 'pending' as const } };
+      const get = vi.fn().mockReturnValueOnce(of(pending)).mockReturnValueOnce(of(pending)).mockReturnValue(of({ ...pending, file: { ...CERT.file, scan: 'clean' as const } }));
+      const { fixture, el, snackBar } = setup({ get });
+      await settle(fixture);
+      expect(el.querySelector('[data-test="download"]')).toBeNull();
+      expect(el.querySelector('[data-test="scan-refresh"]')).toBeNull(); // it checks by itself
+      expect(el.querySelector('[data-test="scan-pending"]')?.textContent).toContain('about 60 seconds left');
+      expect(el.querySelector('mat-progress-bar')?.getAttribute('aria-valuenow')).toBe('33');
+
+      await vi.advanceTimersByTimeAsync(10_000);
+      await settle(fixture);
+      expect(get).toHaveBeenCalledTimes(2);
+      expect(el.querySelector('[data-test="scan-pending"]')?.textContent).toContain('about 50 seconds left');
+
+      await vi.advanceTimersByTimeAsync(10_000);
+      await settle(fixture);
+      expect(get).toHaveBeenCalledTimes(3);
+      expect(el.querySelector('[data-test="scan-pending"]')).toBeNull();
+      expect(el.querySelector('[data-test="download"]')).not.toBeNull();
+      expect(snackBar.open).toHaveBeenCalledWith('File checked: no viruses found. You can download it now.', 'Close', { duration: 4000 });
+
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(get).toHaveBeenCalledTimes(3); // stopped
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('stops re-checking after 10 minutes and offers Check again', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+    try {
+      const pending = { ...CERT, created_at: null, file: { ...CERT.file, scan: 'pending' as const } };
+      const get = vi.fn(() => of(pending));
+      const { fixture, el } = setup({ get });
+      await settle(fixture);
+      await vi.advanceTimersByTimeAsync(10 * 60_000);
+      await settle(fixture);
+      expect(el.querySelector('[data-test="scan-pending"]')?.textContent).toContain('taking longer than usual');
+      const calls = get.mock.calls.length;
+      (el.querySelector('[data-test="scan-refresh"]') as HTMLButtonElement).click();
+      await settle(fixture);
+      expect(get.mock.calls.length).toBe(calls + 1);
+      expect(el.querySelector('[data-test="scan-refresh"]')).toBeNull(); // watching again
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('shows Downloading with a spinner while the download starts', async () => {
+    const { fixture, page, el } = setup({ get: vi.fn(() => of({ ...CERT, file: { ...CERT.file, scan: 'clean' as const } })) });
     await settle(fixture);
-    expect(el.querySelector('[data-test="download"]')).toBeNull();
-    expect(el.querySelector('[data-test="scan-pending"]')?.textContent).toContain('Checking the file for viruses');
-    (el.querySelector('[data-test="scan-refresh"]') as HTMLButtonElement).click();
-    await settle(fixture);
-    expect(get).toHaveBeenCalledTimes(2);
+    await page['download']();
+    fixture.detectChanges();
+    const button = el.querySelector('[data-test="download"]') as HTMLButtonElement;
+    expect(button.textContent).toContain('Downloading');
+    expect(button.querySelector('mat-progress-spinner')).not.toBeNull();
+    expect(button.disabled).toBe(true);
+    await new Promise((resolve) => setTimeout(resolve, CertificateDetailPage.DOWNLOAD_FEEDBACK_MS + 50));
+    fixture.detectChanges();
+    expect(button.textContent).toContain('Download PDF');
   });
 
   it('explains a file that failed or has no virus check result, with no download', async () => {
