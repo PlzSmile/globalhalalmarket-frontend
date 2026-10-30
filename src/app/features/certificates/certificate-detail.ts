@@ -45,10 +45,19 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
           <h1 class="page-top__title">{{ name(c) }}</h1>
           @if (!c.body) { <p class="notice notice--info">Not in our list of bodies — counts as not recognised by any authority.</p> }
           <hs-certificate-status-badge [status]="c.status" />
+          @switch (c.file.scan) {
+            @case ('pending') { <p class="notice notice--info" data-test="scan-pending">Checking the file for viruses… You can download it in about a minute.</p> }
+            @case ('infected') { <p class="notice notice--error" data-test="scan-infected">The file failed the virus check and was deleted. Ask the supplier for a new copy.</p> }
+            @case ('failed') { <p class="notice notice--warning" data-test="scan-failed">The file could not be checked for viruses, so it cannot be opened yet. We have been told and are looking into it.</p> }
+          }
           @if (c.archived_at) { <p class="notice notice--info" data-test="archived">Archived on {{ date(c.archived_at) }}. It no longer counts for compliance.</p> }
         </div>
         <div class="actions">
-          <button mat-flat-button type="button" class="btn" (click)="download()" [disabled]="busy()" data-test="download"><mat-icon svgIcon="file" /> Download PDF</button>
+          @if (fileOpens(c)) {
+            <button mat-flat-button type="button" class="btn" (click)="download()" [disabled]="busy()" data-test="download"><mat-icon svgIcon="file" /> Download PDF</button>
+          } @else if (c.file.scan === 'pending') {
+            <button mat-stroked-button type="button" class="btn" (click)="load()" [disabled]="busy()" data-test="scan-refresh">Check again</button>
+          }
           @if (c.archived_at) {
             <button mat-stroked-button type="button" class="btn" (click)="restore()" [disabled]="busy()" data-test="restore">Restore</button>
           } @else {
@@ -134,6 +143,11 @@ export class CertificateDetailPage implements OnInit {
     } catch (error) {
       this.state.set({ kind: isNotFound(error) ? 'notFound' : 'error' });
     }
+  }
+
+  /** Files from before the virus check status (no scan field) were checked during their upload. */
+  protected fileOpens(certificate: CertificateDetail): boolean {
+    return (certificate.file.scan ?? 'clean') === 'clean';
   }
 
   protected ingredientNames(certificate: CertificateDetail): string {

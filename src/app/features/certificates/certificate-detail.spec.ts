@@ -121,4 +121,26 @@ describe('CertificateDetailPage', () => {
     await settle(fixture);
     expect(el.querySelector('[data-test="from-link"]')?.textContent).toContain('Uploaded by the supplier through an upload link on 29 Sep 2026');
   });
+  it('hides the download while the file is being virus-checked and checks again on request', async () => {
+    const pending = { ...CERT, file: { ...CERT.file, scan: 'pending' as const } };
+    const get = vi.fn(() => of(pending));
+    const { fixture, el } = setup({ get });
+    await settle(fixture);
+    expect(el.querySelector('[data-test="download"]')).toBeNull();
+    expect(el.querySelector('[data-test="scan-pending"]')?.textContent).toContain('Checking the file for viruses');
+    (el.querySelector('[data-test="scan-refresh"]') as HTMLButtonElement).click();
+    await settle(fixture);
+    expect(get).toHaveBeenCalledTimes(2);
+  });
+
+  it('explains a file that failed or has no virus check result, with no download', async () => {
+    for (const [scan, text] of [['infected', 'failed the virus check and was deleted'], ['failed', 'could not be checked for viruses']] as const) {
+      TestBed.resetTestingModule();
+      const { fixture, el } = setup({ get: vi.fn(() => of({ ...CERT, file: { ...CERT.file, scan } })) });
+      await settle(fixture);
+      expect(el.querySelector('[data-test="download"]')).toBeNull();
+      expect(el.querySelector('[data-test="scan-refresh"]')).toBeNull();
+      expect(el.querySelector(`[data-test="scan-${scan}"]`)?.textContent).toContain(text);
+    }
+  });
 });

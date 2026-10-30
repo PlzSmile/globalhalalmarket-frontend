@@ -19,10 +19,14 @@ export interface CertificateListItem {
   readonly archived_at?: string | null;
 }
 
+/** pending: AWS is still checking the file (usually under a minute); infected: deleted; failed: no result, blocked. */
+export type FileScan = 'clean' | 'pending' | 'infected' | 'failed';
+
 export interface CertificateDetail extends CertificateListItem {
   readonly scope: string | null;
   readonly ingredients: readonly NamedRef[];
-  readonly file: { readonly original_name: string; readonly size: number };
+  /** scan: the file's virus check (30 Oct 2026); only a clean file can be downloaded. */
+  readonly file: { readonly original_name: string; readonly size: number; readonly scan?: FileScan };
   readonly reviewed_by: NamedRef | null;
   readonly reviewed_at: string | null;
   readonly rejection_reason: string | null;
