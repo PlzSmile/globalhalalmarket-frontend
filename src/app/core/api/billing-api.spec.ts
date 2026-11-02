@@ -25,11 +25,11 @@ describe('BillingApi', () => {
     backend.expectOne({ method: 'POST', url: '/api/v1/billing/cancel' }).flush({ data: {} });
   });
 
-  it('returns the Paddle links and escapes invoice ids', () => {
+  it('returns the Stripe links and escapes invoice ids', () => {
     let url = '';
     api.invoiceUrl('txn/1').subscribe((u) => (url = u));
-    backend.expectOne('/api/v1/billing/invoices/txn%2F1').flush({ data: { url: 'https://paddle.example/1.pdf' } });
-    expect(url).toBe('https://paddle.example/1.pdf');
+    backend.expectOne('/api/v1/billing/invoices/txn%2F1').flush({ data: { url: 'https://invoice.stripe.example/1' } });
+    expect(url).toBe('https://invoice.stripe.example/1');
     expect(api.checkoutUrl('starter', 'monthly')).toBe('/billing/checkout/starter/monthly');
   });
 });

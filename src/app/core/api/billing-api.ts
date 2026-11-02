@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 import { ApiItem, PlanKey } from '../models/auth';
 import { Billing, BillingInterval, Invoice } from '../models/billing';
 
-/** Phase 7a: Settings → Billing. Paying itself happens on the server-rendered checkout page (Paddle). */
+/** Phase 7a: Settings → Billing. Paying itself happens on Stripe's checkout page (the server redirects there). */
 @Injectable({ providedIn: 'root' })
 export class BillingApi {
   private readonly http = inject(HttpClient);

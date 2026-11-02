@@ -39,9 +39,9 @@ const USAGE: readonly { key: keyof PlanLimits; label: string }[] = [
                 @case ('read_only') { Read-only — choose a plan to keep editing. Nothing has been deleted. }
               }
             </p>
-            @if (waiting()) { <p class="billing__note" role="status">Thank you! We are confirming your payment with Paddle…</p> }
-            @if (waitedTooLong()) { <p class="billing__note" role="status">Your payment is still being confirmed. Please refresh in a minute.</p> }
-            @if (b.past_due) { <p class="billing__alert" role="alert">Payment failed — please update your card. Paddle will try again.</p> }
+            @if (waiting()) { <p class="billing__note" role="status">Thank you! We are confirming your payment with Stripe…</p> }
+            @if (waitedTooLong()) { <p class="billing__note" role="status">Your payment is still being confirmed (a Direct Debit can take a few days). Please refresh in a minute.</p> }
+            @if (b.past_due) { <p class="billing__alert" role="alert">Payment failed — please update your payment method. Stripe will try again.</p> }
             @if (b.cancelled && b.ends_on) { <p class="billing__note">Cancelled: your plan stays active until {{ b.ends_on | date: 'd MMMM y' }}.</p> }
             @if (b.next_payment && !b.cancelled) { <p class="billing__note">Next payment {{ b.next_payment.date | date: 'd MMMM y' }}.</p> }
 
@@ -57,7 +57,7 @@ const USAGE: readonly { key: keyof PlanLimits; label: string }[] = [
 
             @if (b.can_manage && b.state === 'subscribed') {
               <div class="billing__actions">
-                <button mat-stroked-button type="button" (click)="updateCard()" [disabled]="busy()">Update card</button>
+                <button mat-stroked-button type="button" (click)="updateCard()" [disabled]="busy()">Payment method &amp; invoices</button>
                 @if (b.cancelled) {
                   <button mat-stroked-button type="button" (click)="resume()" [disabled]="busy()">Keep my plan</button>
                 } @else {
@@ -76,7 +76,7 @@ const USAGE: readonly { key: keyof PlanLimits; label: string }[] = [
               <mat-button-toggle value="monthly">Monthly</mat-button-toggle>
               <mat-button-toggle value="yearly">Yearly</mat-button-toggle>
             </mat-button-toggle-group>
-            <p class="billing__note">Prices in US dollars, excluding VAT or sales tax (added at checkout by Paddle, our reseller).</p>
+            <p class="billing__note">Prices in pounds sterling (GBP), excluding VAT. You pay on Stripe's secure page by card or Direct Debit.</p>
             <div class="billing__plans">
               @for (p of b.plans; track p.plan) {
                 <section class="billing__plan" [class.billing__plan--current]="isCurrent(b, p)">
@@ -113,7 +113,7 @@ const USAGE: readonly { key: keyof PlanLimits; label: string }[] = [
                 @for (i of invoices(); track i.id) {
                   <mat-list-item>
                     <span matListItemTitle>{{ i.date | date: 'd MMM y' }} — {{ money(i.total) }}</span>
-                    <button mat-button matListItemMeta type="button" (click)="openInvoice(i)">PDF</button>
+                    <button mat-button matListItemMeta type="button" (click)="openInvoice(i)">View</button>
                   </mat-list-item>
                 }
               </mat-list>
@@ -185,8 +185,11 @@ export class BillingTab implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.load();
-    if (this.route.snapshot.queryParamMap.get('checkout') === 'success' && this.billing()?.state !== 'subscribed') {
+    const checkout = this.route.snapshot.queryParamMap.get('checkout');
+    if (checkout === 'success' && this.billing()?.state !== 'subscribed') {
       void this.poll();
+    } else if (checkout === 'failed') {
+      this.snackBar.open('Stripe could not be reached, so the payment page did not open. Please try again.', 'Close', { duration: 8000 });
     }
   }
 
@@ -202,17 +205,17 @@ export class BillingTab implements OnInit {
     return b.state === 'subscribed' && b.plan === p.plan && b.interval === this.interval();
   }
 
-  protected money(cents: number): string {
-    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'USD', minimumFractionDigits: cents % 100 === 0 ? 0 : 2 }).format(cents / 100);
+  protected money(pence: number): string {
+    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: pence % 100 === 0 ? 0 : 2 }).format(pence / 100);
   }
 
   protected async choose(b: Billing, p: OfferedPlan): Promise<void> {
     if (b.state !== 'subscribed') {
-      const promo = this.route.snapshot.queryParamMap.get('promo'); // from a /pricing?promo=CODE link; Paddle checks it
+      const promo = this.route.snapshot.queryParamMap.get('promo'); // from a /pricing?promo=CODE link; the server applies it if it fits
       window.location.assign(this.api.checkoutUrl(p.plan, this.interval()) + (promo ? `?promo=${encodeURIComponent(promo)}` : ''));
       return;
     }
-    const ok = await this.confirm(`Switch to ${p.name}?`, `Paddle charges or credits the difference for the rest of this period straight away.`, `Switch to ${p.name}`);
+    const ok = await this.confirm(`Switch to ${p.name}?`, `We charge or credit the difference for the rest of this period straight away.`, `Switch to ${p.name}`);
     if (ok) {
       await this.run(() => this.api.swap(p.plan as PlanKey, this.interval()), `Your plan is now ${p.name}.`);
     }
@@ -234,7 +237,7 @@ export class BillingTab implements OnInit {
     try {
       window.location.assign(await firstValueFrom(this.api.paymentMethodUrl()));
     } catch {
-      this.snackBar.open('Paddle could not be reached. Please try again.', 'Close', { duration: 6000 });
+      this.snackBar.open('Stripe could not be reached. Please try again.', 'Close', { duration: 6000 });
     } finally {
       this.busy.set(false);
     }
@@ -263,7 +266,7 @@ export class BillingTab implements OnInit {
     }
   }
 
-  /** After Paddle's checkout the webhook may arrive a few seconds later: check every 3 s for up to a minute. */
+  /** After Stripe's checkout the webhook may arrive a few seconds later: check every 3 s for up to a minute. */
   private async poll(): Promise<void> {
     this.waiting.set(true);
     let stopped = false;

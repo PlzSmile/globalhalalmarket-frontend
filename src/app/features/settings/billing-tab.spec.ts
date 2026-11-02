@@ -8,8 +8,8 @@ import { AccessService } from '../../core/billing/access.service';
 import { Billing, OfferedPlan } from '../../core/models/billing';
 import { settle } from '../../../testing/settle';
 
-const STARTER: OfferedPlan = { plan: 'starter', name: 'Starter', description: null, limits: { suppliers: 50, markets: 2, users: 2 }, monthly: 4900, yearly: 49000, can_buy_monthly: true, can_buy_yearly: true };
-const PRO: OfferedPlan = { plan: 'pro', name: 'Pro', description: null, limits: { suppliers: null, markets: 3, users: 5 }, monthly: 9900, yearly: 99000, can_buy_monthly: true, can_buy_yearly: true };
+const STARTER: OfferedPlan = { plan: 'starter', name: 'Starter', description: null, limits: { suppliers: 50, markets: 2, users: 2 }, monthly: 3900, yearly: 39000, can_buy_monthly: true, can_buy_yearly: true };
+const PRO: OfferedPlan = { plan: 'pro', name: 'Pro', description: null, limits: { suppliers: null, markets: 3, users: 5 }, monthly: 7900, yearly: 79000, can_buy_monthly: true, can_buy_yearly: true };
 const BASE: Billing = {
   state: 'trial', plan: 'pro', plan_label: 'Pro', interval: null, ends_on: '2026-11-01', next_payment: null, cancelled: false, past_due: false, can_manage: true,
   usage: { suppliers: 3, markets: 2, users: 1 }, limits: { suppliers: null, markets: 3, users: 5 }, plans: [STARTER, PRO],
@@ -36,7 +36,8 @@ describe('BillingTab', () => {
     expect(text()).toContain('Trial (Pro limits) — ends on 1 November 2026');
     expect(text()).toContain('3 suppliers'); // unlimited on the trial
     expect(text()).toContain('2 of 3 markets');
-    expect(text()).toContain('US$49');
+    expect(text()).toContain('£39');
+    expect(text()).toContain('Prices in pounds sterling (GBP)');
     expect(text()).toContain('Choose Starter');
   });
 
@@ -48,6 +49,7 @@ describe('BillingTab', () => {
     expect(text()).toContain('Your plan');
     expect(text()).toContain('Switch to Pro');
     expect(text()).toContain('Cancel plan');
+    expect(text()).toContain('Payment method & invoices');
   });
 
   it('on a cancelled plan offers Keep my plan instead of switching', async () => {
@@ -63,9 +65,9 @@ describe('BillingTab', () => {
     expect(text()).not.toContain('Choose Starter');
   });
 
-  it('asks to update the card when a payment failed', async () => {
+  it('asks to update the payment method when a payment failed', async () => {
     const { text } = await render({ ...BASE, state: 'subscribed', interval: 'monthly', past_due: true, ends_on: null });
-    expect(text()).toContain('Payment failed — please update your card');
+    expect(text()).toContain('Payment failed — please update your payment method');
   });
 
   it('after the checkout it checks until the subscription arrives', async () => {
@@ -83,6 +85,14 @@ describe('BillingTab', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('BillingTab after a failed checkout start', () => {
+  it('says the payment page did not open', async () => {
+    const { fixture } = await render(BASE, { checkout: 'failed' });
+    expect(document.body.textContent).toContain('the payment page did not open');
+    fixture.destroy();
   });
 });
 

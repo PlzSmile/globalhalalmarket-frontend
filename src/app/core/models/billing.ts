@@ -12,15 +12,15 @@ export interface OfferedPlan {
   readonly name: string;
   readonly description: string | null;
   readonly limits: PlanLimits;
-  /** Cents (USD, excluding tax); null when not offered. */
+  /** Pence (GBP, excluding VAT); null when not offered. */
   readonly monthly: number | null;
   readonly yearly: number | null;
-  /** Published to Paddle, so the checkout can open. */
+  /** Published to Stripe, so the checkout can open. */
   readonly can_buy_monthly: boolean;
   readonly can_buy_yearly: boolean;
 }
 
-export interface NextPayment { readonly date: string; readonly amount: string; readonly currency: string; }
+export interface NextPayment { readonly date: string; /** Pence. */ readonly amount: number; readonly currency: string; }
 
 export interface Billing {
   readonly state: AccessState;
