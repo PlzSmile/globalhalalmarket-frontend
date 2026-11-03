@@ -25,8 +25,9 @@ interface NavItem {
   readonly icon: IconName;
 }
 
-/** Large screens (>= 1200px): sidebar always visible. Small/medium: sidebar slides over the content. */
-const LARGE_SCREEN = '(min-width: 1200px)';
+/** From 900px (tablet landscape, laptops) the sidebar is always there and stays put while the page scrolls (Bilal, 3 Nov 2026).
+    Narrower: it slides over the content from the menu button. */
+const LARGE_SCREEN = '(min-width: 900px)';
 
 @Component({
   selector: 'hs-shell',

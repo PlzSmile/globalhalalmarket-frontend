@@ -91,10 +91,10 @@ export class Dashboard implements OnInit {
     return market ? `${market.market} · ${market.authority}` : code;
   }
 
-  /** A summary number filters the matrix (through the URL) and scrolls to it. */
+  /** A summary number filters the matrix (through the URL), then the page glides down to the filtered table. */
   protected showStatus(market: string | null, status: ComplianceStatus): void {
-    void this.router.navigate([], { relativeTo: this.route, queryParams: { market, status, page: null }, queryParamsHandling: 'merge' });
-    document.getElementById('matrix')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { market, status, page: null }, queryParamsHandling: 'merge' })
+      .then(() => setTimeout(() => document.getElementById('matrix')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })));
   }
 
   protected daysText(days: number): string {

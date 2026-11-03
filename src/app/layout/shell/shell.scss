@@ -1,22 +1,19 @@
 :host { display: block; }
 
-/* 3 Nov 2026 redesign: a warm canvas with soft glows; a slim, light sidebar whose active item is a filled pill. */
+/* 3 Nov 2026 redesign: a plain warm canvas; a slim, fixed sidebar whose active item is a filled pill. */
 .shell {
   min-height: 100dvh;
-  background:
-    radial-gradient(60rem 40rem at 100% 0%, var(--color-app-glow-cool), transparent 60%),
-    radial-gradient(50rem 36rem at 0% 100%, var(--color-app-glow-warm), transparent 60%),
-    var(--color-app-bg);
-  background-attachment: fixed;
+  background: var(--color-app-bg); /* one plain light colour (Bilal, 3 Nov 2026) */
   --mat-sidenav-container-background-color: var(--color-app-sidebar);
   --mat-sidenav-container-divider-color: color-mix(in srgb, var(--color-border) 60%, transparent);
   --mat-sidenav-content-background-color: transparent;
   --mat-sidenav-container-shape: 0;
 }
 
-.shell__sidenav { width: 248px; display: flex; flex-direction: column; backdrop-filter: blur(14px) saturate(140%); }
+.shell__sidenav { width: 232px; display: flex; flex-direction: column; backdrop-filter: blur(14px) saturate(140%); }
 .shell__sidenav ::ng-deep .mat-drawer-inner-container { display: flex; flex-direction: column; }
-@media (max-width: 1199px) { .shell { --mat-sidenav-container-background-color: var(--color-surface); } }
+@media (max-width: 899px) { .shell { --mat-sidenav-container-background-color: var(--color-surface); } }
+.shell__toolbar-logo { margin-right: auto; }
 
 .shell__brand {
   display: flex; align-items: center; justify-content: space-between;
@@ -43,6 +40,12 @@
   --mat-list-list-item-label-text-size: var(--text-sm);
   --mat-list-list-item-one-line-container-height: var(--touch-target);
   --mat-list-list-item-hover-state-layer-opacity: 0;
+  --mat-list-list-item-hover-leading-icon-color: var(--color-primary);
+  --mat-list-list-item-hover-label-text-color: var(--color-text);
+  /* Small icons close to their label. */
+  --mat-list-list-item-leading-icon-size: 18px;
+  --mat-list-list-item-leading-icon-start-space: var(--space-3);
+  --mat-list-list-item-leading-icon-end-space: var(--space-3);
 }
 .shell__nav .mdc-list-item, .shell__footer .mdc-list-item {
   border-radius: var(--radius-md); margin-bottom: var(--space-half);
@@ -53,6 +56,7 @@
 /* Active page: a filled primary pill with white text and icon (Kinlo-style). */
 .shell__nav .mdc-list-item--activated {
   --mat-list-list-item-leading-icon-color: var(--color-primary-contrast);
+  --mat-list-list-item-hover-leading-icon-color: var(--color-primary-contrast);
   --mat-list-list-item-label-text-color: var(--color-primary-contrast);
   --mat-list-list-item-hover-label-text-color: var(--color-primary-contrast);
   --mat-list-list-item-focus-label-text-color: var(--color-primary-contrast);
@@ -78,3 +82,6 @@
   .shell { --header-height: 56px; }
   .shell__content { padding: var(--space-6) var(--space-8) var(--space-12); }
 }
+
+/* Phones: only the shield mark in the toolbar, so the company name and buttons keep their room. */
+@media (max-width: 599px) { .shell__toolbar-logo ::ng-deep .logo > span { display: none; } }

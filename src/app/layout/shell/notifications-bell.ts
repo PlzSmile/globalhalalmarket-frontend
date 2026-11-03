@@ -32,7 +32,7 @@ const EMPTY: NotificationPage = { data: [], meta: { current_page: 1, last_page: 
           <button type="button" class="bell__item" [class.bell__item--unread]="!n.read" (click)="open(n)" [attr.data-test]="'notification-' + n.id">
             <span class="bell__title">{{ n.title }}</span>
             @for (line of summary(n); track $index) { <span class="bell__line">{{ line }}</span> }
-            @if (n.created_at) { <span class="bell__time">{{ time(n.created_at) }}</span> }
+            @if (n.created_at) { <span class="bell__time"><mat-icon svgIcon="clock" aria-hidden="true" />{{ time(n.created_at) }}</span> }
           </button>
         } @empty {
           <p class="bell__empty">No notifications yet. Reminders appear here 60, 30 and 7 days before something expires.</p>
@@ -42,19 +42,26 @@ const EMPTY: NotificationPage = { data: [], meta: { current_page: 1, last_page: 
   `,
   styles: `
     .bell__button { position: relative; }
-    .bell__badge { position: absolute; top: var(--space-1); right: var(--space-1); min-width: 1.1rem; height: 1.1rem; padding: 0 var(--space-1);
-      border-radius: var(--radius-pill); background: var(--color-danger-fg); color: var(--color-surface); font-size: var(--text-xs);
-      font-weight: var(--weight-semibold); line-height: 1.1rem; text-align: center; pointer-events: none; }
-    .bell { width: min(92vw, 380px); max-height: 70vh; overflow-y: auto; padding: var(--space-2) 0; }
+    .bell__badge { position: absolute; top: 2px; right: 0; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box;
+      border-radius: var(--radius-pill); background: var(--color-danger-fg); color: var(--color-surface); font-size: 10px;
+      font-weight: var(--weight-bold); line-height: 16px; text-align: center; pointer-events: none;
+      box-shadow: 0 0 0 2px var(--color-app-bg); } /* a small dot beside the bell, never over it */
+    /* 3 Nov 2026: the text wraps inside the panel (the menu panel is widened in styles.scss), never a sideways scroll. */
+    .bell { width: 100%; max-height: 70vh; overflow-y: auto; overflow-x: hidden; padding: var(--space-1) 0; overflow-wrap: anywhere; }
     .bell__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: 0 var(--space-4) var(--space-2); min-height: var(--touch-target); }
     .bell__all { min-height: var(--touch-target); }
-    .bell__item { display: grid; gap: var(--space-1); width: 100%; text-align: left; padding: var(--space-3) var(--space-4); border: 0; border-top: 1px solid var(--color-border);
-      background: transparent; color: inherit; font: inherit; cursor: pointer; min-height: var(--touch-target); }
+    .bell__item { display: grid; gap: var(--space-1); justify-items: start; width: 100%; text-align: left; padding: var(--space-3) var(--space-4); border: 0;
+      border-top: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+      background: transparent; color: inherit; font: inherit; cursor: pointer; min-height: var(--touch-target); transition: background-color var(--duration-base) var(--ease-standard); }
     .bell__item:hover, .bell__item:focus-visible { background: var(--color-surface-muted); }
     .bell__item--unread { box-shadow: inset 3px 0 0 var(--color-primary); }
     .bell__title { font-weight: var(--weight-semibold); }
     .bell__line { font-size: var(--text-sm); color: var(--color-text-muted); }
-    .bell__time { font-size: var(--text-xs); color: var(--color-text-subtle); }
+    .bell__title, .bell__line { max-width: 100%; }
+    .bell__time { display: inline-flex; align-items: center; gap: var(--space-1); margin-top: var(--space-1); padding: var(--space-half) var(--space-2);
+      border-radius: var(--radius-pill); background: var(--color-surface-muted); border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+      font-size: var(--text-xs); font-weight: var(--weight-medium); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+    .bell__time mat-icon { width: 12px; height: 12px; }
     .bell__empty { padding: var(--space-3) var(--space-4); color: var(--color-text-muted); font-size: var(--text-sm); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

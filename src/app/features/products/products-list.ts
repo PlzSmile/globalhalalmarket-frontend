@@ -84,7 +84,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Pa
   styles: `
     :host { display: grid; gap: var(--space-4); }
     .page-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
-    .page-top__title { font-size: var(--text-3xl); }
+    .page-top__title { font-size: var(--text-2xl); letter-spacing: -0.02em; }
     .page-top__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
     .search { width: min(100%, var(--container-form)); }
     .btn { min-height: var(--touch-target); }

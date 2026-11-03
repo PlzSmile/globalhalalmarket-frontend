@@ -2,7 +2,7 @@
 
 <mat-sidenav-container class="shell">
   <mat-sidenav #drawer class="shell__sidenav" [mode]="isLarge() ? 'side' : 'over'" [opened]="isLarge()"
-               [fixedInViewport]="!isLarge()" aria-label="App navigation">
+               [fixedInViewport]="true" aria-label="App navigation">
     <div class="shell__brand">
       <hs-logo />
       @if (!isLarge()) {
@@ -38,6 +38,7 @@
         <button mat-icon-button type="button" (click)="drawer.open()" aria-label="Open menu" [attr.aria-expanded]="drawer.opened">
           <mat-icon svgIcon="menu" />
         </button>
+        <hs-logo class="shell__toolbar-logo" />
       }
       <hs-company-switcher />
       <hs-notifications-bell />

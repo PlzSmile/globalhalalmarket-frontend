@@ -38,7 +38,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
     :host { display: grid; gap: var(--space-4); }
     .back { display: inline-flex; align-items: center; min-height: var(--touch-target); }
     .page-top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
-    .page-top__title { font-size: var(--text-3xl); }
+    .page-top__title { font-size: var(--text-2xl); letter-spacing: -0.02em; }
     .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
     .btn { min-height: var(--touch-target); }
     .card-title { font-size: var(--text-xl); }
