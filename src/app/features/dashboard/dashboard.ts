@@ -15,7 +15,6 @@ import { DashboardData } from '../../core/models/dashboard';
 import { MarketOption } from '../../core/models/markets';
 import { ukDate, ukDateTime } from '../../shared/format/uk-date';
 import { EmptyState } from '../../shared/ui/empty-state';
-import { StatusBadge } from '../../shared/ui/status-badge';
 import { ComplianceMatrix } from '../compliance/compliance-matrix';
 import { MarketsDialog } from '../markets/markets-dialog';
 import { OnboardingCard } from './onboarding-card';
@@ -25,7 +24,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; data: Da
 @Component({
   selector: 'hs-dashboard',
   imports: [
-    MatButtonModule, MatCardModule, MatChipsModule, MatIconModule, MatProgressBarModule, RouterLink, EmptyState, OnboardingCard, StatusBadge, ComplianceMatrix,
+    MatButtonModule, MatCardModule, MatChipsModule, MatIconModule, MatProgressBarModule, RouterLink, EmptyState, OnboardingCard, ComplianceMatrix,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
@@ -39,6 +38,9 @@ export class Dashboard implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   protected readonly statuses: readonly ComplianceStatus[] = ['red', 'amber', 'green'];
+  /** Same words as the status badges; the short form heads the narrow count columns. */
+  protected readonly statusLabel: Record<ComplianceStatus, string> = { red: 'Action needed', amber: 'Valid · expires soon', green: 'Compliant' };
+  protected readonly statusShort: Record<ComplianceStatus, string> = { red: 'Action', amber: 'Expiring', green: 'Compliant' };
   protected readonly date = ukDate;
   protected readonly dateTime = ukDateTime;
 

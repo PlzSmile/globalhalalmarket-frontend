@@ -12,6 +12,7 @@
       }
     </div>
 
+    <p class="shell__section" aria-hidden="true">Tracker</p>
     <mat-nav-list class="shell__nav">
       @for (item of nav; track item.path) {
         <a mat-list-item [routerLink]="item.path" routerLinkActive #rla="routerLinkActive"

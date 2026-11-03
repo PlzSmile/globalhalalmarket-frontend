@@ -1,4 +1,4 @@
-<header class="page-top">
+<header class="page-top hs-page-top">
   <div>
     <h1 class="page-top__title">Dashboard</h1>
     <p class="muted">What is safe to ship, for each of your export markets.</p>
@@ -63,32 +63,41 @@
     @let c = s.data.compliance;
     <p class="muted updated" data-test="updated">{{ c.computed_at ? 'Updated ' + dateTime(c.computed_at) : 'Not calculated yet' }}</p>
 
-    <div class="compliance">
+    <!-- 3 Nov 2026 redesign: three tinted totals, then one compact row per market (label left, counts right). -->
+    <div class="totals hs-rise" role="group" aria-label="All markets">
+      @for (st of statuses; track st) {
+        <button type="button" class="hs-lift" [class]="'total total--' + st" (click)="showStatus(null, st)" [attr.data-test]="'count-all-' + st"
+                [attr.aria-label]="c.summary.overall[st] + ' ' + (c.summary.overall[st] === 1 ? 'product' : 'products') + ': ' + statusLabel[st] + ', all markets'">
+          <span class="total__label"><span class="dot" aria-hidden="true"></span><span class="long">{{ statusLabel[st] }}</span><span class="short">{{ statusShort[st] }}</span></span>
+          <strong class="total__value">{{ c.summary.overall[st] }}</strong>
+          <span class="total__hint">{{ c.summary.overall[st] === 1 ? 'product' : 'products' }} · all markets</span>
+        </button>
+      }
+    </div>
+
+    <div class="compliance hs-rise">
       <mat-card appearance="outlined" class="hs-card">
         <mat-card-header><mat-card-title><h2 class="card-title">What is safe to ship</h2></mat-card-title></mat-card-header>
-        <mat-card-content class="summary">
-          <div class="summary__row">
-            <span class="summary__label">All markets</span>
-            <div class="summary__counts">
+        <mat-card-content>
+          <div class="summary" role="table" aria-label="Products by status for each market">
+            <div class="summary__head" role="row">
+              <span role="columnheader">Market</span>
               @for (st of statuses; track st) {
-                <button mat-stroked-button type="button" class="count" (click)="showStatus(null, st)" [attr.data-test]="'count-all-' + st">
-                  <hs-status-badge [status]="st" /> <strong>{{ c.summary.overall[st] }}</strong>
-                </button>
+                <span role="columnheader" class="summary__col" [class]="'summary__col tone--' + st"><span class="dot" aria-hidden="true"></span><span class="summary__col-text">{{ statusShort[st] }}</span></span>
               }
             </div>
-          </div>
-          @for (m of c.summary.markets; track m.code) {
-            <div class="summary__row">
-              <span class="summary__label">{{ marketName(m.code) }}</span>
-              <div class="summary__counts">
+            @for (m of c.summary.markets; track m.code) {
+              <div class="summary__row" role="row">
+                <span class="summary__label" role="rowheader"><span class="market-dot" [class]="'market-dot market-dot--' + m.code" aria-hidden="true"></span>{{ marketName(m.code) }}</span>
                 @for (st of statuses; track st) {
-                  <button mat-stroked-button type="button" class="count" (click)="showStatus(m.code, st)" [attr.data-test]="'count-' + m.code + '-' + st">
-                    <hs-status-badge [status]="st" /> <strong>{{ m[st] }}</strong>
-                  </button>
+                  <span role="cell">
+                    <button type="button" class="count" [class]="'count count--' + st + (m[st] ? '' : ' count--zero')" (click)="showStatus(m.code, st)"
+                            [attr.data-test]="'count-' + m.code + '-' + st" [attr.aria-label]="m[st] + ' ' + (m[st] === 1 ? 'product' : 'products') + ': ' + statusLabel[st] + ' in ' + marketName(m.code)"><span class="dot" aria-hidden="true"></span>{{ m[st] }}<span class="count__word" aria-hidden="true">{{ statusShort[st] }}</span></button>
+                  </span>
                 }
               </div>
-            </div>
-          }
+            }
+          </div>
         </mat-card-content>
       </mat-card>
 

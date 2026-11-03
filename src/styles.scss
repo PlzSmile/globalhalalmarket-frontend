@@ -103,15 +103,60 @@ a { color: var(--color-link); }
   }
 }
 
-// Cards: flat, bordered surface (matches the public site cards).
+/* ---------------------------------------------------------------- Compact desktop (3 Nov 2026 redesign)
+   Large screens (>= 1200px, mouse) get a denser, smaller layout: 15px root (everything in rem shrinks with it),
+   Material density -2 and 36px controls. Phones and tablets keep 16px text and 44px touch targets (CLAUDE.md rule 3). */
+@media (min-width: 1200px) {
+  :root { --touch-target: 36px; --text-xs: 0.8rem; } /* :root, like tokens.css, so these win */
+  html {
+    font-size: 93.75%;
+    @include mat.button-density(-2);
+    @include mat.icon-button-density(-2);
+    @include mat.form-field-density(-4);
+    @include mat.select-density(-2);
+    @include mat.chips-density(-2);
+    @include mat.list-density(-2);
+    @include mat.table-density(-3);
+    @include mat.paginator-density(-3);
+    @include mat.button-toggle-density(-2);
+    @include mat.checkbox-density(-2);
+    @include mat.radio-density(-2);
+    @include mat.slide-toggle-density(-2);
+    @include mat.tabs-density(-2);
+  }
+}
+
+/* Buttons: pill shaped, crisp labels, a small press feedback. */
+.mat-mdc-button-base { --mat-button-filled-container-shape: var(--radius-pill); --mat-button-outlined-container-shape: var(--radius-pill); --mat-button-text-container-shape: var(--radius-pill); }
+.mat-mdc-button-base:not(.mat-mdc-icon-button) { transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard); }
+.mat-mdc-button-base:not(.mat-mdc-icon-button):active { transform: scale(0.97); }
+.mat-mdc-unelevated-button.mat-primary:not(:disabled):hover { box-shadow: var(--shadow-md); }
+
+/* Form fields: never wider than they need to be; white fill on the warm canvas. */
+.mat-mdc-form-field { --mat-form-field-outlined-container-shape: var(--radius-md); }
+.mat-mdc-text-field-wrapper { background: var(--color-surface); border-radius: var(--radius-md); }
+
+// Cards: white surfaces floating on the warm canvas, soft layered shadow, rounded (Kinlo-style).
 .mat-mdc-card.hs-card {
   --mat-card-outlined-container-color: var(--color-surface);
-  --mat-card-outlined-outline-color: var(--color-border);
+  --mat-card-outlined-outline-color: color-mix(in srgb, var(--color-border) 70%, transparent);
   --mat-card-outlined-container-shape: var(--radius-lg);
   --mat-card-title-text-size: var(--text-lg);
   --mat-card-title-text-weight: var(--weight-semibold);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
+/* Cards that are one big link or button lift a little on hover. */
+.mat-mdc-card.hs-card--interactive:hover, .hs-lift:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-2px); }
+
+/* Page header used on every tracker page: title, one line of help, actions on the right. */
+.hs-page-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-3) var(--space-4); }
+.hs-page-top h1 { font-size: var(--text-2xl); letter-spacing: -0.02em; }
+.hs-page-top p { margin-top: var(--space-1); }
+
+/* Entrance: content fades up softly when a page opens (off with reduced motion: durations are 0). */
+@keyframes hs-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.hs-rise { animation: hs-rise var(--duration-slow) var(--ease-standard) both; }
 /* Room between a card title and its content (an outlined field's floating label would touch the title). */
 .mat-mdc-card.hs-card .mat-mdc-card-header + .mat-mdc-card-content { padding-top: var(--space-4); }
 
@@ -120,8 +165,8 @@ a { color: var(--color-link); }
   .hs-responsive-table .mat-mdc-header-row { display: none; }
   .hs-responsive-table .mat-mdc-row { display: grid; gap: var(--space-2); height: auto; padding: var(--space-4); }
   .hs-responsive-table .mat-mdc-cell {
-    display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
-    padding: 0; border: 0; min-height: 0;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-1) var(--space-3);
+    padding: 0; border: 0; min-height: 0; min-width: 0;
   }
   .hs-responsive-table .mat-mdc-cell[data-label]::before {
     content: attr(data-label); color: var(--color-text-subtle); font-size: var(--text-sm); font-weight: var(--weight-medium);
@@ -132,10 +177,10 @@ a { color: var(--color-link); }
 // Paginator arrows: touch targets ≥ 44 px (Material's default is 40 px).
 .mat-mdc-paginator .mat-mdc-paginator-navigation-previous,
 .mat-mdc-paginator .mat-mdc-paginator-navigation-next {
-  --mat-icon-button-state-layer-size: 44px;
-  width: 44px;
-  height: 44px;
-  padding: 10px;
+  --mat-icon-button-state-layer-size: var(--touch-target);
+  width: var(--touch-target);
+  height: var(--touch-target);
+  padding: calc((var(--touch-target) - 24px) / 2);
 }
 
 /* ---------------------------------------------------------------- Auth screens (login, sign-up, …) */
