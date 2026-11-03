@@ -2,18 +2,18 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MarketsApi } from '../../core/api/markets-api';
 import { AuthService } from '../../core/auth/auth.service';
 import { MarketOption } from '../../core/models/markets';
 import { MarketPicker } from '../markets/market-picker';
 
+import { Skeleton } from '../../shared/ui/skeleton';
 type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; markets: readonly MarketOption[] };
 
 @Component({
   selector: 'hs-markets-tab',
-  imports: [MatButtonModule, MatCardModule, MatProgressBarModule, MarketPicker],
+  imports: [Skeleton, MatButtonModule, MatCardModule, MarketPicker],
   template: `
     <div class="settings-grid">
       <mat-card appearance="outlined" class="hs-card">
@@ -23,7 +23,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; markets:
           @if (!auth.canManageTeam()) { <p class="notice notice--info">Only owners and admins can change markets.</p> }
           @let s = state();
           @if (s.kind === 'loading') {
-            <mat-progress-bar mode="indeterminate" aria-label="Loading markets" />
+            <hs-skeleton kind="list" label="Loading markets" />
           } @else if (s.kind === 'error') {
             <p class="notice notice--error" role="alert">Markets could not be loaded.</p>
             <button mat-stroked-button type="button" class="retry" (click)="load()">Try again</button>

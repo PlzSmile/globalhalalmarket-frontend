@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatListModule } from '@angular/material/list';
+import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
@@ -14,6 +15,7 @@ import { AccessService } from '../../core/billing/access.service';
 import { Billing, BillingInterval, Invoice, OfferedPlan, PlanLimits } from '../../core/models/billing';
 import { PlanKey } from '../../core/models/auth';
 import { ConfirmDialog } from '../../shared/ui/confirm-dialog';
+import { Skeleton } from '../../shared/ui/skeleton';
 
 const POLL_MS = 3000;
 const POLL_TIMES = 20;
@@ -24,7 +26,7 @@ const USAGE: readonly { key: keyof PlanLimits; label: string }[] = [
 /** Phase 7a: plan, usage, choose or change plan, card, invoices, cancel. Only the owner can manage; everyone can see. */
 @Component({
   selector: 'hs-billing-tab',
-  imports: [DatePipe, MatCardModule, MatButtonModule, MatButtonToggleModule, MatProgressBarModule, MatListModule],
+  imports: [DatePipe, Skeleton, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatProgressBarModule, MatListModule],
   template: `
     <div class="settings-grid">
       @if (billing(); as b) {
@@ -79,7 +81,8 @@ const USAGE: readonly { key: keyof PlanLimits; label: string }[] = [
             <p class="billing__note">Prices in pounds sterling (GBP), excluding VAT. You pay on Stripe's secure page by card or Direct Debit.</p>
             <div class="billing__plans">
               @for (p of b.plans; track p.plan) {
-                <section class="billing__plan" [class.billing__plan--current]="isCurrent(b, p)">
+                <section class="billing__plan" [class.billing__plan--current]="isCurrent(b, p)" [class.billing__plan--recommended]="p.plan === 'pro'">
+                  @if (p.plan === 'pro') { <span class="billing__ribbon" data-test="recommended"><mat-icon svgIcon="check" aria-hidden="true" />Recommended</span> }
                   <h3>{{ p.name }}</h3>
                   @if (price(p); as cents) {
                     <p class="billing__price">{{ money(cents) }} <span>/ {{ interval() === 'yearly' ? 'year' : 'month' }}</span></p>
@@ -122,6 +125,8 @@ const USAGE: readonly { key: keyof PlanLimits; label: string }[] = [
         }
       } @else if (failed()) {
         <p class="billing__alert" role="alert">Billing could not be loaded. Please refresh the page.</p>
+      } @else {
+        <hs-skeleton kind="detail" label="Loading billing" />
       }
     </div>
   `,
@@ -136,10 +141,17 @@ const USAGE: readonly { key: keyof PlanLimits; label: string }[] = [
     .billing__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
     .billing__toggle { margin-bottom: var(--space-2); --mat-button-toggle-height: var(--touch-target); }
     .billing__toggle ::ng-deep .mat-button-toggle-button { min-height: var(--touch-target); }
-    .billing__plans { display: grid; gap: var(--space-3); margin-top: var(--space-3); grid-template-columns: 1fr; }
+    .billing__plans { display: grid; gap: var(--space-5) var(--space-3); margin-top: var(--space-5); grid-template-columns: 1fr; }
     @media (min-width: 768px) { .billing__plans { grid-template-columns: repeat(3, 1fr); } }
     .billing__plan { display: grid; align-content: start; gap: var(--space-2); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
     .billing__plan--current { border-color: var(--color-primary); box-shadow: inset 0 0 0 1px var(--color-primary); }
+    /* Pro is the plan we suggest (Bilal, 3 Nov 2026): a soft green card with a tag on its top edge. */
+    .billing__plan { position: relative; }
+    .billing__plan--recommended { border-color: var(--color-primary); background: linear-gradient(180deg, var(--color-primary-soft), var(--color-surface) 45%); box-shadow: var(--shadow-card); }
+    .billing__ribbon { position: absolute; top: 0; right: var(--space-4); transform: translateY(-50%); display: inline-flex; align-items: center; gap: var(--space-1);
+      padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); background: var(--color-primary); color: var(--color-primary-contrast);
+      font-size: var(--text-xs); font-weight: var(--weight-semibold); letter-spacing: 0.02em; box-shadow: 0 4px 10px -4px var(--color-primary); }
+    .billing__ribbon mat-icon { width: 14px; height: 14px; }
     .billing__plan h3 { margin: 0; font-size: var(--text-lg); }
     .billing__price { margin: 0; font-size: var(--text-xl); font-weight: var(--weight-semibold); }
     .billing__price span { font-size: var(--text-sm); font-weight: var(--weight-regular); color: var(--color-text-muted); }

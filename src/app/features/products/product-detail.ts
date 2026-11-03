@@ -7,7 +7,6 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ComplianceApi } from '../../core/api/compliance-api';
 import { IngredientsApi } from '../../core/api/ingredients-api';
@@ -28,11 +27,12 @@ import { ComplianceBreakdown } from '../compliance/compliance-breakdown';
 import { ComplianceHistory } from '../compliance/compliance-history';
 import { ProductDialog, ProductDialogData } from './product-dialog';
 
+import { Skeleton } from '../../shared/ui/skeleton';
 type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { kind: 'ready'; product: ProductDetail };
 
 @Component({
   selector: 'hs-product-detail',
-  imports: [RouterLink, MatButtonModule, MatCardModule, MatChipsModule, MatIconModule, MatMenuModule, MatProgressBarModule, LinkPicker, ComplianceBreakdown, ComplianceHistory],
+  imports: [Skeleton, RouterLink, MatButtonModule, MatCardModule, MatChipsModule, MatIconModule, MatMenuModule, LinkPicker, ComplianceBreakdown, ComplianceHistory],
   templateUrl: './product-detail.html',
   styles: `
     :host { display: grid; gap: var(--space-4); }
@@ -42,8 +42,13 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
     .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
     .btn { min-height: var(--touch-target); }
     .card-title { font-size: var(--text-xl); }
-    .ingredients { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: grid; }
-    .ingredient { display: grid; gap: var(--space-2); padding-block: var(--space-3); border-top: 1px solid var(--color-border); }
+    /* 3 Nov 2026: ingredients as small cards, two per row on large screens. */
+    .ingredients { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: grid; gap: var(--space-3); }
+    @media (min-width: 1200px) { .ingredients { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .ingredient { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3); border-radius: var(--radius-md);
+      border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent); background: color-mix(in srgb, var(--color-surface-muted) 45%, var(--color-surface)); }
+    .history { display: grid; gap: var(--space-3); }
+    .section-title { font-size: var(--text-lg); }
     .ingredient__top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
     .ingredient__name { font-weight: var(--weight-semibold); }
     .ingredient__meta { color: var(--color-text-subtle); font-size: var(--text-sm); margin: 0; }

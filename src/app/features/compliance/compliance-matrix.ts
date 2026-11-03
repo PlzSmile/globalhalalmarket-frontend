@@ -11,7 +11,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { ComplianceApi } from '../../core/api/compliance-api';
@@ -26,6 +25,7 @@ import { StatusBadge } from '../../shared/ui/status-badge';
 import { ComplianceReasonsDialog, ComplianceReasonsDialogData } from './compliance-reasons-dialog';
 import { statusDetail } from './compliance-format';
 
+import { Skeleton } from '../../shared/ui/skeleton';
 type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Paginated<ProductComplianceRow> };
 
 const STATUSES: readonly ComplianceStatus[] = ['red', 'amber', 'green'];
@@ -34,9 +34,9 @@ const EMPTY: ComplianceFilters = { market: null, status: null, supplier: null, s
 /** Product × market matrix. The URL holds the filters (shareable inside the team, survives reload). */
 @Component({
   selector: 'hs-compliance-matrix',
-  imports: [
+  imports: [Skeleton, 
     ReactiveFormsModule, RouterLink, MatAutocompleteModule, MatButtonModule, MatChipsModule, MatFormFieldModule, MatIconModule, MatInputModule,
-    MatPaginatorModule, MatProgressBarModule, MatSelectModule, MatTableModule, StatusBadge,
+    MatPaginatorModule, MatSelectModule, MatTableModule, StatusBadge,
   ],
   template: `
     <div class="filters">
@@ -78,7 +78,7 @@ const EMPTY: ComplianceFilters = { market: null, status: null, supplier: null, s
 
     @let s = state();
     @if (s.kind === 'loading') {
-      <mat-progress-bar mode="indeterminate" aria-label="Loading products" />
+      <hs-skeleton kind="table" label="Loading products" />
     } @else if (s.kind === 'error') {
       <div class="load-error">
         <p role="alert">We couldn't load the products.</p>

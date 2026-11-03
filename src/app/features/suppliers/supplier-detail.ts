@@ -5,7 +5,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { IngredientsApi } from '../../core/api/ingredients-api';
 import { SuppliersApi } from '../../core/api/suppliers-api';
@@ -22,16 +21,17 @@ import { CertificateDialog, CertificateDialogData } from '../certificates/certif
 import { UploadRequestDialog, UploadRequestDialogData } from './upload-request-dialog';
 import { SupplierDialog, SupplierDialogData } from './supplier-dialog';
 
+import { Skeleton } from '../../shared/ui/skeleton';
 type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { kind: 'ready'; supplier: SupplierDetail };
 
 @Component({
   selector: 'hs-supplier-detail',
-  imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatProgressBarModule, LinkPicker, CertificateStatusBadge],
+  imports: [Skeleton, RouterLink, MatButtonModule, MatCardModule, MatIconModule, LinkPicker, CertificateStatusBadge],
   template: `
     <a routerLink="/suppliers" class="back">← All suppliers</a>
     @let s = state();
     @if (s.kind === 'loading') {
-      <mat-progress-bar mode="indeterminate" aria-label="Loading supplier" />
+      <hs-skeleton kind="detail" label="Loading supplier" />
     } @else if (s.kind === 'notFound') {
       <mat-card appearance="outlined" class="hs-card"><mat-card-content class="load-error">
         <h1 class="card-title">Supplier not found</h1>
@@ -61,6 +61,8 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
         </div>
       </header>
 
+      <!-- 3 Nov 2026: two cards per row on large screens (ingredients | certificates), upload links below. -->
+      <div class="cards">
       <mat-card appearance="outlined" class="hs-card">
         <mat-card-header><mat-card-title><h2 class="card-title">Ingredients it supplies</h2></mat-card-title></mat-card-header>
         <mat-card-content>
@@ -105,6 +107,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
           }
         </mat-card-content>
       </mat-card>
+      </div>
 
       <mat-card appearance="outlined" class="hs-card" data-test="upload-links">
         <mat-card-header><mat-card-title><h2 class="card-title">Upload links</h2></mat-card-title></mat-card-header>
@@ -140,7 +143,9 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
     .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
     .btn { min-height: var(--touch-target); }
     .btn + .muted { margin-top: var(--space-2); }
-    .card-title { font-size: var(--text-xl); }
+    .card-title { font-size: var(--text-lg); }
+    .cards { display: grid; gap: var(--space-4); align-items: start; }
+    @media (min-width: 1200px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     .rows { list-style: none; margin: var(--space-4) 0 0; padding: 0; }
     .row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); border-top: 1px solid var(--color-border); padding-block: var(--space-1); }
     .cert-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); }

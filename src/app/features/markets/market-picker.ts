@@ -4,15 +4,15 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MarketsApi } from '../../core/api/markets-api';
 import { AuthorityCode, MarketOption } from '../../core/models/markets';
 import { applyServerErrorsOr } from '../../shared/forms/server-errors';
 
+import { Loader } from '../../shared/ui/loader';
 /** Tick the export markets and save. Used in the dashboard dialog and in Settings → Markets. */
 @Component({
   selector: 'hs-market-picker',
-  imports: [ReactiveFormsModule, MatButtonModule, MatCheckboxModule, MatProgressBarModule],
+  imports: [Loader, ReactiveFormsModule, MatButtonModule, MatCheckboxModule],
   template: `
     <form class="picker" [formGroup]="form" (ngSubmit)="save()" novalidate>
       <fieldset class="picker__list">
@@ -33,7 +33,7 @@ import { applyServerErrorsOr } from '../../shared/forms/server-errors';
           <button mat-flat-button type="submit" [disabled]="busy()" data-test="save-markets">Save markets</button>
         </div>
       }
-      @if (busy()) { <mat-progress-bar mode="indeterminate" aria-label="Saving markets" /> }
+      @if (busy()) { <hs-loader label="Saving markets" /> }
     </form>
   `,
   styles: `

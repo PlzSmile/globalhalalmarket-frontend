@@ -18,16 +18,18 @@ import { ConfirmDialog, ConfirmDialogData } from '../../shared/ui/confirm-dialog
 import { NameDialog, NameDialogData } from '../../shared/ui/name-dialog';
 import { CertificateDialog, CertificateDialogData } from './certificate-dialog';
 
+import { Loader } from '../../shared/ui/loader';
+import { Skeleton } from '../../shared/ui/skeleton';
 type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { kind: 'ready'; certificate: CertificateDetail };
 
 @Component({
   selector: 'hs-certificate-detail',
-  imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatProgressBarModule, MatProgressSpinnerModule, CertificateStatusBadge],
+  imports: [Skeleton, Loader, RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatProgressBarModule, MatProgressSpinnerModule, CertificateStatusBadge],
   template: `
     <a routerLink="/certificates" class="back">← All certificates</a>
     @let s = state();
     @if (s.kind === 'loading') {
-      <mat-progress-bar mode="indeterminate" aria-label="Loading certificate" />
+      <hs-skeleton kind="detail" label="Loading certificate" />
     } @else if (s.kind === 'notFound') {
       <mat-card appearance="outlined" class="hs-card"><mat-card-content class="load-error">
         <h1 class="card-title">Certificate not found</h1>
@@ -67,7 +69,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
           @if (fileOpens(c)) {
             <button mat-flat-button type="button" class="btn" (click)="download()" [disabled]="busy() || downloading()" data-test="download">
               @if (downloading()) {
-                <mat-progress-spinner class="btn-spinner" mode="indeterminate" diameter="18" aria-hidden="true" />
+                <hs-loader class="btn-spinner" [inline]="true" label="Downloading" />
               } @else {
                 <mat-icon svgIcon="file" />
               }

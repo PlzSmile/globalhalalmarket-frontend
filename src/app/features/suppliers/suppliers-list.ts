@@ -10,7 +10,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { SuppliersApi } from '../../core/api/suppliers-api';
 import { Paginated, SupplierDetail, SupplierListItem } from '../../core/models/catalogue';
@@ -19,18 +18,21 @@ import { collapseSpaces } from '../../shared/forms/normalise';
 import { EmptyState } from '../../shared/ui/empty-state';
 import { SupplierDialog, SupplierDialogData } from './supplier-dialog';
 
+import { Skeleton } from '../../shared/ui/skeleton';
+import { SearchField } from '../../shared/ui/search-field';
 type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Paginated<SupplierListItem> };
 
 @Component({
   selector: 'hs-suppliers-list',
-  imports: [
+  imports: [Skeleton, SearchField, 
     ReactiveFormsModule, RouterLink, MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule,
-    MatPaginatorModule, MatProgressBarModule, MatTableModule, EmptyState,
+    MatPaginatorModule, MatTableModule, EmptyState,
   ],
   template: `
-    <header class="page-top">
-      <h1 class="page-top__title">Suppliers</h1>
-      <div class="page-top__actions">
+    <header class="hs-list-head">
+      <h1>Suppliers</h1>
+      <hs-search-field class="hs-list-head__search" [control]="search" label="Search by name" />
+      <div class="hs-list-head__actions">
         @if (auth.canManageTeam()) {
           <a mat-stroked-button routerLink="/import" class="btn" data-test="import-csv">Import CSV</a>
         }
@@ -38,14 +40,9 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Pa
       </div>
     </header>
 
-    <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
-      <mat-label>Search by name</mat-label>
-      <input matInput type="search" [formControl]="search" maxlength="100" data-test="search" />
-    </mat-form-field>
-
     @let s = state();
     @if (s.kind === 'loading') {
-      <mat-progress-bar mode="indeterminate" aria-label="Loading suppliers" />
+      <hs-skeleton kind="table" label="Loading suppliers" />
     } @else if (s.kind === 'error') {
       <mat-card appearance="outlined" class="hs-card"><mat-card-content class="load-error">
         <p role="alert">We couldn't load your suppliers.</p>
@@ -74,7 +71,14 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Pa
           </ng-container>
           <ng-container matColumnDef="ingredients">
             <th mat-header-cell *matHeaderCellDef scope="col">Ingredients</th>
-            <td mat-cell *matCellDef="let supplier" data-label="Ingredients">{{ supplier.ingredients_count }}</td>
+            <td mat-cell *matCellDef="let supplier" data-label="Ingredients">
+              <span class="hs-tags">
+                @for (name of supplier.ingredient_names ?? []; track $index) { <span class="hs-tag">{{ name }}</span> }
+                @let shown = supplier.ingredient_names?.length ?? 0;
+                @if (supplier.ingredients_count === 0) { <span class="subtle">None yet</span> }
+                @else if (supplier.ingredients_count > shown) { <span class="hs-tag hs-tag--count">{{ shown ? '+' + (supplier.ingredients_count - shown) : supplier.ingredients_count }}</span> }
+              </span>
+            </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="columns"></tr>
           <tr mat-row *matRowDef="let row; columns: columns"></tr>
@@ -86,10 +90,6 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Pa
   `,
   styles: `
     :host { display: grid; gap: var(--space-4); }
-    .page-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
-    .page-top__title { font-size: var(--text-2xl); letter-spacing: -0.02em; }
-    .page-top__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-    .search { width: min(100%, var(--container-form)); }
     .btn { min-height: var(--touch-target); }
     .table-card { overflow: hidden; }
     .row-link { display: inline-flex; align-items: center; min-height: var(--touch-target); font-weight: var(--weight-semibold); }

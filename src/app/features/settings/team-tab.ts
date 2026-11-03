@@ -5,7 +5,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { actionError } from '../../shared/forms/error-message';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -16,9 +15,10 @@ import { AssignableRole, PendingInvitation, ROLE_LABELS, Team, TeamMember, UserR
 import { ConfirmDialog, ConfirmDialogData } from '../../shared/ui/confirm-dialog';
 import { InviteDialog } from './invite-dialog';
 
+import { Skeleton } from '../../shared/ui/skeleton';
 @Component({
   selector: 'hs-team-tab',
-  imports: [DatePipe, MatButtonModule, MatCardModule, MatIconModule, MatProgressBarModule, MatSelectModule, MatTableModule],
+  imports: [Skeleton, DatePipe, MatButtonModule, MatCardModule, MatIconModule, MatSelectModule, MatTableModule],
   templateUrl: './team-tab.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

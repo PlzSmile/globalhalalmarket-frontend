@@ -180,7 +180,7 @@ describe('CertificateDetailPage', () => {
     fixture.detectChanges();
     const button = el.querySelector('[data-test="download"]') as HTMLButtonElement;
     expect(button.textContent).toContain('Downloading');
-    expect(button.querySelector('mat-progress-spinner')).not.toBeNull();
+    expect(button.querySelector('hs-loader')).not.toBeNull();
     expect(button.disabled).toBe(true);
     await new Promise((resolve) => setTimeout(resolve, CertificateDetailPage.DOWNLOAD_FEEDBACK_MS + 50));
     fixture.detectChanges();

@@ -9,7 +9,7 @@ export interface Paginated<T> {
 export interface NamedRef { readonly id: number; readonly name: string; }
 export type LinkTarget = { readonly id: number } | { readonly name: string };
 
-export interface ProductListItem { readonly id: number; readonly name: string; readonly sku: string | null; readonly ingredients_count: number; }
+export interface ProductListItem { readonly id: number; readonly name: string; readonly sku: string | null; readonly ingredients_count: number; /** First few names, for the list tags. */ readonly ingredient_names?: readonly string[]; }
 /** Latest-expiring approved certificate of an ingredient (information only until Phase 6). */
 export interface IngredientCertificate { readonly id: number; readonly status: 'approved' | 'pending' | 'rejected'; readonly expires_on: string; }
 export interface ProductIngredient {
@@ -24,7 +24,7 @@ export interface IngredientSuppliers { readonly id: number; readonly name: strin
 export interface DeleteIngredientResult { readonly unlinked_products: number; readonly unlinked_suppliers: number; }
 
 export interface Country { readonly code: string; readonly name: string; }
-export interface SupplierListItem { readonly id: number; readonly name: string; readonly country: Country | null; readonly ingredients_count: number; }
+export interface SupplierListItem { readonly id: number; readonly name: string; readonly country: Country | null; readonly ingredients_count: number; readonly ingredient_names?: readonly string[]; }
 export interface SupplierDetail {
   readonly id: number; readonly name: string; readonly contact_email: string | null;
   readonly country: Country | null; readonly ingredients: readonly NamedRef[];

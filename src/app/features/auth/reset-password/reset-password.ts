@@ -6,14 +6,14 @@ import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AuthApi } from '../../../core/api/auth-api';
 import { applyServerErrorsOr, clearServerErrors, serverError } from '../../../shared/forms/server-errors';
 import { PASSWORD_MIN, matchesField } from '../../../shared/forms/validators';
 
+import { Loader } from '../../../shared/ui/loader';
 @Component({
   selector: 'hs-reset-password',
-  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressBarModule],
+  imports: [Loader, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule],
   template: `
     <h1 class="auth-title">Choose a new password</h1>
     <p class="auth-subtitle">For {{ email || 'your account' }}.</p>
@@ -38,7 +38,7 @@ import { PASSWORD_MIN, matchesField } from '../../../shared/forms/validators';
         @else if (form.controls.password_confirmation.hasError('required')) { <mat-error>Type your password again.</mat-error> }
       </mat-form-field>
       <button mat-flat-button class="auth-submit" type="submit" [disabled]="busy()">Change password</button>
-      @if (busy()) { <mat-progress-bar mode="indeterminate" aria-label="Saving" /> }
+      @if (busy()) { <hs-loader label="Saving" /> }
     </form>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

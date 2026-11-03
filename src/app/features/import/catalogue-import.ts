@@ -5,19 +5,19 @@ import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ImportsApi } from '../../core/api/imports-api';
 import { AuthService } from '../../core/auth/auth.service';
 import { ImportCounts, ImportPreview, ImportResult } from '../../core/models/imports';
 import { FilePicker } from '../../shared/ui/file-picker';
 
+import { Loader } from '../../shared/ui/loader';
 const FILE_MESSAGE = 'Choose a CSV file (max 2 MB).';
 
 /** Catalogue CSV import: choose file → preview (nothing saved) → import (all-or-nothing). Owners and admins. */
 @Component({
   selector: 'hs-catalogue-import',
-  imports: [RouterLink, MatButtonModule, MatCardModule, MatExpansionModule, MatProgressBarModule, FilePicker],
+  imports: [Loader, RouterLink, MatButtonModule, MatCardModule, MatExpansionModule, FilePicker],
   template: `
     <a routerLink="/products" class="back">← Products</a>
     <h1 class="page-top__title">Import products &amp; suppliers</h1>
@@ -57,7 +57,7 @@ const FILE_MESSAGE = 'Choose a CSV file (max 2 MB).';
           <hs-file-picker label="Choose CSV file" againLabel="Choose another file" accept=".csv,text/csv"
                           [extensions]="extensions" [mimeTypes]="mimeTypes" [typeMessage]="fileMessage" [sizeMessage]="fileMessage"
                           [maxBytes]="maxBytes" [disabled]="busy() !== null" (fileChange)="onFile($event)" />
-          @if (busy() === 'previewing') { <mat-progress-bar mode="indeterminate" aria-label="Checking the file" /> }
+          @if (busy() === 'previewing') { <hs-loader label="Checking the file" /> }
           @if (formError(); as message) { <p class="notice notice--error" role="alert" data-test="form-error">{{ message }}</p> }
 
           @if (preview(); as p) {
@@ -89,7 +89,7 @@ const FILE_MESSAGE = 'Choose a CSV file (max 2 MB).';
                 <button mat-flat-button type="button" class="btn" (click)="runImport()" [disabled]="!p.can_import || busy() !== null" data-test="run-import">Import</button>
                 <button mat-button type="button" class="btn" (click)="reset()" [disabled]="busy() !== null">Choose another file</button>
               </div>
-              @if (busy() === 'importing') { <mat-progress-bar mode="indeterminate" aria-label="Importing" /> }
+              @if (busy() === 'importing') { <hs-loader label="Importing" /> }
             </section>
           }
         }

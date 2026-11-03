@@ -158,6 +158,27 @@ a { color: var(--color-link); }
 .hs-page-top h1 { font-size: var(--text-2xl); letter-spacing: -0.02em; }
 .hs-page-top p { margin-top: var(--space-1); }
 
+/* List pages (products, suppliers, certificates): title, search and buttons in one row on large screens;
+   on smaller screens the title and buttons share a row and the search goes underneath, full width. */
+.hs-list-head { display: grid; gap: var(--space-3); grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'title actions' 'search search'; align-items: center; }
+.hs-list-head > h1 { grid-area: title; font-size: var(--text-2xl); letter-spacing: -0.02em; }
+.hs-list-head > .hs-list-head__search { grid-area: search; }
+.hs-list-head > .hs-list-head__actions { grid-area: actions; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
+@media (min-width: 1200px) {
+  .hs-list-head { grid-template-columns: auto minmax(0, 28rem) 1fr; grid-template-areas: 'title search actions'; gap: var(--space-5); }
+}
+@media (max-width: 599px) {
+  .hs-list-head { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'title' 'actions' 'search'; }
+  .hs-list-head > .hs-list-head__actions { justify-content: flex-start; }
+}
+
+/* Small grey name tags (ingredients on the list pages). */
+.hs-tags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.hs-tag { display: inline-flex; align-items: center; padding: var(--space-half) var(--space-2); border-radius: var(--radius-pill);
+  background: var(--color-surface-muted); border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  font-size: var(--text-xs); font-weight: var(--weight-medium); color: var(--color-text-muted); white-space: nowrap; }
+.hs-tag--count { background: var(--color-primary-soft); color: var(--color-primary); border-color: transparent; font-weight: var(--weight-semibold); }
+
 /* Entrance: content fades up softly when a page opens (off with reduced motion: durations are 0). */
 @keyframes hs-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .hs-rise { animation: hs-rise var(--duration-slow) var(--ease-standard) both; }
@@ -203,3 +224,29 @@ a { color: var(--color-link); }
 .notice--success { color: var(--color-success-fg); background: var(--color-success-bg); border-color: var(--color-success-border); }
 .notice--error { color: var(--color-danger-fg); background: var(--color-danger-bg); border-color: var(--color-danger-border); }
 .notice--info { color: var(--color-info-fg); background: var(--color-info-bg); border-color: var(--color-info-border); }
+
+/* ---------------------------------------------------------------- Page change: a soft slide (View Transitions)
+   Only the page content (#app-main, named app-page in the shell) moves; the sidebar and top bar stay still. */
+@keyframes hs-page-out { to { opacity: 0; transform: translateX(-16px); } }
+@keyframes hs-page-in { from { opacity: 0; transform: translateX(24px); } }
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+::view-transition-old(app-page) { animation: hs-page-out 160ms var(--ease-standard) both; }
+::view-transition-new(app-page) { animation: hs-page-in 280ms var(--ease-standard) both; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(app-page), ::view-transition-new(app-page) { animation: none; }
+}
+
+/* Before the app starts (index.html): the same three dots, centred on the page. */
+.boot-loader { display: grid; place-items: center; min-height: 100dvh; color: var(--color-primary); }
+.boot-loader .dots {
+  width: 56px; aspect-ratio: 4;
+  --_g: no-repeat radial-gradient(circle closest-side, currentColor 90%, transparent);
+  background: var(--_g) 0% 50%, var(--_g) 50% 50%, var(--_g) 100% 50%;
+  background-size: calc(100% / 3) 100%;
+  animation: hs-boot-dots 1s infinite linear;
+}
+@keyframes hs-boot-dots {
+  33% { background-size: calc(100% / 3) 0%, calc(100% / 3) 100%, calc(100% / 3) 100%; }
+  50% { background-size: calc(100% / 3) 100%, calc(100% / 3) 0%, calc(100% / 3) 100%; }
+  66% { background-size: calc(100% / 3) 100%, calc(100% / 3) 100%, calc(100% / 3) 0%; }
+}

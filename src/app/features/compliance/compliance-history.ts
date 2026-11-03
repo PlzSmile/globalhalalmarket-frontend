@@ -7,7 +7,6 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ComplianceApi } from '../../core/api/compliance-api';
 import { Paginated } from '../../core/models/catalogue';
 import { HistoryEntry, StatusOnDate } from '../../core/models/compliance';
@@ -16,63 +15,80 @@ import { toIsoDate, ukDate, ukDateTime } from '../../shared/format/uk-date';
 import { UkDateAdapter } from '../../shared/format/uk-date-adapter';
 import { StatusBadge } from '../../shared/ui/status-badge';
 
+import { Skeleton } from '../../shared/ui/skeleton';
+import { MatCardModule } from '@angular/material/card';
 type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Paginated<HistoryEntry> };
 
 /** Every status change of a product, and "what did we know on this date?" for audits. */
 @Component({
   selector: 'hs-compliance-history',
-  imports: [ReactiveFormsModule, MatButtonModule, MatDatepickerModule, MatFormFieldModule, MatInputModule, MatPaginatorModule, MatProgressBarModule, StatusBadge],
+  imports: [Skeleton, MatCardModule, ReactiveFormsModule, MatButtonModule, MatDatepickerModule, MatFormFieldModule, MatInputModule, MatPaginatorModule, StatusBadge],
   providers: [provideNativeDateAdapter(), { provide: DateAdapter, useClass: UkDateAdapter }, { provide: MAT_DATE_LOCALE, useValue: 'en-GB' }],
   template: `
-    <form class="on-date" (ngSubmit)="showOn()">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Status on date</mat-label>
-        <input matInput [matDatepicker]="picker" [formControl]="date" [max]="today" placeholder="DD/MM/YYYY" data-test="on-date" />
-        <mat-datepicker-toggle matIconSuffix [for]="picker" />
-        <mat-datepicker #picker />
-      </mat-form-field>
-      <button mat-stroked-button type="submit" class="btn" [disabled]="busy()">Show</button>
-    </form>
-    @if (dateError(); as message) { <p class="notice notice--error" role="alert">{{ message }}</p> }
-    @if (onDate(); as o) {
-      <section class="on-result" data-test="on-result" aria-live="polite">
-        <h3 class="on-result__title">{{ day(o.on) }}</h3>
-        <ul class="entries">
-          @for (e of o.markets; track e.market) {
-            <li class="entry">
-              <div class="entry__top"><span class="entry__market">{{ e.market }}</span>@if (e.status; as status) { <hs-status-badge [status]="status" /> }</div>
-              @if (e.reasons.length) { <ul class="reasons">@for (r of e.reasons; track $index) { <li>{{ r }}</li> }</ul> }
-            </li>
-          }
-        </ul>
-      </section>
-    }
+    <!-- 3 Nov 2026: two cards side by side on large screens: the status on a chosen date, and every change. -->
+    <mat-card appearance="outlined" class="hs-card">
+      <mat-card-header><mat-card-title><h3 class="panel-title">Status on a date</h3></mat-card-title></mat-card-header>
+      <mat-card-content class="panel">
 
-    @let s = state();
-    @if (s.kind === 'loading') {
-      <mat-progress-bar mode="indeterminate" aria-label="Loading history" />
-    } @else if (s.kind === 'error') {
-      <p role="alert">We couldn't load the history.</p>
-      <button mat-stroked-button type="button" class="btn" (click)="load()">Try again</button>
-    } @else if (s.page.meta.total === 0) {
-      <p class="muted">No changes recorded yet.</p>
-    } @else {
-      <ul class="entries">
-        @for (e of s.page.data; track $index) {
-          <li class="entry">
-            <div class="entry__top">
-              <span class="entry__market">{{ e.changed_at ? time(e.changed_at) : '' }} · {{ e.market }}</span>
-              @if (e.status; as status) { <hs-status-badge [status]="status" /> } @else { <span class="muted">No longer tracked</span> }
-            </div>
-            @if (e.reasons.length) { <ul class="reasons">@for (r of e.reasons; track $index) { <li>{{ r }}</li> }</ul> }
-          </li>
+        <form class="on-date" (ngSubmit)="showOn()">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Status on date</mat-label>
+            <input matInput [matDatepicker]="picker" [formControl]="date" [max]="today" placeholder="DD/MM/YYYY" data-test="on-date" />
+            <mat-datepicker-toggle matIconSuffix [for]="picker" />
+            <mat-datepicker #picker />
+          </mat-form-field>
+          <button mat-stroked-button type="submit" class="btn" [disabled]="busy()">Show</button>
+        </form>
+        @if (dateError(); as message) { <p class="notice notice--error" role="alert">{{ message }}</p> }
+        @if (onDate(); as o) {
+          <section class="on-result" data-test="on-result" aria-live="polite">
+            <h3 class="on-result__title">{{ day(o.on) }}</h3>
+            <ul class="entries">
+              @for (e of o.markets; track e.market) {
+                <li class="entry">
+                  <div class="entry__top"><span class="entry__market">{{ e.market }}</span>@if (e.status; as status) { <hs-status-badge [status]="status" /> }</div>
+                  @let rs = shown(e.reasons); @if (rs.length) { <ul class="reasons">@for (r of rs; track $index) { <li>{{ r }}</li> }</ul> }
+                </li>
+              }
+            </ul>
+          </section>
         }
-      </ul>
-      <mat-paginator [length]="s.page.meta.total" [pageSize]="25" [pageIndex]="page() - 1" [hidePageSize]="true" (page)="onPage($event)" aria-label="Choose history page" />
-    }
+
+      </mat-card-content>
+    </mat-card>
+    <mat-card appearance="outlined" class="hs-card">
+      <mat-card-header><mat-card-title><h3 class="panel-title">All changes</h3></mat-card-title></mat-card-header>
+      <mat-card-content class="panel">
+    @let s = state();
+        @if (s.kind === 'loading') {
+          <hs-skeleton kind="list" label="Loading history" />
+        } @else if (s.kind === 'error') {
+          <p role="alert">We couldn't load the history.</p>
+          <button mat-stroked-button type="button" class="btn" (click)="load()">Try again</button>
+        } @else if (s.page.meta.total === 0) {
+          <p class="muted">No changes recorded yet.</p>
+        } @else {
+          <ul class="entries">
+            @for (e of s.page.data; track $index) {
+              <li class="entry">
+                <div class="entry__top">
+                  <span class="entry__market">{{ e.changed_at ? time(e.changed_at) : '' }} · {{ e.market }}</span>
+                  @if (e.status; as status) { <hs-status-badge [status]="status" /> } @else { <span class="muted">No longer tracked</span> }
+                </div>
+                @let rs = shown(e.reasons); @if (rs.length) { <ul class="reasons">@for (r of rs; track $index) { <li>{{ r }}</li> }</ul> }
+              </li>
+            }
+          </ul>
+          <mat-paginator [length]="s.page.meta.total" [pageSize]="25" [pageIndex]="page() - 1" [hidePageSize]="true" (page)="onPage($event)" aria-label="Choose history page" />
+        }
+      </mat-card-content>
+    </mat-card>
   `,
   styles: `
-    :host { display: grid; gap: var(--space-3); }
+    :host { display: grid; gap: var(--space-4); align-items: start; }
+    @media (min-width: 1200px) { :host { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .panel { display: grid; gap: var(--space-3); }
+    .panel-title { font-size: var(--text-lg); margin: 0; }
     .on-date { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
     .btn { min-height: var(--touch-target); }
     .on-result { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
@@ -101,6 +117,11 @@ export class ComplianceHistory {
   protected readonly today = new Date();
   protected readonly day = ukDate;
   protected readonly time = ukDateTime;
+
+  /** "scope not checked" lines are left out (Bilal, 3 Nov 2026), as in the breakdown. */
+  protected shown(reasons: readonly string[]): readonly string[] {
+    return reasons.filter((r) => !/scope not checked/i.test(r));
+  }
 
   constructor() {
     effect(() => {

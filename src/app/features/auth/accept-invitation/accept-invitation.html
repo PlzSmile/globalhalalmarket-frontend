@@ -1,6 +1,6 @@
 @let s = state();
 @if (s.kind === 'loading') {
-  <mat-progress-bar mode="indeterminate" aria-label="Checking your invitation" />
+  <hs-loader label="Checking your invitation" />
 } @else if (s.kind === 'invalid') {
   <h1 class="auth-title">Invitation not found</h1>
   <p class="notice notice--error" role="alert">This invitation link is not valid or has expired. Ask your colleague to send a new one.</p>
@@ -36,7 +36,7 @@
         @else if (form.controls.password_confirmation.hasError('required')) { <mat-error>Type your password again.</mat-error> }
       </mat-form-field>
       <button mat-flat-button class="auth-submit" type="submit" [disabled]="busy()">Join {{ s.preview.company_name }}</button>
-      @if (busy()) { <mat-progress-bar mode="indeterminate" aria-label="Creating your account" /> }
+      @if (busy()) { <hs-loader label="Creating your account" /> }
     </form>
   }
 }

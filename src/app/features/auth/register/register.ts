@@ -6,16 +6,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PromoApi } from '../../../core/api/promo-api';
 import { Promo } from '../../../core/models/promo';
 import { applyServerErrors, clearServerErrors, serverError } from '../../../shared/forms/server-errors';
 import { PASSWORD_MIN, matchesField } from '../../../shared/forms/validators';
 
+import { Loader } from '../../../shared/ui/loader';
 @Component({
   selector: 'hs-register',
-  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatProgressBarModule],
+  imports: [Loader, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule],
   templateUrl: './register.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

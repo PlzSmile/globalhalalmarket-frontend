@@ -5,13 +5,13 @@ import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AuthApi } from '../../../core/api/auth-api';
 import { applyServerErrors, clearServerErrors, serverError } from '../../../shared/forms/server-errors';
 
+import { Loader } from '../../../shared/ui/loader';
 @Component({
   selector: 'hs-forgot-password',
-  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressBarModule],
+  imports: [Loader, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule],
   template: `
     <h1 class="auth-title">Forgot your password?</h1>
     <p class="auth-subtitle">Enter your email and we will send you a link to choose a new one.</p>
@@ -28,7 +28,7 @@ import { applyServerErrors, clearServerErrors, serverError } from '../../../shar
           @else if (serverError(form.controls.email); as message) { <mat-error>{{ message }}</mat-error> }
         </mat-form-field>
         <button mat-flat-button class="auth-submit" type="submit" [disabled]="busy()">Send reset link</button>
-        @if (busy()) { <mat-progress-bar mode="indeterminate" aria-label="Sending" /> }
+        @if (busy()) { <hs-loader label="Sending" /> }
       </form>
     }
 

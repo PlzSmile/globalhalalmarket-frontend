@@ -11,7 +11,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { CertificatesApi } from '../../core/api/certificates-api';
 import { Paginated } from '../../core/models/catalogue';
@@ -22,6 +21,8 @@ import { CertificateStatusBadge } from '../../shared/ui/certificate-status-badge
 import { EmptyState } from '../../shared/ui/empty-state';
 import { CertificateDialog, CertificateDialogData } from './certificate-dialog';
 
+import { Skeleton } from '../../shared/ui/skeleton';
+import { SearchField } from '../../shared/ui/search-field';
 type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Paginated<CertificateListItem> };
 type Filter = 'all' | CertificateStatus | 'expiring' | 'archived';
 interface Query { readonly search: string; readonly status: CertificateStatus | null; readonly expiring: boolean; readonly archived: boolean; readonly page: number; }
@@ -30,21 +31,20 @@ const STATUSES: readonly CertificateStatus[] = ['approved', 'pending', 'rejected
 
 @Component({
   selector: 'hs-certificates-list',
-  imports: [
+  imports: [Skeleton, SearchField, 
     ReactiveFormsModule, RouterLink, MatButtonModule, MatCardModule, MatChipsModule, MatFormFieldModule, MatIconModule, MatInputModule,
-    MatPaginatorModule, MatProgressBarModule, MatTableModule, CertificateStatusBadge, EmptyState,
+    MatPaginatorModule, MatTableModule, CertificateStatusBadge, EmptyState,
   ],
   template: `
-    <header class="page-top">
-      <h1 class="page-top__title">Certificates</h1>
-      <button mat-flat-button type="button" class="btn" (click)="add()" data-test="add-certificate"><mat-icon svgIcon="plus" /> Add certificate</button>
+    <header class="hs-list-head">
+      <h1>Certificates</h1>
+      <hs-search-field class="hs-list-head__search" [control]="search" label="Search body, number or supplier" />
+      <div class="hs-list-head__actions">
+        <button mat-flat-button type="button" class="btn" (click)="add()" data-test="add-certificate"><mat-icon svgIcon="plus" /> Add certificate</button>
+      </div>
     </header>
 
     <div class="filters">
-      <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
-        <mat-label>Search body, number or supplier</mat-label>
-        <input matInput type="search" [formControl]="search" maxlength="100" />
-      </mat-form-field>
       <mat-chip-listbox aria-label="Filter certificates" [value]="activeFilter()" (change)="setFilter($event.value ?? 'all')">
         @for (f of filters; track f.value) { <mat-chip-option [value]="f.value" [selectable]="true">{{ f.label }}</mat-chip-option> }
       </mat-chip-listbox>
@@ -52,7 +52,7 @@ const STATUSES: readonly CertificateStatus[] = ['approved', 'pending', 'rejected
 
     @let s = state();
     @if (s.kind === 'loading') {
-      <mat-progress-bar mode="indeterminate" aria-label="Loading certificates" />
+      <hs-skeleton kind="table" label="Loading certificates" />
     } @else if (s.kind === 'error') {
       <mat-card appearance="outlined" class="hs-card"><mat-card-content class="load-error">
         <p role="alert">We couldn't load your certificates.</p>
@@ -104,12 +104,9 @@ const STATUSES: readonly CertificateStatus[] = ['approved', 'pending', 'rejected
   `,
   styles: `
     :host { display: grid; gap: var(--space-4); }
-    .page-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
-    .page-top__title { font-size: var(--text-2xl); letter-spacing: -0.02em; }
     .filters { display: grid; gap: var(--space-3); }
     /* Touch targets ≥ 44 px (Material chips default to 32 px). */
     .filters mat-chip-option { --mat-chip-container-height: var(--touch-target); }
-    .search { width: min(100%, var(--container-form)); }
     .btn { min-height: var(--touch-target); }
     .table-card { overflow: hidden; }
     .row-link { display: inline-flex; align-items: center; min-height: var(--touch-target); font-weight: var(--weight-semibold); }

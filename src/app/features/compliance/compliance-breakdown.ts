@@ -21,13 +21,14 @@ let nextId = 0;
   imports: [RouterLink, MatButtonModule, StatusBadge],
   template: `
     @for (m of visible(); track m.market) {
-      <section class="market" [attr.aria-labelledby]="uid + '-' + m.market">
+      <section class="market" [class]="'market market--' + m.market" [attr.aria-labelledby]="uid + '-' + m.market">
         <header class="market__top">
           <h3 class="market__title" [id]="uid + '-' + m.market">{{ m.authority }}</h3>
           @if (m.status; as status) { <hs-status-badge [status]="status" [detail]="detail(status, m.next_expiry_on)" /> } @else { <span class="muted">Not calculated yet</span> }
         </header>
-        @if (m.reasons.length) {
-          <ul class="reasons">@for (r of m.reasons; track $index) { <li>{{ r }}</li> }</ul>
+        @let marketReasons = shown(m.reasons);
+        @if (marketReasons.length) {
+          <ul class="reasons">@for (r of marketReasons; track $index) { <li>{{ r }}</li> }</ul>
         }
         <ul class="ingredients">
           @for (i of m.ingredients; track i.id) {
@@ -36,8 +37,9 @@ let nextId = 0;
                 <span class="ingredient__name">{{ i.name }}</span>
                 @if (i.status; as status) { <hs-status-badge [status]="status" /> }
               </div>
-              @if (i.reasons.length) {
-                <ul class="reasons reasons--small">@for (r of i.reasons; track $index) { <li>{{ r }}</li> }</ul>
+              @let reasons = shown(i.reasons);
+              @if (reasons.length) {
+                <ul class="reasons reasons--small">@for (r of reasons; track $index) { <li>{{ r }}</li> }</ul>
               }
               @for (c of i.certificates; track c.id) {
                 <div class="cert" data-test="certificate">
@@ -62,16 +64,24 @@ let nextId = 0;
     }
   `,
   styles: `
-    :host { display: grid; gap: var(--space-5); }
-    .market { display: grid; gap: var(--space-3); }
+    :host { display: grid; gap: var(--space-4); }
+    /* 3 Nov 2026: each market is its own panel with the market's colour on the left; its ingredients sit in two columns. */
+    .market { display: grid; gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-lg);
+      border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent); border-left: 4px solid var(--market-colour, var(--color-primary));
+      background: var(--color-surface); }
+    .market--BPJPH { --market-colour: var(--market-id); }
+    .market--JAKIM { --market-colour: var(--market-my); }
+    .market--MOIAT { --market-colour: var(--market-ae); }
     .market__top, .ingredient__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
     .market__title { font-size: var(--text-lg); margin: 0; }
     .reasons { margin: 0; padding-inline-start: var(--space-5); display: grid; gap: var(--space-1); }
     .reasons--small { font-size: var(--text-sm); color: var(--color-text-muted); }
-    .ingredients { list-style: none; margin: 0; padding: 0; display: grid; }
-    .ingredient { display: grid; gap: var(--space-2); padding-block: var(--space-3); border-top: 1px solid var(--color-border); }
+    .ingredients { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+    @media (min-width: 1200px) { .ingredients { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .ingredient { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3); border-radius: var(--radius-md);
+      border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent); background: color-mix(in srgb, var(--color-surface-muted) 45%, var(--color-surface)); }
     .ingredient__name { font-weight: var(--weight-semibold); }
-    .cert { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-muted); }
+    .cert { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent); border-radius: var(--radius-md); background: var(--color-surface); }
     .cert__title { margin: 0; font-size: var(--text-sm); }
     .cert__title a { display: inline-flex; align-items: center; min-height: var(--touch-target); }
     .scopes { display: grid; gap: var(--space-2); margin: 0; grid-template-columns: minmax(0, 1fr); }
@@ -106,6 +116,11 @@ export class ComplianceBreakdown {
 
   protected detail(status: ComplianceStatus, next: string | null): string | null {
     return statusDetail(status, next);
+  }
+
+  /** Reasons worth reading: "scope not checked" lines are left out (Bilal, 3 Nov 2026); each certificate box still says it. */
+  protected shown(reasons: readonly string[]): readonly string[] {
+    return reasons.filter((r) => !/scope not checked/i.test(r));
   }
 
   protected scopes(certificate: BreakdownCertificate): string {

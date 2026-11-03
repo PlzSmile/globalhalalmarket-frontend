@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AuthApi } from '../api/auth-api';
-import { CurrentUser, LoginRequest, RegisterRequest } from '../models/auth';
+import { CurrentUser, LoginChallenge, LoginCodeMethod, LoginRequest, RegisterRequest } from '../models/auth';
 
 /** Who is logged in. Loaded once from GET /api/v1/me; screens and guards read the signals. */
 @Injectable({ providedIn: 'root' })
@@ -37,8 +37,14 @@ export class AuthService {
     return this.state();
   }
 
-  async login(body: LoginRequest): Promise<CurrentUser> {
-    return this.setUser(await firstValueFrom(this.api.login(body)));
+  /** Step 1 of logging in: nobody is logged in yet; the answer says which code comes next. */
+  async login(body: LoginRequest): Promise<LoginChallenge> {
+    return firstValueFrom(this.api.login(body));
+  }
+
+  /** Step 2: the code logs the user in. */
+  async verifyLogin(code: string, method: LoginCodeMethod): Promise<CurrentUser> {
+    return this.setUser(await firstValueFrom(this.api.verifyLogin(code, method)));
   }
 
   async register(body: RegisterRequest): Promise<CurrentUser> {

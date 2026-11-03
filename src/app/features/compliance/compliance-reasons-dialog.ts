@@ -3,13 +3,13 @@ import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ComplianceApi } from '../../core/api/compliance-api';
 import { AuthService } from '../../core/auth/auth.service';
 import { MarketBreakdown } from '../../core/models/compliance';
 import { AuthorityCode } from '../../core/models/markets';
 import { ComplianceBreakdown } from './compliance-breakdown';
 
+import { Skeleton } from '../../shared/ui/skeleton';
 export interface ComplianceReasonsDialogData {
   readonly productId: number;
   readonly productName: string;
@@ -21,13 +21,13 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; markets:
 /** Opened by tapping a matrix cell: works on touch screens, where tooltips do not. */
 @Component({
   selector: 'hs-compliance-reasons-dialog',
-  imports: [RouterLink, MatButtonModule, MatDialogModule, MatProgressBarModule, ComplianceBreakdown],
+  imports: [Skeleton, RouterLink, MatButtonModule, MatDialogModule, ComplianceBreakdown],
   template: `
     <h2 mat-dialog-title>Why? · {{ data.productName }}</h2>
     <mat-dialog-content>
       @let s = state();
       @if (s.kind === 'loading') {
-        <mat-progress-bar mode="indeterminate" aria-label="Loading the reasons" />
+        <hs-skeleton kind="list" label="Loading the reasons" />
       } @else if (s.kind === 'error') {
         <p role="alert">We couldn't load the reasons.</p>
         <button mat-stroked-button type="button" class="btn" (click)="load()">Try again</button>

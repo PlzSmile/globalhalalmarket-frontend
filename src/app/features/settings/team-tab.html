@@ -46,7 +46,7 @@
           <tr mat-row *matRowDef="let row; columns: columns"></tr>
         </table>
       } @else {
-        <mat-progress-bar mode="indeterminate" aria-label="Loading your team" />
+        <hs-skeleton kind="list" label="Loading your team" />
       }
     </mat-card-content>
   </mat-card>

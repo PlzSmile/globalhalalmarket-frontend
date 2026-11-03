@@ -1,6 +1,6 @@
 import { ApplicationConfig, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient, withFetch, withInterceptors, withXsrfConfiguration } from '@angular/common/http';
-import { NavigationEnd, provideRouter, Router, withComponentInputBinding } from '@angular/router';
+import { ActivatedRouteSnapshot, NavigationEnd, provideRouter, Router, withComponentInputBinding, withViewTransitions } from '@angular/router';
 import { filter } from 'rxjs';
 import { registerIcons } from './core/icons/icons';
 import { apiInterceptor } from './core/http/api.interceptor';
@@ -22,10 +22,28 @@ function scrollToTopOnNewPage(): void {
   });
 }
 
+/** The page path of a route snapshot (every segment down to the leaf, without the query). */
+function pathOf(snapshot: ActivatedRouteSnapshot): string {
+  const parts: string[] = [];
+  for (let s: ActivatedRouteSnapshot | null = snapshot.root; s; s = s.firstChild) {
+    parts.push(...s.url.map((u) => u.path));
+  }
+  return parts.join('/');
+}
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes, withComponentInputBinding()),
+    // Moving between pages slides the content softly (Bilal, 3 Nov 2026; styles.scss). A query-only change (a filter,
+    // a tab) does not animate.
+    provideRouter(routes, withComponentInputBinding(), withViewTransitions({
+      skipInitialTransition: true,
+      onViewTransitionCreated: ({ transition, from, to }) => {
+        if (pathOf(from) === pathOf(to)) {
+          transition.skipTransition();
+        }
+      },
+    })),
     provideAppInitializer(scrollToTopOnNewPage),
     // Laravel Sanctum SPA auth: send the XSRF-TOKEN cookie back as X-XSRF-TOKEN.
     provideHttpClient(withFetch(), withXsrfConfiguration({ cookieName: 'XSRF-TOKEN', headerName: 'X-XSRF-TOKEN' }), withInterceptors([apiInterceptor])),

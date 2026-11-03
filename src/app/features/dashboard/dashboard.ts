@@ -5,7 +5,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DashboardApi } from '../../core/api/dashboard-api';
@@ -19,12 +18,13 @@ import { ComplianceMatrix } from '../compliance/compliance-matrix';
 import { MarketsDialog } from '../markets/markets-dialog';
 import { OnboardingCard } from './onboarding-card';
 
+import { Skeleton } from '../../shared/ui/skeleton';
 type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; data: DashboardData };
 
 @Component({
   selector: 'hs-dashboard',
-  imports: [
-    MatButtonModule, MatCardModule, MatChipsModule, MatIconModule, MatProgressBarModule, RouterLink, EmptyState, OnboardingCard, ComplianceMatrix,
+  imports: [Skeleton, 
+    MatButtonModule, MatCardModule, MatChipsModule, MatIconModule, RouterLink, EmptyState, OnboardingCard, ComplianceMatrix,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',

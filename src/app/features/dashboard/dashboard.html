@@ -11,7 +11,7 @@
 
 @let s = state();
 @if (s.kind === 'loading') {
-  <mat-progress-bar mode="indeterminate" aria-label="Loading your dashboard" />
+  <hs-skeleton kind="dashboard" label="Loading your dashboard" />
 } @else if (s.kind === 'error') {
   <mat-card appearance="outlined" class="hs-card">
     <mat-card-content class="load-error">
@@ -68,9 +68,11 @@
       @for (st of statuses; track st) {
         <button type="button" class="hs-lift" [class]="'total total--' + st" (click)="showStatus(null, st)" [attr.data-test]="'count-all-' + st"
                 [attr.aria-label]="c.summary.overall[st] + ' ' + (c.summary.overall[st] === 1 ? 'product' : 'products') + ': ' + statusLabel[st] + ', all markets'">
-          <span class="total__label"><span class="dot" aria-hidden="true"></span><span class="long">{{ statusLabel[st] }}</span><span class="short">{{ statusShort[st] }}</span></span>
+          <span class="total__text">
+            <span class="total__label"><span class="dot" aria-hidden="true"></span><span class="long">{{ statusLabel[st] }}</span><span class="short">{{ statusShort[st] }}</span></span>
+            <span class="total__hint">{{ c.summary.overall[st] === 1 ? 'product' : 'products' }} · all markets</span>
+          </span>
           <strong class="total__value">{{ c.summary.overall[st] }}</strong>
-          <span class="total__hint">{{ c.summary.overall[st] === 1 ? 'product' : 'products' }} · all markets</span>
         </button>
       }
     </div>

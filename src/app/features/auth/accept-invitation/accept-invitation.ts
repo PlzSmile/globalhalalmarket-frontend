@@ -6,18 +6,18 @@ import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TeamApi } from '../../../core/api/team-api';
 import { AuthService } from '../../../core/auth/auth.service';
 import { InvitationPreview, ROLE_LABELS } from '../../../core/models/auth';
 import { applyServerErrorsOr, clearServerErrors, serverError } from '../../../shared/forms/server-errors';
 import { PASSWORD_MIN, matchesField } from '../../../shared/forms/validators';
 
+import { Loader } from '../../../shared/ui/loader';
 type State = { kind: 'loading' } | { kind: 'invalid' } | { kind: 'ready'; preview: InvitationPreview };
 
 @Component({
   selector: 'hs-accept-invitation',
-  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressBarModule],
+  imports: [Loader, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule],
   templateUrl: './accept-invitation.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

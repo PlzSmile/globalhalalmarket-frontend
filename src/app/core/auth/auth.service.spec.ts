@@ -38,13 +38,21 @@ describe('AuthService', () => {
     expect(service.isLoggedIn()).toBe(false);
   });
 
-  it('logs in after fetching the CSRF cookie', async () => {
-    const result = service.login({ email: 'aisha@example.com', password: 'secret-secret', remember: false });
+  it('logs in in two steps: password (after the CSRF cookie), then the code', async () => {
+    const challenge = { two_factor: true, method: 'email', email_hint: 'ai•••@example.com', resend_after: 30 };
+    const step1 = service.login({ email: 'aisha@example.com', password: 'secret-secret', remember: false });
     http.expectOne('/sanctum/csrf-cookie').flush(null, { status: 204, statusText: 'No Content' });
     const login = http.expectOne('/api/v1/auth/login');
     expect(login.request.method).toBe('POST');
-    login.flush({ data: USER });
-    expect(await result).toEqual(USER);
+    login.flush({ data: challenge }, { status: 202, statusText: 'Accepted' });
+    expect(await step1).toEqual(challenge);
+    expect(service.user()).toBeNull(); // nobody is logged in after the password alone
+
+    const step2 = service.verifyLogin('123456', 'email');
+    const verify = http.expectOne('/api/v1/auth/login/verify');
+    expect(verify.request.body).toEqual({ code: '123456', method: 'email' });
+    verify.flush({ data: USER });
+    expect(await step2).toEqual(USER);
     expect(service.user()).toEqual(USER);
   });
 

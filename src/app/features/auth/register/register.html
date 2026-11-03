@@ -63,7 +63,7 @@
   </mat-form-field>
 
   <button mat-flat-button class="auth-submit" type="submit" [disabled]="busy()">Create account</button>
-  @if (busy()) { <mat-progress-bar mode="indeterminate" aria-label="Creating your account" /> }
+  @if (busy()) { <hs-loader label="Creating your account" /> }
 </form>
 
 <p class="auth-footer">Already have an account? <a routerLink="/login">Log in</a></p>

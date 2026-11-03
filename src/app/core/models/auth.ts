@@ -57,6 +57,12 @@ export interface Team { readonly members: readonly TeamMember[]; readonly invita
 export interface InvitationPreview { readonly company_name: string; readonly email: string; readonly role: AssignableRole; }
 
 export interface LoginRequest { email: string; password: string; remember: boolean; }
+/** 3 Nov 2026: the password is right; now a code from the authenticator app or one we emailed. */
+export type LoginCodeMethod = 'app' | 'email' | 'recovery';
+export interface LoginChallenge { readonly two_factor: true; readonly method: 'app' | 'email'; readonly email_hint: string; readonly resend_after: number; }
+export interface EmailCodeSent { readonly email_hint: string; readonly resend_after: number; }
+export interface TwoFactorStatus { readonly app: boolean; readonly recovery_codes_left: number; }
+export interface TwoFactorSetup { readonly qr: string; readonly secret: string; }
 export interface RegisterRequest { name: string; email: string; password: string; password_confirmation: string; company_name: string; offer_code?: string; }
 export interface ResetPasswordRequest { token: string; email: string; password: string; password_confirmation: string; }
 export interface AcceptInvitationRequest { name: string; password: string; password_confirmation: string; }

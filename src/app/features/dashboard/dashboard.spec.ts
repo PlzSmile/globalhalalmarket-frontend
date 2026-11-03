@@ -66,11 +66,11 @@ describe('Dashboard', () => {
     const response = new Subject<DashboardData>();
     const { fixture, el } = setup(vi.fn(() => response.asObservable()));
     fixture.detectChanges();
-    expect(el.querySelector('mat-progress-bar')).not.toBeNull();
+    expect(el.querySelector('hs-skeleton')).not.toBeNull();
     response.next(NEW_COMPANY);
     response.complete();
     await settle(fixture);
-    expect(el.querySelector('mat-progress-bar')).toBeNull();
+    expect(el.querySelector('hs-skeleton')).toBeNull();
     expect(el.textContent).toContain('Getting started');
   });
 
