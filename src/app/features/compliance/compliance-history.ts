@@ -30,7 +30,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Pa
       <mat-card-header><mat-card-title><h3 class="panel-title">Status on a date</h3></mat-card-title></mat-card-header>
       <mat-card-content class="panel">
 
-        <form class="on-date" (ngSubmit)="showOn()">
+        <form class="on-date" (submit)="$event.preventDefault(); showOn()">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Status on date</mat-label>
             <input matInput [matDatepicker]="picker" [formControl]="date" [max]="today" placeholder="DD/MM/YYYY" data-test="on-date" />

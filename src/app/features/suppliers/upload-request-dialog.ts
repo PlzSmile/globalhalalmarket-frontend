@@ -47,7 +47,7 @@ export interface UploadRequestDialogData {
         <button mat-flat-button type="button" class="btn" [mat-dialog-close]="true">Done</button>
       </mat-dialog-actions>
     } @else {
-      <form (ngSubmit)="submit()" novalidate>
+      <form (submit)="$event.preventDefault(); submit()" novalidate>
         <mat-dialog-content class="fields">
           @if (formError(); as message) { <p class="notice notice--error" role="alert">{{ message }}</p> }
           @if (data.hasOpenLink) { <p class="notice notice--info" data-test="replaces">Sending a new link stops the open link for this supplier.</p> }

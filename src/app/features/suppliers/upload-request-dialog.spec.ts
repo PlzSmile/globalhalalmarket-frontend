@@ -41,9 +41,13 @@ describe('UploadRequestDialog', () => {
     expect(el.textContent).toContain('Email the link to q@acme.test');
     dialog['toggle'](2, false);
     dialog['note'].setValue('  Please   send the 2026 one ');
-    await dialog['submit']();
+    // 4 Nov 2026: click the real button. The form had (ngSubmit) without a form directive, so the browser reloaded
+    // the page and nothing was sent; calling submit() directly hid that.
+    const submitted = new Event('submit', { cancelable: true });
+    el.querySelector('form')!.dispatchEvent(submitted);
     await settle(fixture);
 
+    expect(submitted.defaultPrevented).toBe(true); // no page reload
     expect(send).toHaveBeenCalledWith(5, { ingredient_ids: [1], note: 'Please send the 2026 one', send_email: true });
     expect(snackBar.open).toHaveBeenCalledWith('Upload link sent.', 'Close', { duration: 4000 });
     expect((el.querySelector('[data-test="link"]') as HTMLInputElement).value).toBe('https://globalhalalmarket.test/upload/abc');

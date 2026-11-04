@@ -29,7 +29,7 @@ export type TwoFactorDialogMode = 'setup' | 'recovery' | 'disable';
       @switch (step()) {
         @case ('password') {
           <p>{{ mode === 'disable' ? 'After this, log-in codes come by email.' : 'For your security, type your current password first.' }}</p>
-          <form id="tf-password" (ngSubmit)="next()">
+          <form id="tf-password" (submit)="$event.preventDefault(); next()">
             <mat-form-field appearance="outline" class="full">
               <mat-label>Current password</mat-label>
               <input matInput type="password" [formControl]="password" autocomplete="current-password" data-test="tf-password" />

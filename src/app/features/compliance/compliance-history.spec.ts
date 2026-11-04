@@ -40,8 +40,10 @@ describe('ComplianceHistory', () => {
     const { fixture, component, statusOn, el } = setup();
     await settle(fixture);
     component['date'].setValue(new Date(2026, 9, 1));
-    await component['showOn']();
+    const submitted = new Event('submit', { cancelable: true }); // the real form event: no page reload (4 Nov 2026)
+    el.querySelector('form.on-date')!.dispatchEvent(submitted);
     await settle(fixture);
+    expect(submitted.defaultPrevented).toBe(true);
     expect(statusOn).toHaveBeenCalledWith(3, '2026-10-01');
     expect(el.querySelector('[data-test="on-result"]')?.textContent).toContain('1 Oct 2026');
   });
