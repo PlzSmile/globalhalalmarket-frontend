@@ -8,12 +8,13 @@ import { vi } from 'vitest';
 import { UploadRequestDialog } from './upload-request-dialog';
 import { UploadRequestsApi } from '../../core/api/upload-requests-api';
 import { SupplierDetail } from '../../core/models/catalogue';
+import { SentUploadRequest } from '../../core/models/upload-requests';
 import { settle } from '../../../testing/settle';
 
 const ACME: SupplierDetail = { id: 5, name: 'Acme Gelatin', contact_email: 'q@acme.test', country: null,
   ingredients: [{ id: 1, name: 'Gelatin' }, { id: 2, name: 'Salt' }], certificates: [] };
-const SENT = { id: 9, status: 'open', closed_reason: null, ingredients: [{ id: 1, name: 'Gelatin' }], note: null, expires_at: '2026-10-13T10:00:00+00:00',
-  emailed_to_saved_address: true, uploads_count: 0, max_uploads: 5, created_at: null, requested_by: null, link: 'https://globalhalalmarket.test/upload/abc' };
+const SENT: SentUploadRequest = { id: 9, status: 'open', closed_reason: null, ingredients: [{ id: 1, name: 'Gelatin' }], note: null, expires_at: '2026-10-13T10:00:00+00:00',
+  emailed_to_saved_address: true, email: { status: 'sent', to: 'q@acme.test', at: '2026-11-04T14:32:00Z' }, uploads_count: 0, max_uploads: 5, created_at: null, requested_by: null, link: 'https://globalhalalmarket.test/upload/abc' };
 
 function setup(supplier: SupplierDetail = ACME, send = vi.fn(() => of(SENT)), hasOpenLink = false) {
   const snackBar = { open: vi.fn() };
@@ -46,7 +47,7 @@ describe('UploadRequestDialog', () => {
     expect(send).toHaveBeenCalledWith(5, { ingredient_ids: [1], note: 'Please send the 2026 one', send_email: true });
     expect(snackBar.open).toHaveBeenCalledWith('Upload link sent.', 'Close', { duration: 4000 });
     expect((el.querySelector('[data-test="link"]') as HTMLInputElement).value).toBe('https://globalhalalmarket.test/upload/abc');
-    expect(el.textContent).toContain('Sent by email to q@acme.test.');
+    expect(el.querySelector('[data-test="sent-to"]')?.textContent).toContain('Emailed to q@acme.test at 4 Nov 2026');
     expect(el.textContent).toContain('Anyone with this link can upload certificates for this supplier until it closes. Share it only with the supplier.');
   });
 
@@ -61,7 +62,7 @@ describe('UploadRequestDialog', () => {
   });
 
   it('offers copy-link only when the supplier has no email', async () => {
-    const send = vi.fn(() => of({ ...SENT, emailed_to_saved_address: false }));
+    const send = vi.fn(() => of({ ...SENT, emailed_to_saved_address: false, email: { status: 'not_sent' as const, to: null, at: null } }));
     const { fixture, dialog, el } = setup({ ...ACME, contact_email: null }, send);
     await settle(fixture);
     expect(el.querySelector('[data-test="no-email"]')?.textContent).toContain('No email saved — you can copy the link and send it yourself.');
@@ -89,7 +90,7 @@ describe('UploadRequestDialog', () => {
   });
 
   it('says when the email could not be sent', async () => {
-    const { fixture, dialog, el } = setup(ACME, vi.fn(() => of({ ...SENT, emailed_to_saved_address: false })));
+    const { fixture, dialog, el } = setup(ACME, vi.fn(() => of({ ...SENT, emailed_to_saved_address: false, email: { status: 'failed' as const, to: 'q@acme.test', at: '2026-11-04T14:32:00Z' } })));
     await settle(fixture);
     await dialog['submit']();
     await settle(fixture);

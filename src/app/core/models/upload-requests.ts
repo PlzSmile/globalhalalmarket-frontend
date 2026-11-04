@@ -4,6 +4,14 @@ import { NamedRef } from './catalogue';
 export type UploadRequestStatus = 'open' | 'closed' | 'expired';
 export type UploadClosedReason = 'finished' | 'covered' | 'limit' | 'cancelled' | 'replaced';
 
+export type UploadEmailStatus = 'sent' | 'failed' | 'not_sent';
+
+export interface UploadRequestEmail {
+  readonly status: UploadEmailStatus;
+  readonly to: string | null;
+  readonly at: string | null;
+}
+
 export interface UploadRequestItem {
   readonly id: number;
   readonly status: UploadRequestStatus;
@@ -12,6 +20,8 @@ export interface UploadRequestItem {
   readonly note: string | null;
   readonly expires_at: string;
   readonly emailed_to_saved_address: boolean;
+  /** Where and when the email went, or that it failed (4 Nov 2026). */
+  readonly email: UploadRequestEmail;
   readonly uploads_count: number;
   readonly max_uploads: number;
   readonly created_at: string | null;

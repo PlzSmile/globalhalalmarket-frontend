@@ -17,8 +17,8 @@ const ACME: SupplierDetail = { id: 5, name: 'Acme Gelatin', contact_email: 'q@ac
   certificates: [{ id: 11, status: 'approved', body: null, body_name_other: 'Midlands Halal Board', supplier: { id: 5, name: 'Acme Gelatin' }, certificate_number: 'MHB-1', issued_on: null, expires_on: '2027-03-12', ingredients_count: 1 }] };
 
 const REQUESTS: UploadRequestItem[] = [
-  { id: 2, status: 'open', closed_reason: null, ingredients: [{ id: 3, name: 'Gelatin' }], note: null, expires_at: '2026-10-13T10:00:00+00:00', emailed_to_saved_address: true, uploads_count: 1, max_uploads: 5, created_at: '2026-09-29T10:00:00+00:00', requested_by: { id: 1, name: 'Aisha' } },
-  { id: 1, status: 'closed', closed_reason: 'replaced', ingredients: [{ id: 3, name: 'Gelatin' }], note: null, expires_at: '2026-10-10T10:00:00+00:00', emailed_to_saved_address: false, uploads_count: 0, max_uploads: 5, created_at: '2026-09-26T10:00:00+00:00', requested_by: null },
+  { id: 2, status: 'open', closed_reason: null, ingredients: [{ id: 3, name: 'Gelatin' }], note: null, expires_at: '2026-10-13T10:00:00+00:00', emailed_to_saved_address: true, email: { status: 'sent', to: 'q@acme.test', at: '2026-09-29T10:05:00Z' }, uploads_count: 1, max_uploads: 5, created_at: '2026-09-29T10:00:00+00:00', requested_by: { id: 1, name: 'Aisha' } },
+  { id: 1, status: 'closed', closed_reason: 'replaced', ingredients: [{ id: 3, name: 'Gelatin' }], note: null, expires_at: '2026-10-10T10:00:00+00:00', emailed_to_saved_address: false, email: { status: 'failed', to: 'q@acme.test', at: '2026-09-26T10:05:00Z' }, uploads_count: 0, max_uploads: 5, created_at: '2026-09-26T10:00:00+00:00', requested_by: null },
 ];
 
 function setup(api: Record<string, unknown> = {}, uploadsOverrides: Record<string, unknown> = {}) {
@@ -109,8 +109,12 @@ describe('SupplierDetailPage', () => {
   it('lists upload links with their state and cancels an open one', async () => {
     const { fixture, page, uploads, snackBar, el } = setup();
     await settle(fixture);
-    const card = el.querySelector('[data-test="upload-links"]') as HTMLElement;
+    expect(el.querySelector('[data-test="upload-links"]')).toBeNull(); // 4 Nov 2026: no separate card
+    const card = el.querySelector('[data-test="supplier-certificates"] [data-test="upload-requests"]') as HTMLElement;
     expect(card.textContent).toContain('Open');
+    expect(card.querySelector('[data-test="email-2"]')?.textContent).toContain('Emailed to q@acme.test · 29 Sep 2026');
+    expect(card.querySelector('[data-test="email-1"]')?.textContent).toContain('Email to q@acme.test failed');
+    expect(card.textContent).toContain('By Aisha');
     expect(card.textContent).toContain('1 of 5 uploaded');
     expect(card.textContent).toContain('Replaced by a newer link');
     expect(card.textContent).toContain('13 Oct 2026');
@@ -134,8 +138,11 @@ describe('SupplierDetailPage', () => {
   it('asks to link ingredients before requesting certificates', async () => {
     const { fixture, el } = setup({ get: vi.fn(() => of({ ...ACME, ingredients: [] })) });
     await settle(fixture);
-    const button = el.querySelector('[data-test="request-certificates"]') as HTMLButtonElement;
+    (el.querySelector('[data-test="add-supplier-certificate"]') as HTMLButtonElement).click();
+    await settle(fixture);
+    const button = document.querySelector('[data-test="request-certificates"]') as HTMLButtonElement;
     expect(button.disabled).toBe(true);
-    expect(el.textContent).toContain('Link ingredients to this supplier first.');
+    expect(button.textContent).toContain('Link ingredients to this supplier first');
+    expect((document.querySelector('[data-test="add-manually"]') as HTMLButtonElement).disabled).toBe(false);
   });
 });

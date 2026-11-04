@@ -5,13 +5,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { IngredientsApi } from '../../core/api/ingredients-api';
 import { SuppliersApi } from '../../core/api/suppliers-api';
 import { LinkTarget, NamedRef, SupplierDetail } from '../../core/models/catalogue';
 import { CertificateDetail, bodyName } from '../../core/models/certificates';
 import { errorMessage, isNotFound } from '../../shared/forms/error-message';
-import { ukDate } from '../../shared/format/uk-date';
+import { ukDate, ukDateTime } from '../../shared/format/uk-date';
 import { CertificateStatusBadge } from '../../shared/ui/certificate-status-badge';
 import { ConfirmDialog, ConfirmDialogData } from '../../shared/ui/confirm-dialog';
 import { LinkPicker } from '../../shared/ui/link-picker';
@@ -26,7 +27,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
 
 @Component({
   selector: 'hs-supplier-detail',
-  imports: [Skeleton, RouterLink, MatButtonModule, MatCardModule, MatIconModule, LinkPicker, CertificateStatusBadge],
+  imports: [Skeleton, RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatMenuModule, LinkPicker, CertificateStatusBadge],
   template: `
     <a routerLink="/suppliers" class="back">← All suppliers</a>
     @let s = state();
@@ -61,7 +62,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
         </div>
       </header>
 
-      <!-- 3 Nov 2026: two cards per row on large screens (ingredients | certificates), upload links below. -->
+      <!-- Two cards per row on large screens (ingredients | certificates); upload requests live in the certificates card (4 Nov 2026). -->
       <div class="cards">
       <mat-card appearance="outlined" class="hs-card">
         <mat-card-header><mat-card-title><h2 class="card-title">Ingredients it supplies</h2></mat-card-title></mat-card-header>
@@ -87,9 +88,26 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
       <mat-card appearance="outlined" class="hs-card" data-test="supplier-certificates">
         <mat-card-header><mat-card-title><h2 class="card-title">Certificates</h2></mat-card-title></mat-card-header>
         <mat-card-content>
-          <button mat-stroked-button type="button" class="btn" (click)="addCertificate()" [disabled]="busy()" data-test="add-supplier-certificate">
-            <mat-icon svgIcon="plus" /> Add certificate
+          <!-- 4 Nov 2026 (Bilal): one button, two ways: ask the supplier by email, or add the PDF yourself. -->
+          <button mat-stroked-button type="button" class="btn" [matMenuTriggerFor]="addMenu" [disabled]="busy()" data-test="add-supplier-certificate">
+            <mat-icon svgIcon="plus" /> Add certificate <mat-icon svgIcon="chevron-down" iconPositionEnd />
           </button>
+          <mat-menu #addMenu="matMenu" class="add-menu">
+            <button mat-menu-item type="button" (click)="requestCertificates()" [disabled]="supplier.ingredients.length === 0" data-test="request-certificates">
+              <mat-icon svgIcon="mail" />
+              <span class="menu-option">
+                <span class="menu-option__title">Request from supplier</span>
+                <span class="menu-option__hint">{{ supplier.ingredients.length === 0 ? 'Link ingredients to this supplier first' : 'Send an upload link by email' }}</span>
+              </span>
+            </button>
+            <button mat-menu-item type="button" (click)="addCertificate()" data-test="add-manually">
+              <mat-icon svgIcon="file" />
+              <span class="menu-option">
+                <span class="menu-option__title">Add manually</span>
+                <span class="menu-option__hint">Upload the PDF yourself</span>
+              </span>
+            </button>
+          </mat-menu>
           @if (supplier.certificates?.length) {
             <ul class="rows">
               @for (certificate of supplier.certificates; track certificate.id) {
@@ -105,23 +123,20 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
           } @else {
             <p class="muted">No certificates yet.</p>
           }
-        </mat-card-content>
-      </mat-card>
-      </div>
 
-      <mat-card appearance="outlined" class="hs-card" data-test="upload-links">
-        <mat-card-header><mat-card-title><h2 class="card-title">Upload links</h2></mat-card-title></mat-card-header>
-        <mat-card-content>
-          <button mat-flat-button type="button" class="btn" (click)="requestCertificates()" [disabled]="busy() || supplier.ingredients.length === 0" data-test="request-certificates">Request certificates</button>
-          @if (supplier.ingredients.length === 0) { <p class="muted">Link ingredients to this supplier first.</p> }
           @if (requests().length) {
-            <ul class="rows">
+            <h3 class="sub-title">Requests sent</h3>
+            <ul class="rows" data-test="upload-requests">
               @for (item of requests(); track item.id) {
                 <li class="row link-row">
                   <div class="link-row__main">
                     <span class="link-state link-state--{{ item.status }}">{{ item.status === 'open' ? 'Open' : item.status === 'expired' ? 'Expired' : 'Closed' }}</span>
                     <span>{{ ingredientNames(item) }}</span>
-                    <span class="muted">sent {{ date(item.created_at) }} · expires {{ date(item.expires_at) }} · {{ item.uploads_count }} of {{ item.max_uploads }} uploaded</span>
+                    <span class="email-line email-line--{{ item.email.status }}" [attr.data-test]="'email-' + item.id">
+                      <mat-icon [svgIcon]="item.email.status === 'failed' ? 'alert' : item.email.status === 'sent' ? 'check' : 'mail'" />
+                      {{ emailText(item) }}
+                    </span>
+                    <span class="muted">{{ item.requested_by ? 'By ' + item.requested_by.name + ' · ' : '' }}expires {{ date(item.expires_at) }} · {{ item.uploads_count }} of {{ item.max_uploads }} uploaded</span>
                     @if (item.closed_reason) { <span class="muted">{{ reasonText[item.closed_reason] }}</span> }
                   </div>
                   @if (item.status === 'open') {
@@ -133,6 +148,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
           }
         </mat-card-content>
       </mat-card>
+      </div>
     }
   `,
   styles: `
@@ -155,6 +171,15 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
     .link-state--open { color: var(--color-success-fg); }
     .link-state--expired { color: var(--color-warning-fg); }
     .link-state--closed { color: var(--color-text-muted); }
+    .sub-title { font-size: var(--text-base); margin: var(--space-5) 0 0; }
+    .email-line { display: inline-flex; align-items: center; gap: var(--space-1); overflow-wrap: anywhere; }
+    .email-line mat-icon { width: 16px; height: 16px; flex: none; }
+    .email-line--sent mat-icon { color: var(--color-success-fg); }
+    .email-line--failed { color: var(--color-danger-fg); }
+    .email-line--not_sent { color: var(--color-text-muted); }
+    .menu-option { display: grid; line-height: 1.3; padding-block: var(--space-1); }
+    .menu-option__title { font-weight: var(--weight-semibold); }
+    .menu-option__hint { font-size: var(--text-sm); color: var(--color-text-muted); }
     .load-error { display: grid; gap: var(--space-3); justify-items: start; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -267,6 +292,20 @@ export class SupplierDetailPage implements OnInit {
       await this.loadRequests();
       this.notify('Upload link cancelled.');
     }, 'The link could not be cancelled. Please try again.');
+  }
+
+  /** Where and when the request email went, or why it did not (4 Nov 2026: requests need a trace). */
+  protected emailText(item: UploadRequestItem): string {
+    const { status, to, at } = item.email;
+    const when = at ? ukDateTime(at) : '';
+    switch (status) {
+      case 'sent':
+        return `Emailed to ${to ?? 'the supplier'} · ${when}`;
+      case 'failed':
+        return `Email to ${to ?? 'the supplier'} failed · ${when}` + (item.status === 'open' ? '. Send a new request to try again.' : '');
+      default:
+        return 'Not emailed: the link was copied to send another way';
+    }
   }
 
   protected ingredientNames(item: UploadRequestItem): string {

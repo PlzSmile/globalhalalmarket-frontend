@@ -13,6 +13,7 @@ import { SupplierDetail } from '../../core/models/catalogue';
 import { SentUploadRequest } from '../../core/models/upload-requests';
 import { errorMessage } from '../../shared/forms/error-message';
 import { collapseSpaces } from '../../shared/forms/normalise';
+import { ukDateTime } from '../../shared/format/uk-date';
 
 export interface UploadRequestDialogData {
   readonly supplier: SupplierDetail;
@@ -28,8 +29,8 @@ export interface UploadRequestDialogData {
     <h2 mat-dialog-title>Request certificates</h2>
     @if (sent(); as s) {
       <mat-dialog-content class="fields">
-        @if (s.emailed_to_saved_address) {
-          <p>Sent by email to {{ data.supplier.contact_email }}.</p>
+        @if (s.email.status === 'sent') {
+          <p data-test="sent-to">Emailed to <strong>{{ s.email.to }}</strong> at {{ time(s.email.at) }}. If it has not arrived in a few minutes, ask the supplier to check their spam folder, or copy the link below.</p>
         } @else if (emailWanted()) {
           <p class="notice notice--warning" role="alert">The email could not be sent — copy the link and send it yourself.</p>
         } @else {
@@ -136,6 +137,10 @@ export class UploadRequestDialog {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  protected time(iso: string | null): string {
+    return iso ? ukDateTime(iso) : '';
   }
 
   protected copy(): void {
