@@ -19,6 +19,7 @@ import { MarketsDialog } from '../markets/markets-dialog';
 import { OnboardingCard } from './onboarding-card';
 
 import { Skeleton } from '../../shared/ui/skeleton';
+import { onLiveChange } from '../../core/live/live-changes';
 type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; data: DashboardData };
 
 @Component({
@@ -45,6 +46,7 @@ export class Dashboard implements OnInit {
   protected readonly dateTime = ukDateTime;
 
   protected readonly state = signal<State>({ kind: 'loading' });
+  protected readonly liveRefresh = onLiveChange(() => void this.load()); // keeps the data on screen while refreshing
   protected readonly allStepsDone = computed(() => {
     const s = this.state();
     return s.kind === 'ready' && s.data.onboarding.steps.every((step) => step.status === 'done');

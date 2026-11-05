@@ -24,6 +24,7 @@ import { UploadRequestDialog, UploadRequestDialogData } from './upload-request-d
 import { SupplierDialog, SupplierDialogData } from './supplier-dialog';
 
 import { Skeleton } from '../../shared/ui/skeleton';
+import { onLiveChange } from '../../core/live/live-changes';
 type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { kind: 'ready'; supplier: SupplierDetail };
 
 @Component({
@@ -201,6 +202,10 @@ export class SupplierDetailPage implements OnInit {
   private readonly router = inject(Router);
 
   protected readonly state = signal<State>({ kind: 'loading' });
+  protected readonly liveRefresh = onLiveChange(() => {
+    void this.load(true);
+    void this.loadRequests();
+  });
   protected readonly busy = signal(false);
   protected readonly name = bodyName;
   protected readonly date = ukDate;
@@ -219,14 +224,17 @@ export class SupplierDetailPage implements OnInit {
     void this.loadRequests();
   }
 
-  async load(): Promise<void> {
+  /** silent: a live refresh (5 Nov 2026) keeps the page on screen if the server cannot be reached. */
+  async load(silent = false): Promise<void> {
     if (this.state().kind !== 'ready') {
       this.state.set({ kind: 'loading' });
     }
     try {
       this.state.set({ kind: 'ready', supplier: await firstValueFrom(this.suppliers.get(this.supplierId)) });
     } catch (error) {
-      this.state.set({ kind: isNotFound(error) ? 'notFound' : 'error' });
+      if (!silent || isNotFound(error)) {
+        this.state.set({ kind: isNotFound(error) ? 'notFound' : 'error' });
+      }
     }
   }
 

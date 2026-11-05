@@ -7,6 +7,7 @@ import { firstValueFrom } from 'rxjs';
 import { NotificationsApi } from '../../core/api/notifications-api';
 import { AppNotification, NotificationPage } from '../../core/models/notifications';
 import { ukDateTime } from '../../shared/format/uk-date';
+import { onLiveChange } from '../../core/live/live-changes';
 
 const EMPTY: NotificationPage = { data: [], meta: { current_page: 1, last_page: 1, total: 0, unread: 0 } };
 
@@ -68,6 +69,7 @@ const EMPTY: NotificationPage = { data: [], meta: { current_page: 1, last_page: 
 })
 export class NotificationsBell implements OnInit {
   private readonly api = inject(NotificationsApi);
+  protected readonly liveRefresh = onLiveChange(() => void this.load()); // e.g. a supplier's upload arrived
   protected readonly page = signal<NotificationPage>(EMPTY);
   protected readonly unread = computed(() => this.page().meta.unread);
   protected readonly time = ukDateTime;

@@ -23,6 +23,7 @@ import { CertificateDialog, CertificateDialogData } from './certificate-dialog';
 
 import { Skeleton } from '../../shared/ui/skeleton';
 import { SearchField } from '../../shared/ui/search-field';
+import { onLiveChange } from '../../core/live/live-changes';
 type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Paginated<CertificateListItem> };
 type Filter = 'all' | CertificateStatus | 'expiring' | 'archived';
 interface Query { readonly search: string; readonly status: CertificateStatus | null; readonly expiring: boolean; readonly archived: boolean; readonly page: number; }
@@ -132,6 +133,7 @@ export class CertificatesList implements OnInit {
   protected readonly search = new FormControl('', { nonNullable: true });
   protected readonly query = signal<Query>({ search: '', status: null, expiring: false, archived: false, page: 1 });
   protected readonly state = signal<State>({ kind: 'loading' });
+  protected readonly liveRefresh = onLiveChange(() => void this.load(true));
   protected readonly name = bodyName;
   protected readonly date = ukDate;
   protected readonly expiry = (iso: string) => expiryNote(iso);
@@ -171,9 +173,12 @@ export class CertificatesList implements OnInit {
     this.go({ ...this.query(), status: STATUSES.includes(filter as CertificateStatus) ? (filter as CertificateStatus) : null, expiring: filter === 'expiring', archived: filter === 'archived', page: 1 });
   }
 
-  async load(): Promise<void> {
+  /** silent: a live refresh (5 Nov 2026) keeps the list on screen instead of showing the skeleton. */
+  async load(silent = false): Promise<void> {
     const request = ++this.latestRequest;
-    this.state.set({ kind: 'loading' });
+    if (!silent || this.state().kind !== 'ready') {
+      this.state.set({ kind: 'loading' });
+    }
     try {
       const q = this.query();
       const result = await firstValueFrom(this.api.list({ search: q.search, status: q.status, supplierId: null, expiring: q.expiring, archived: q.archived, page: q.page }));
@@ -181,7 +186,7 @@ export class CertificatesList implements OnInit {
         this.state.set({ kind: 'ready', page: result });
       }
     } catch {
-      if (request === this.latestRequest) {
+      if (request === this.latestRequest && !(silent && this.state().kind === 'ready')) {
         this.state.set({ kind: 'error' });
       }
     }

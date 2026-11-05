@@ -28,6 +28,7 @@ import { ComplianceHistory } from '../compliance/compliance-history';
 import { ProductDialog, ProductDialogData } from './product-dialog';
 
 import { Skeleton } from '../../shared/ui/skeleton';
+import { onLiveChange } from '../../core/live/live-changes';
 type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { kind: 'ready'; product: ProductDetail };
 
 @Component({
@@ -69,6 +70,7 @@ export class ProductDetailPage implements OnInit {
   private readonly router = inject(Router);
 
   protected readonly state = signal<State>({ kind: 'loading' });
+  protected readonly liveRefresh = onLiveChange(() => void this.load(true)); // compliance follows (effect below)
   protected readonly busy = signal(false);
   protected readonly auth = inject(AuthService);
   private readonly compliance = inject(ComplianceApi);
@@ -131,14 +133,17 @@ export class ProductDetailPage implements OnInit {
     void this.load();
   }
 
-  async load(): Promise<void> {
+  /** silent: a live refresh (5 Nov 2026) keeps the page on screen if the server cannot be reached. */
+  async load(silent = false): Promise<void> {
     if (this.state().kind !== 'ready') {
       this.state.set({ kind: 'loading' });
     }
     try {
       this.state.set({ kind: 'ready', product: await firstValueFrom(this.products.get(this.productId)) });
     } catch (error) {
-      this.state.set({ kind: isNotFound(error) ? 'notFound' : 'error' });
+      if (!silent || isNotFound(error)) {
+        this.state.set({ kind: isNotFound(error) ? 'notFound' : 'error' });
+      }
     }
   }
 

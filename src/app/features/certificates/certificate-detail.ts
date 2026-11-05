@@ -20,6 +20,7 @@ import { CertificateDialog, CertificateDialogData } from './certificate-dialog';
 
 import { Loader } from '../../shared/ui/loader';
 import { Skeleton } from '../../shared/ui/skeleton';
+import { onLiveChange } from '../../core/live/live-changes';
 type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { kind: 'ready'; certificate: CertificateDetail };
 
 @Component({
@@ -151,6 +152,7 @@ export class CertificateDetailPage implements OnInit {
   static readonly DOWNLOAD_FEEDBACK_MS = 3_000;
 
   protected readonly state = signal<State>({ kind: 'loading' });
+  protected readonly liveRefresh = onLiveChange(() => void this.load(true));
   protected readonly busy = signal(false);
   protected readonly downloading = signal(false);
   protected readonly scanWatching = signal(false);
@@ -188,14 +190,17 @@ export class CertificateDetailPage implements OnInit {
     void this.load();
   }
 
-  async load(): Promise<void> {
+  /** silent: a live refresh (5 Nov 2026) keeps the page on screen if the server cannot be reached. */
+  async load(silent = false): Promise<void> {
     if (this.state().kind !== 'ready') {
       this.state.set({ kind: 'loading' });
     }
     try {
       this.state.set({ kind: 'ready', certificate: await firstValueFrom(this.api.get(this.certificateId)) });
     } catch (error) {
-      this.state.set({ kind: isNotFound(error) ? 'notFound' : 'error' });
+      if (!silent || isNotFound(error)) {
+        this.state.set({ kind: isNotFound(error) ? 'notFound' : 'error' });
+      }
     }
     this.watchScan();
   }

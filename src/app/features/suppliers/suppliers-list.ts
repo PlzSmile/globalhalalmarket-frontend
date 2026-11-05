@@ -20,6 +20,7 @@ import { SupplierDialog, SupplierDialogData } from './supplier-dialog';
 
 import { Skeleton } from '../../shared/ui/skeleton';
 import { SearchField } from '../../shared/ui/search-field';
+import { onLiveChange } from '../../core/live/live-changes';
 type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Paginated<SupplierListItem> };
 
 @Component({
@@ -108,6 +109,7 @@ export class SuppliersList implements OnInit {
   protected readonly search = new FormControl('', { nonNullable: true });
   protected readonly query = signal({ search: '', page: 1 });
   protected readonly state = signal<State>({ kind: 'loading' });
+  protected readonly liveRefresh = onLiveChange(() => void this.load(true));
   /** Only the newest request may update the list (a slow older reply must not overwrite a newer one). */
   private latestRequest = 0;
 
@@ -129,9 +131,12 @@ export class SuppliersList implements OnInit {
     void this.load();
   }
 
-  async load(): Promise<void> {
+  /** silent: a live refresh (5 Nov 2026) keeps the list on screen instead of showing the skeleton. */
+  async load(silent = false): Promise<void> {
     const request = ++this.latestRequest;
-    this.state.set({ kind: 'loading' });
+    if (!silent || this.state().kind !== 'ready') {
+      this.state.set({ kind: 'loading' });
+    }
     try {
       const { search, page } = this.query();
       const result = await firstValueFrom(this.api.list(search, page));
@@ -139,7 +144,7 @@ export class SuppliersList implements OnInit {
         this.state.set({ kind: 'ready', page: result });
       }
     } catch {
-      if (request === this.latestRequest) {
+      if (request === this.latestRequest && !(silent && this.state().kind === 'ready')) {
         this.state.set({ kind: 'error' });
       }
     }

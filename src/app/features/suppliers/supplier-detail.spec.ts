@@ -12,6 +12,7 @@ import { IngredientsApi } from '../../core/api/ingredients-api';
 import { SupplierDetail } from '../../core/models/catalogue';
 import { UploadRequestsApi } from '../../core/api/upload-requests-api';
 import { UploadRequestItem } from '../../core/models/upload-requests';
+import { LiveChanges } from '../../core/live/live-changes';
 import { settle } from '../../../testing/settle';
 
 const ACME: SupplierDetail = { id: 5, name: 'Acme Gelatin', contact_email: 'q@acme.test', country: { code: 'GB', name: 'United Kingdom' }, ingredients: [{ id: 3, name: 'Gelatin' }],
@@ -107,6 +108,21 @@ describe('SupplierDetailPage', () => {
     await page['addCertificate']();
     const options = (dialog.open.mock.calls.at(-1) as unknown[])[1] as { data: { supplier: { id: number } } };
     expect(options.data.supplier).toEqual({ id: 5, name: 'Acme Gelatin' });
+  });
+
+  it('refreshes the supplier and its requests by itself when the company data changes, without a skeleton', async () => {
+    const { fixture, suppliers, uploads, el } = setup();
+    await settle(fixture);
+    expect(suppliers.get).toHaveBeenCalledTimes(1);
+
+    // 5 Nov 2026: e.g. the supplier uploaded a certificate in another window.
+    (TestBed.inject(LiveChanges) as unknown as { changes: { next(): void } }).changes.next();
+    fixture.detectChanges();
+    expect(el.querySelector('hs-skeleton')).toBeNull(); // the page stays on screen
+    await settle(fixture);
+
+    expect(suppliers.get).toHaveBeenCalledTimes(2);
+    expect(uploads.list).toHaveBeenCalledTimes(2);
   });
 
   it('lists upload links with their state and cancels an open one', async () => {

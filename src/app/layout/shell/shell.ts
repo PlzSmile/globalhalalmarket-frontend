@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, DestroyRef } from '@angular/core';
 import { NotificationsBell } from './notifications-bell';
 import { CompanySwitcher } from './company-switcher';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -18,6 +18,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { IconName } from '../../core/icons/icons';
 import { Logo } from '../../shared/ui/logo';
 import { AccessBanner } from '../../shared/ui/access-banner';
+import { LiveChanges } from '../../core/live/live-changes';
 
 interface NavItem {
   readonly label: string;
@@ -58,6 +59,10 @@ export class Shell {
   ];
 
   constructor() {
+    // 5 Nov 2026: open screens refresh when the company's data changes (checked every 20 s while visible).
+    const live = inject(LiveChanges);
+    live.start();
+    inject(DestroyRef).onDestroy(() => live.stop());
     // Arriving from the verification email link: /dashboard?verified=1
     if (inject(ActivatedRoute).snapshot.queryParamMap.get('verified') === '1') {
       inject(MatSnackBar).open('Your email is verified. Welcome to Global Halal Market!', 'Close', { duration: 6000 });
