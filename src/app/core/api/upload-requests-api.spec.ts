@@ -5,7 +5,7 @@ import { UploadRequestsApi } from './upload-requests-api';
 import { SentUploadRequest, UploadRequestItem } from '../models/upload-requests';
 
 const ITEM: UploadRequestItem = { id: 3, status: 'open', closed_reason: null, ingredients: [{ id: 1, name: 'Gelatin' }], note: null,
-  expires_at: '2026-10-13T10:00:00+00:00', emailed_to_saved_address: true, email: { status: 'sent', to: 'q@acme.test', at: '2026-09-29T10:00:00+00:00' }, uploads_count: 0, max_uploads: 5, created_at: '2026-09-29T10:00:00+00:00', requested_by: { id: 2, name: 'Aisha' } };
+  expires_at: '2026-10-13T10:00:00+00:00', emailed_to_saved_address: true, email: { status: 'sent', to: 'q@acme.test', at: '2026-09-29T10:00:00+00:00' }, can_copy_link: true, uploads_count: 0, max_uploads: 5, created_at: '2026-09-29T10:00:00+00:00', requested_by: { id: 2, name: 'Aisha' } };
 
 describe('UploadRequestsApi', () => {
   let backend: HttpTestingController;

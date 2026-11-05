@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Clipboard } from '@angular/cdk/clipboard';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
@@ -17,12 +18,13 @@ const ACME: SupplierDetail = { id: 5, name: 'Acme Gelatin', contact_email: 'q@ac
   certificates: [{ id: 11, status: 'approved', body: null, body_name_other: 'Midlands Halal Board', supplier: { id: 5, name: 'Acme Gelatin' }, certificate_number: 'MHB-1', issued_on: null, expires_on: '2027-03-12', ingredients_count: 1 }] };
 
 const REQUESTS: UploadRequestItem[] = [
-  { id: 2, status: 'open', closed_reason: null, ingredients: [{ id: 3, name: 'Gelatin' }], note: null, expires_at: '2026-10-13T10:00:00+00:00', emailed_to_saved_address: true, email: { status: 'sent', to: 'q@acme.test', at: '2026-09-29T10:05:00Z' }, uploads_count: 1, max_uploads: 5, created_at: '2026-09-29T10:00:00+00:00', requested_by: { id: 1, name: 'Aisha' } },
-  { id: 1, status: 'closed', closed_reason: 'replaced', ingredients: [{ id: 3, name: 'Gelatin' }], note: null, expires_at: '2026-10-10T10:00:00+00:00', emailed_to_saved_address: false, email: { status: 'failed', to: 'q@acme.test', at: '2026-09-26T10:05:00Z' }, uploads_count: 0, max_uploads: 5, created_at: '2026-09-26T10:00:00+00:00', requested_by: null },
+  { id: 2, status: 'open', closed_reason: null, ingredients: [{ id: 3, name: 'Gelatin' }], note: null, expires_at: '2026-10-13T10:00:00+00:00', emailed_to_saved_address: true, email: { status: 'sent', to: 'q@acme.test', at: '2026-09-29T10:05:00Z' }, can_copy_link: true, uploads_count: 1, max_uploads: 5, created_at: '2026-09-29T10:00:00+00:00', requested_by: { id: 1, name: 'Aisha' } },
+  { id: 1, status: 'closed', closed_reason: 'replaced', ingredients: [{ id: 3, name: 'Gelatin' }], note: null, expires_at: '2026-10-10T10:00:00+00:00', emailed_to_saved_address: false, email: { status: 'failed', to: 'q@acme.test', at: '2026-09-26T10:05:00Z' }, can_copy_link: false, uploads_count: 0, max_uploads: 5, created_at: '2026-09-26T10:00:00+00:00', requested_by: null },
 ];
 
 function setup(api: Record<string, unknown> = {}, uploadsOverrides: Record<string, unknown> = {}) {
-  const uploads = { list: vi.fn(() => of(REQUESTS)), cancel: vi.fn(() => of(undefined)), ...uploadsOverrides };
+  const uploads = { list: vi.fn(() => of(REQUESTS)), cancel: vi.fn(() => of(undefined)), link: vi.fn(() => of('https://globalhalalmarket.test/upload/abc')), ...uploadsOverrides };
+  const clipboard = { copy: vi.fn(() => true) };
   const suppliers = { get: vi.fn(() => of(ACME)), linkIngredient: vi.fn(() => of(ACME)), unlinkIngredient: vi.fn(() => of(undefined)), remove: vi.fn(() => of(undefined)), ...api };
   const snackBar = { open: vi.fn() };
   TestBed.configureTestingModule({
@@ -33,6 +35,7 @@ function setup(api: Record<string, unknown> = {}, uploadsOverrides: Record<strin
       { provide: MatDialog, useValue: { open: vi.fn(() => ({ afterClosed: () => of(true) })) } },
       { provide: MatSnackBar, useValue: snackBar },
       { provide: UploadRequestsApi, useValue: uploads },
+      { provide: Clipboard, useValue: clipboard },
     ],
   });
   const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -111,13 +114,18 @@ describe('SupplierDetailPage', () => {
     await settle(fixture);
     expect(el.querySelector('[data-test="upload-links"]')).toBeNull(); // 4 Nov 2026: no separate card
     const card = el.querySelector('[data-test="supplier-certificates"] [data-test="upload-requests"]') as HTMLElement;
-    expect(card.textContent).toContain('Open');
+    expect(card.textContent).toContain('Link active: waiting for the supplier');
     expect(card.querySelector('[data-test="email-2"]')?.textContent).toContain('Emailed to q@acme.test · 29 Sep 2026');
     expect(card.querySelector('[data-test="email-1"]')?.textContent).toContain('Email to q@acme.test failed');
     expect(card.textContent).toContain('By Aisha');
     expect(card.textContent).toContain('1 of 5 uploaded');
     expect(card.textContent).toContain('Replaced by a newer link');
     expect(card.textContent).toContain('13 Oct 2026');
+    expect(card.querySelector('[data-test="copy-2"]')).not.toBeNull(); // open + copyable
+    expect(card.querySelector('[data-test="copy-1"]')).toBeNull(); // closed
+    await page['copyLink'](REQUESTS[0]);
+    expect(uploads.link).toHaveBeenCalledWith(2);
+    expect(snackBar.open).toHaveBeenCalledWith('Link copied. Share it only with the supplier.', 'Close', { duration: 4000 });
     await page['cancelLink'](REQUESTS[0]);
     expect(uploads.cancel).toHaveBeenCalledWith(2);
     expect(snackBar.open).toHaveBeenCalledWith('Upload link cancelled.', 'Close', { duration: 4000 });

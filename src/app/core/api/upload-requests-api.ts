@@ -16,6 +16,11 @@ export class UploadRequestsApi {
     return this.http.post<ApiItem<SentUploadRequest>>(`/api/v1/suppliers/${supplierId}/upload-requests`, input).pipe(map((r) => r.data));
   }
 
+  /** The link of an open request again (5 Nov 2026: "Copy link"). */
+  link(id: number): Observable<string> {
+    return this.http.get<ApiItem<{ link: string }>>(`/api/v1/upload-requests/${id}/link`).pipe(map((r) => r.data.link));
+  }
+
   cancel(id: number): Observable<void> {
     return this.http.delete<void>(`/api/v1/upload-requests/${id}`);
   }

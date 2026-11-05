@@ -14,6 +14,7 @@ import { SentUploadRequest } from '../../core/models/upload-requests';
 import { errorMessage } from '../../shared/forms/error-message';
 import { collapseSpaces } from '../../shared/forms/normalise';
 import { ukDateTime } from '../../shared/format/uk-date';
+import { SecurityBadge } from '../../shared/ui/security-badge';
 
 export interface UploadRequestDialogData {
   readonly supplier: SupplierDetail;
@@ -24,7 +25,7 @@ export interface UploadRequestDialogData {
 /** Send an upload link; the link is shown once afterwards (copy for WhatsApp/Teams). */
 @Component({
   selector: 'hs-upload-request-dialog',
-  imports: [ReactiveFormsModule, MatButtonModule, MatCheckboxModule, MatDialogModule, MatFormFieldModule, MatInputModule],
+  imports: [ReactiveFormsModule, MatButtonModule, MatCheckboxModule, MatDialogModule, MatFormFieldModule, MatInputModule, SecurityBadge],
   template: `
     <h2 mat-dialog-title>Request certificates</h2>
     @if (sent(); as s) {
@@ -66,6 +67,7 @@ export interface UploadRequestDialogData {
           } @else {
             <p class="notice notice--info" data-test="no-email">No email saved — you can copy the link and send it yourself.</p>
           }
+          <hs-security-badge />
         </mat-dialog-content>
         <mat-dialog-actions align="end">
           <button mat-button type="button" class="btn" mat-dialog-close>Cancel</button>

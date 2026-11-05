@@ -14,7 +14,7 @@ import { settle } from '../../../testing/settle';
 const ACME: SupplierDetail = { id: 5, name: 'Acme Gelatin', contact_email: 'q@acme.test', country: null,
   ingredients: [{ id: 1, name: 'Gelatin' }, { id: 2, name: 'Salt' }], certificates: [] };
 const SENT: SentUploadRequest = { id: 9, status: 'open', closed_reason: null, ingredients: [{ id: 1, name: 'Gelatin' }], note: null, expires_at: '2026-10-13T10:00:00+00:00',
-  emailed_to_saved_address: true, email: { status: 'sent', to: 'q@acme.test', at: '2026-11-04T14:32:00Z' }, uploads_count: 0, max_uploads: 5, created_at: null, requested_by: null, link: 'https://globalhalalmarket.test/upload/abc' };
+  emailed_to_saved_address: true, email: { status: 'sent', to: 'q@acme.test', at: '2026-11-04T14:32:00Z' }, can_copy_link: true, uploads_count: 0, max_uploads: 5, created_at: null, requested_by: null, link: 'https://globalhalalmarket.test/upload/abc' };
 
 function setup(supplier: SupplierDetail = ACME, send = vi.fn(() => of(SENT)), hasOpenLink = false) {
   const snackBar = { open: vi.fn() };

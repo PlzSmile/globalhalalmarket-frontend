@@ -22,6 +22,8 @@ export interface UploadRequestItem {
   readonly emailed_to_saved_address: boolean;
   /** Where and when the email went, or that it failed (4 Nov 2026). */
   readonly email: UploadRequestEmail;
+  /** Open and the link can be shown again (5 Nov 2026). */
+  readonly can_copy_link: boolean;
   readonly uploads_count: number;
   readonly max_uploads: number;
   readonly created_at: string | null;

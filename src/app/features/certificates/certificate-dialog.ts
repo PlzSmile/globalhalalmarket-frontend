@@ -23,6 +23,7 @@ import { UkDateAdapter } from '../../shared/format/uk-date-adapter';
 import { collapseSpaces } from '../../shared/forms/normalise';
 import { applyServerErrorsOr, clearServerErrors, serverError } from '../../shared/forms/server-errors';
 import { FilePicker } from '../../shared/ui/file-picker';
+import { SecurityBadge } from '../../shared/ui/security-badge';
 
 export interface CertificateDialogData {
   readonly certificate: CertificateDetail | null;
@@ -42,7 +43,7 @@ function picked(control: AbstractControl<Picked<NamedRef>>): ValidationErrors | 
   providers: [provideNativeDateAdapter(), { provide: DateAdapter, useClass: UkDateAdapter }, { provide: MAT_DATE_LOCALE, useValue: 'en-GB' }],
   imports: [
     ReactiveFormsModule, MatAutocompleteModule, MatButtonModule, MatCheckboxModule, MatDatepickerModule, MatDialogModule,
-    MatFormFieldModule, MatInputModule, MatProgressBarModule, FilePicker,
+    MatFormFieldModule, MatInputModule, MatProgressBarModule, FilePicker, SecurityBadge,
   ],
   template: `
     <h2 mat-dialog-title>{{ data.certificate ? 'Edit certificate' : 'Add certificate' }}</h2>
@@ -139,6 +140,7 @@ function picked(control: AbstractControl<Picked<NamedRef>>): ValidationErrors | 
         </mat-form-field>
 
         @if (progress() !== null) { <mat-progress-bar mode="determinate" [value]="progress()" aria-label="Uploading" /> }
+        <hs-security-badge />
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <button mat-button type="button" class="btn" mat-dialog-close>Cancel</button>

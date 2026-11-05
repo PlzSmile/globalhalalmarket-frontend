@@ -16,6 +16,7 @@ import { applyServerErrors, clearServerErrors, serverError } from '../../../shar
 import { errorMessage } from '../../../shared/forms/error-message';
 import { Loader } from '../../../shared/ui/loader';
 import { OtpInput } from '../../../shared/ui/otp-input';
+import { SecurityBadge } from '../../../shared/ui/security-badge';
 
 const NOTICES: Record<string, string> = {
   verified: 'Your email is verified. Please log in.',
@@ -29,9 +30,10 @@ const NOTICES: Record<string, string> = {
  */
 @Component({
   selector: 'hs-login',
-  imports: [Loader, OtpInput, ReactiveFormsModule, RouterLink, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatIconModule, MatInputModule],
+  imports: [Loader, OtpInput, SecurityBadge, ReactiveFormsModule, RouterLink, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatIconModule, MatInputModule],
   templateUrl: './login.html',
   styles: `
+    .auth-security { display: block; margin-top: var(--space-6); }
     .code { display: grid; gap: var(--space-4); }
     .code__icon { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 50%; background: var(--color-primary-soft); color: var(--color-primary); }
     .code__icon mat-icon { width: 24px; height: 24px; }

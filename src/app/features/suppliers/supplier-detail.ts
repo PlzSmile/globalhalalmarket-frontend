@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { Clipboard } from '@angular/cdk/clipboard';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { IngredientsApi } from '../../core/api/ingredients-api';
 import { SuppliersApi } from '../../core/api/suppliers-api';
@@ -130,7 +131,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
               @for (item of requests(); track item.id) {
                 <li class="row link-row">
                   <div class="link-row__main">
-                    <span class="link-state link-state--{{ item.status }}">{{ item.status === 'open' ? 'Open' : item.status === 'expired' ? 'Expired' : 'Closed' }}</span>
+                    <span class="link-state link-state--{{ item.status }}">{{ item.status === 'open' ? 'Link active: waiting for the supplier' : item.status === 'expired' ? 'Link expired' : 'Link closed' }}</span>
                     <span>{{ ingredientNames(item) }}</span>
                     <span class="email-line email-line--{{ item.email.status }}" [attr.data-test]="'email-' + item.id">
                       <mat-icon [svgIcon]="item.email.status === 'failed' ? 'alert' : item.email.status === 'sent' ? 'check' : 'mail'" />
@@ -140,7 +141,12 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
                     @if (item.closed_reason) { <span class="muted">{{ reasonText[item.closed_reason] }}</span> }
                   </div>
                   @if (item.status === 'open') {
-                    <button mat-button type="button" class="btn" (click)="cancelLink(item)" [disabled]="busy()">Cancel link</button>
+                    <div class="link-actions">
+                      @if (item.can_copy_link) {
+                        <button mat-stroked-button type="button" class="btn" (click)="copyLink(item)" [disabled]="busy()" [attr.data-test]="'copy-' + item.id">Copy link</button>
+                      }
+                      <button mat-button type="button" class="btn" (click)="cancelLink(item)" [disabled]="busy()">Cancel link</button>
+                    </div>
                   }
                 </li>
               }
@@ -171,6 +177,7 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
     .link-state--open { color: var(--color-success-fg); }
     .link-state--expired { color: var(--color-warning-fg); }
     .link-state--closed { color: var(--color-text-muted); }
+    .link-actions { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-2); }
     .sub-title { font-size: var(--text-base); margin: var(--space-5) 0 0; }
     .email-line { display: inline-flex; align-items: center; gap: var(--space-1); overflow-wrap: anywhere; }
     .email-line mat-icon { width: 16px; height: 16px; flex: none; }
@@ -198,6 +205,7 @@ export class SupplierDetailPage implements OnInit {
   protected readonly name = bodyName;
   protected readonly date = ukDate;
   private readonly uploads = inject(UploadRequestsApi);
+  private readonly clipboard = inject(Clipboard);
   protected readonly requests = signal<readonly UploadRequestItem[]>([]);
   protected readonly reasonText = CLOSED_REASON_TEXT;
   protected readonly searchIngredients = (text: string): Observable<readonly NamedRef[]> => this.ingredients.search(text);
@@ -292,6 +300,14 @@ export class SupplierDetailPage implements OnInit {
       await this.loadRequests();
       this.notify('Upload link cancelled.');
     }, 'The link could not be cancelled. Please try again.');
+  }
+
+  /** 5 Nov 2026: the open link again, to send by WhatsApp, Teams or another way. */
+  protected async copyLink(item: UploadRequestItem): Promise<void> {
+    await this.run(async () => {
+      const link = await firstValueFrom(this.uploads.link(item.id));
+      this.notify(this.clipboard.copy(link) ? 'Link copied. Share it only with the supplier.' : 'The link could not be copied.');
+    }, 'The link could not be copied. Please try again.');
   }
 
   /** Where and when the request email went, or why it did not (4 Nov 2026: requests need a trace). */
