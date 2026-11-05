@@ -49,10 +49,10 @@ import { NameDialog, NameDialogData } from '../../shared/ui/name-dialog';
     }
   `,
   styles: `
-    :host { margin-right: auto; min-width: 0; }
+    :host { margin-right: auto; min-width: 0; display: flex; overflow: hidden; padding-right: var(--space-2); } /* a long name ends in … before the bell (5 Nov 2026) */
     .switcher { min-height: var(--touch-target); max-width: 100%; }
     .switcher__name { font-weight: var(--weight-semibold); font-size: var(--text-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .switcher__name--plain { display: inline-block; }
+    .switcher__name--plain { display: block; max-width: 100%; }
     .switcher__client { margin-right: var(--space-2); padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--color-warning-bg); color: var(--color-warning-fg); font-size: var(--text-sm); font-weight: var(--weight-semibold); }
     .switcher__hint { margin: var(--space-3) var(--space-4); color: var(--color-text-muted); font-size: var(--text-sm); }
   `,
