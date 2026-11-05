@@ -20,6 +20,12 @@
     <div>
       <h1 class="page-top__title">{{ product.name }}</h1>
       <p class="muted">SKU: <span class="mono">{{ product.sku ?? 'none' }}</span></p>
+      @if (product.markets?.length) {
+        <p class="exported" data-test="product-markets">Exported to:
+          @for (code of product.markets; track code) { <span class="exported__market">{{ marketLabel(code) }}</span> }
+          <button mat-button type="button" class="exported__edit" (click)="editProduct(product)" [disabled]="busy()">Change</button>
+        </p>
+      }
     </div>
     <div class="actions">
       @let packMarkets = auditPackMarkets();

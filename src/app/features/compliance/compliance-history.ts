@@ -17,6 +17,7 @@ import { StatusBadge } from '../../shared/ui/status-badge';
 
 import { Skeleton } from '../../shared/ui/skeleton';
 import { MatCardModule } from '@angular/material/card';
+import { marketLabel } from '../../core/models/markets';
 type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Paginated<HistoryEntry> };
 
 /** Every status change of a product, and "what did we know on this date?" for audits. */
@@ -46,7 +47,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Pa
             <ul class="entries">
               @for (e of o.markets; track e.market) {
                 <li class="entry">
-                  <div class="entry__top"><span class="entry__market">{{ e.market }}</span>@if (e.status; as status) { <hs-status-badge [status]="status" /> }</div>
+                  <div class="entry__top"><span class="entry__market">{{ label(e.market) }}</span>@if (e.status; as status) { <hs-status-badge [status]="status" /> }</div>
                   @let rs = shown(e.reasons); @if (rs.length) { <ul class="reasons">@for (r of rs; track $index) { <li>{{ r }}</li> }</ul> }
                 </li>
               }
@@ -68,12 +69,12 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Pa
         } @else if (s.page.meta.total === 0) {
           <p class="muted">No changes recorded yet.</p>
         } @else {
-          <ul class="entries">
+          <ul class="entries entries--changes">
             @for (e of s.page.data; track $index) {
               <li class="entry">
                 <div class="entry__top">
-                  <span class="entry__market">{{ e.changed_at ? time(e.changed_at) : '' }} · {{ e.market }}</span>
-                  @if (e.status; as status) { <hs-status-badge [status]="status" /> } @else { <span class="muted">No longer tracked</span> }
+                  <span class="entry__market">{{ e.changed_at ? time(e.changed_at) : '' }} · {{ label(e.market) }}</span>
+                  @if (e.status; as status) { <hs-status-badge [status]="status" /> } @else { <span class="muted">No longer checked here</span> }
                 </div>
                 @let rs = shown(e.reasons); @if (rs.length) { <ul class="reasons">@for (r of rs; track $index) { <li>{{ r }}</li> }</ul> }
               </li>
@@ -85,8 +86,10 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Pa
     </mat-card>
   `,
   styles: `
+    /* 5 Nov 2026 (Bilal): stacked, so the short date check never leaves a tall empty column next to the long list;
+       on large screens the list itself uses two columns. */
     :host { display: grid; gap: var(--space-4); align-items: start; }
-    @media (min-width: 1200px) { :host { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (min-width: 1200px) { .entries--changes { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-6); } }
     .panel { display: grid; gap: var(--space-3); }
     .panel-title { font-size: var(--text-lg); margin: 0; }
     .on-date { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
@@ -102,6 +105,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Pa
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ComplianceHistory {
+  protected readonly label = marketLabel;
   readonly productId = input.required<number>();
   /** Bumped by the product page after each recalculation; reloads the list. */
   readonly version = input(0);

@@ -12,6 +12,8 @@ export interface ComplianceCell {
   readonly reason: string | null;
   readonly reasons_count: number;
   readonly next_expiry_on: string | null;
+  /** 5 Nov 2026: the product is not exported to this market (no result there). */
+  readonly not_sold?: boolean;
 }
 
 export interface ProductComplianceRow {

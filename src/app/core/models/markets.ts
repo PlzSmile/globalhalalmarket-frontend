@@ -10,3 +10,10 @@ export interface MarketOption {
   readonly data_note: string | null;
   readonly selected: boolean;
 }
+
+/** 5 Nov 2026 (Bilal): every market is shown with its country, e.g. "Indonesia · BPJPH". */
+export const MARKET_LABELS: Record<AuthorityCode, string> = { BPJPH: 'Indonesia · BPJPH', JAKIM: 'Malaysia · JAKIM', MOIAT: 'UAE · MoIAT' };
+
+export function marketLabel(code: AuthorityCode | string | null | undefined): string {
+  return code ? (MARKET_LABELS[code as AuthorityCode] ?? code) : '';
+}

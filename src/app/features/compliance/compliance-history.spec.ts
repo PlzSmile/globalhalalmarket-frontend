@@ -29,7 +29,7 @@ describe('ComplianceHistory', () => {
     await settle(fixture);
     expect(history).toHaveBeenCalledWith(3, 1);
     expect(el.textContent).toContain('5 Oct 2026, 09:00');
-    expect(el.textContent).toContain('No longer tracked');
+    expect(el.textContent).toContain('No longer checked here');
     expect(el.textContent).toContain('Gelatin — Acme Gelatin: no approved certificate');
     fixture.componentRef.setInput('version', 2);
     await settle(fixture);

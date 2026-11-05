@@ -29,6 +29,7 @@ import { ProductDialog, ProductDialogData } from './product-dialog';
 
 import { Skeleton } from '../../shared/ui/skeleton';
 import { onLiveChange } from '../../core/live/live-changes';
+import { marketLabel } from '../../core/models/markets';
 type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { kind: 'ready'; product: ProductDetail };
 
 @Component({
@@ -38,6 +39,9 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
   styles: `
     :host { display: grid; gap: var(--space-4); }
     .back { display: inline-flex; align-items: center; min-height: var(--touch-target); }
+    .exported { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+    .exported__market { padding: 2px var(--space-2); border-radius: var(--radius-pill); background: var(--color-primary-soft); color: var(--color-text); font-weight: var(--weight-semibold); }
+    .exported__edit { min-height: var(--touch-target); }
     .page-top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
     .page-top__title { font-size: var(--text-2xl); letter-spacing: -0.02em; }
     .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
@@ -105,7 +109,7 @@ export class ProductDetailPage implements OnInit {
   });
 
   protected marketLabel(code: AuthorityCode): string {
-    return { BPJPH: 'Indonesia · BPJPH', JAKIM: 'Malaysia · JAKIM', MOIAT: 'UAE · MoIAT' }[code] ?? code;
+    return marketLabel(code);
   }
 
   /** Phase 7b: the audit pack for one market. A plan without it gets the upgrade dialog (shared error handler). */

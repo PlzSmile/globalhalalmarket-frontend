@@ -102,6 +102,10 @@ const EMPTY: ComplianceFilters = { market: null, status: null, supplier: null, s
               <th mat-header-cell *matHeaderCellDef scope="col">{{ m.market }} · {{ m.authority }}</th>
               <td mat-cell *matCellDef="let row" [attr.data-label]="m.market + ' · ' + m.authority">
                 @let c = cell(row, m.code);
+                @if (c?.not_sold) {
+                  <!-- 5 Nov 2026: the product is not exported to this market, so it is not checked here. -->
+                  <span class="not-sold" data-test="not-sold" [attr.aria-label]="row.name + ': not sold in ' + m.market">Not sold here</span>
+                } @else {
                 <button type="button" class="cell-button" (click)="openReasons(row, m.code)" [attr.aria-label]="cellLabel(row, m, c)" data-test="cell">
                   @if (c?.status; as status) {
                     <hs-status-badge [status]="status" [reason]="c?.reason ?? null" [detail]="detail(c)" />
@@ -109,6 +113,7 @@ const EMPTY: ComplianceFilters = { market: null, status: null, supplier: null, s
                     <span class="muted">Not calculated yet</span>
                   }
                 </button>
+                }
               </td>
             </ng-container>
           }
@@ -124,6 +129,7 @@ const EMPTY: ComplianceFilters = { market: null, status: null, supplier: null, s
     .filters { display: grid; gap: var(--space-3); grid-template-columns: minmax(0, 1fr); }
     @media (min-width: 768px) { .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (min-width: 1200px) { .filters { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    .not-sold { display: inline-flex; align-items: center; min-height: var(--touch-target); color: var(--color-text-subtle, var(--color-text-muted)); font-size: var(--text-sm); }
     /* Tablet/desktop: the table scrolls sideways inside the card, never the page; the product column stays put. */
     .matrix-scroll { overflow-x: auto; }
     .matrix { min-width: 100%; }

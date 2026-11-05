@@ -5,6 +5,14 @@ import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ProductDialog, ProductDialogData } from './product-dialog';
 import { ProductsApi } from '../../core/api/products-api';
+import { MarketsApi } from '../../core/api/markets-api';
+import { MarketOption } from '../../core/models/markets';
+import { settle } from '../../../testing/settle';
+
+const option = (code: 'BPJPH' | 'JAKIM' | 'MOIAT', selected = true): MarketOption =>
+  ({ code, market: code, market_slug: code.toLowerCase(), authority: code, country_code: 'XX', data_note: null, selected });
+/** One company market by default: nothing to choose, so no markets are sent (the earlier tests). */
+let companyMarkets: MarketOption[] = [option('BPJPH')];
 
 const SAVED = { id: 7, name: 'Chicken sausage', sku: 'CS-500', ingredients: [] };
 
@@ -15,6 +23,7 @@ function setup(data: ProductDialogData, api: Partial<Record<'create' | 'update',
       { provide: MAT_DIALOG_DATA, useValue: data },
       { provide: MatDialogRef, useValue: { close } },
       { provide: ProductsApi, useValue: api },
+      { provide: MarketsApi, useValue: { list: vi.fn(() => of(companyMarkets)) } },
     ],
   });
   const fixture = TestBed.createComponent(ProductDialog);
@@ -24,6 +33,34 @@ function setup(data: ProductDialogData, api: Partial<Record<'create' | 'update',
 }
 
 describe('ProductDialog', () => {
+  afterEach(() => { companyMarkets = [option('BPJPH')]; });
+
+  it('5 Nov 2026: with several markets a new product starts with all ticked; unticking one sends only the others', async () => {
+    companyMarkets = [option('BPJPH'), option('JAKIM'), option('MOIAT', false)];
+    const create = vi.fn(() => of(SAVED));
+    const { fixture, dialog, el } = setup({ product: null }, { create });
+    await settle(fixture);
+    expect(el.querySelector('[data-test="product-markets"]')?.textContent).toContain('Indonesia · BPJPH');
+    expect(el.querySelector('[data-test="market-MOIAT"]')).toBeNull(); // not a company market
+    dialog['form'].setValue({ name: 'Chicken Masala', sku: '' });
+    dialog['toggle']('JAKIM', false);
+    await dialog['save']();
+    expect(create).toHaveBeenCalledWith({ name: 'Chicken Masala', sku: null, markets: ['BPJPH'] });
+  });
+
+  it('editing keeps the product markets and needs at least one', async () => {
+    companyMarkets = [option('BPJPH'), option('JAKIM')];
+    const update = vi.fn(() => of(SAVED));
+    const { fixture, dialog, el } = setup({ product: { id: 7, name: 'Old', sku: null, markets: ['BPJPH'] } }, { update });
+    await settle(fixture);
+    expect([...dialog['chosen']()]).toEqual(['BPJPH']);
+    dialog['toggle']('BPJPH', false);
+    await dialog['save']();
+    fixture.detectChanges();
+    expect(update).not.toHaveBeenCalled();
+    expect(el.textContent).toContain('Choose at least one market.');
+  });
+
   it('creates with tidied values (blank SKU → null) and closes with the product', async () => {
     const create = vi.fn(() => of(SAVED));
     const { close, dialog } = setup({ product: null }, { create });

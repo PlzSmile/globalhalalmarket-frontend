@@ -53,6 +53,17 @@ async function setup(url = '/', products = vi.fn(() => of(PAGE)), changedInDialo
 }
 
 describe('ComplianceMatrix', () => {
+  it('5 Nov 2026: a market the product is not exported to shows "Not sold here" with no reasons button', async () => {
+    const page = { ...PAGE, data: [{ id: 5, name: 'Chicken Masala', sku: null, status: 'green', cells: [
+      { market: 'JAKIM', status: null, reason: 'Not sold in this market', reasons_count: 0, next_expiry_on: null, not_sold: true },
+      { market: 'MOIAT', status: 'green', reason: null, reasons_count: 0, next_expiry_on: '2027-11-05', not_sold: false },
+    ] }], meta: { ...PAGE.meta, total: 1 } };
+    const { fixture, el } = await setup('/', vi.fn(() => of(page)) as unknown as Parameters<typeof setup>[1]);
+    await settle(fixture);
+    expect(el.querySelector('[data-test="not-sold"]')?.textContent).toContain('Not sold here');
+    expect(el.querySelectorAll('[data-test="cell"]').length).toBe(1); // only the market it is sold in
+  });
+
   it('loads the filters from the URL and shows a badge per market', async () => {
     const { fixture, products, suppliers, el } = await setup('/?market=MOIAT&status=red&supplier=7&q=beef&page=2');
     await settle(fixture);

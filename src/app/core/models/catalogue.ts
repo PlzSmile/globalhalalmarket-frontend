@@ -1,3 +1,4 @@
+import { AuthorityCode } from './markets';
 import type { CertificateListItem } from './certificates';
 
 /** Mirrors the catalogue API (App\Http\Resources\Product*, Supplier*, Ingredient*). */
@@ -16,8 +17,9 @@ export interface ProductIngredient {
   readonly id: number; readonly name: string; readonly products_count: number; readonly suppliers: readonly NamedRef[];
   readonly certificate?: IngredientCertificate | null;
 }
-export interface ProductDetail { readonly id: number; readonly name: string; readonly sku: string | null; readonly ingredients: readonly ProductIngredient[]; }
-export interface ProductInput { readonly name: string; readonly sku: string | null; }
+/** 5 Nov 2026: markets = the codes this product is exported to; all_markets = it follows all the company's markets. */
+export interface ProductDetail { readonly id: number; readonly name: string; readonly sku: string | null; readonly ingredients: readonly ProductIngredient[]; readonly markets?: readonly AuthorityCode[]; readonly all_markets?: boolean; }
+export interface ProductInput { readonly name: string; readonly sku: string | null; readonly markets?: readonly AuthorityCode[]; }
 
 export interface IngredientOption { readonly id: number; readonly name: string; readonly products_count: number; }
 export interface IngredientSuppliers { readonly id: number; readonly name: string; readonly suppliers: readonly NamedRef[]; }

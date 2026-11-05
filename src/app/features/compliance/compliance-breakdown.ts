@@ -12,6 +12,7 @@ import { ukDate } from '../../shared/format/uk-date';
 import { StatusBadge } from '../../shared/ui/status-badge';
 import { statusDetail } from './compliance-format';
 import { ScopeCheckDialog, ScopeCheckDialogData } from './scope-check-dialog';
+import { marketLabel } from '../../core/models/markets';
 
 let nextId = 0;
 
@@ -23,7 +24,7 @@ let nextId = 0;
     @for (m of visible(); track m.market) {
       <section class="market" [class]="'market market--' + m.market" [attr.aria-labelledby]="uid + '-' + m.market">
         <header class="market__top">
-          <h3 class="market__title" [id]="uid + '-' + m.market">{{ m.authority }}</h3>
+          <h3 class="market__title" [id]="uid + '-' + m.market">{{ label(m.market) }}</h3>
           @if (m.status; as status) { <hs-status-badge [status]="status" [detail]="detail(status, m.next_expiry_on)" /> } @else { <span class="muted">Not calculated yet</span> }
         </header>
         @let marketReasons = shown(m.reasons);
@@ -96,6 +97,8 @@ let nextId = 0;
 })
 export class ComplianceBreakdown {
   readonly markets = input.required<readonly MarketBreakdown[]>();
+  protected readonly label = marketLabel;
+
   /** Show only this market (the matrix cell that was tapped). */
   readonly market = input<AuthorityCode | null>(null);
   readonly canManage = input(false);
