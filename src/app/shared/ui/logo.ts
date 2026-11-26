@@ -1,23 +1,22 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
-/** Global Halal Market mark + wordmark, linking to the public site. Used in the shell and the auth layout. */
+/**
+ * The Global Halal Market logo (same image as the public site header), linking to the public site.
+ * In the dark theme it sits on a small white plate (--color-logo-backdrop) so the dark lettering stays readable.
+ */
 @Component({
   selector: 'hs-logo',
   template: `
-    <a class="logo" href="/" aria-label="Global Halal Market public site">
-      <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-        <path d="M16 2.5 4.5 6.8v8.4c0 7.2 4.9 12.6 11.5 14.3 6.6-1.7 11.5-7.1 11.5-14.3V6.8L16 2.5z" fill="currentColor" opacity=".14"/>
-        <path d="M16 2.5 4.5 6.8v8.4c0 7.2 4.9 12.6 11.5 14.3 6.6-1.7 11.5-7.1 11.5-14.3V6.8L16 2.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-        <path d="m10.5 16 3.8 3.8 7.2-8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span>Global Halal <span class="logo__accent">Market</span></span>
+    <a class="logo" href="/" aria-label="Global Halal Market home">
+      <img src="/images/brand/logo-full-40.webp" srcset="/images/brand/logo-full-40.webp 1x, /images/brand/logo-full-80.webp 2x"
+           width="211" height="32" alt="Global Halal Market" decoding="async" />
     </a>
   `,
   styles: `
-    .logo { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--color-text); text-decoration: none;
-      font-weight: var(--weight-bold); font-size: var(--text-lg); min-height: var(--touch-target); white-space: nowrap; }
-    .logo svg { width: 28px; height: 28px; color: var(--color-primary); }
-    .logo__accent { color: var(--color-primary); }
+    .logo { display: inline-flex; align-items: center; min-height: var(--touch-target); border-radius: var(--radius-sm); }
+    .logo img { display: block; width: auto; height: 32px; padding: 4px 8px; margin-inline-start: -8px; border-radius: var(--radius-sm);
+      background: var(--color-logo-backdrop); }
+    @media (min-width: 1200px) { .logo img { height: 28px; } }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -7,13 +7,15 @@ import { ProfileTab } from './profile-tab';
 import { TeamTab } from './team-tab';
 import { BillingTab } from './billing-tab';
 import { ActivityTab } from './activity-tab';
+import { BrandingForm } from './branding-form';
+import { EmailTemplatesTab } from './email-templates-tab';
 import { AuthService } from '../../core/auth/auth.service';
 
-const TABS = ['profile', 'team', 'markets', 'reminders', 'billing', 'activity'] as const;
+const TABS = ['profile', 'team', 'markets', 'reminders', 'billing', 'branding', 'emails', 'activity'] as const;
 
 @Component({
   selector: 'hs-settings',
-  imports: [MatTabsModule, ProfileTab, TeamTab, MarketsTab, RemindersTab, BillingTab, ActivityTab],
+  imports: [MatTabsModule, ProfileTab, TeamTab, MarketsTab, RemindersTab, BillingTab, BrandingForm, EmailTemplatesTab, ActivityTab],
   template: `
     <h1 class="page-title">Settings</h1>
     <mat-tab-group [selectedIndex]="initialTab" mat-stretch-tabs="false" animationDuration="0ms">
@@ -23,6 +25,10 @@ const TABS = ['profile', 'team', 'markets', 'reminders', 'billing', 'activity'] 
       <mat-tab label="Reminders"><hs-reminders-tab /></mat-tab>
       <mat-tab label="Billing"><ng-template matTabContent><hs-billing-tab /></ng-template></mat-tab>
       @if (auth.canManageTeam()) {
+        <!-- 12 Nov 2026: the company's own logo and details that suppliers see. -->
+        <mat-tab label="Branding"><ng-template matTabContent><div class="settings-grid"><hs-branding-form /></div></ng-template></mat-tab>
+        <!-- 12 Nov 2026: the supplier emails in the customer's own words (like Xero's email templates). -->
+        <mat-tab label="Email templates"><ng-template matTabContent><hs-email-templates-tab /></ng-template></mat-tab>
         <mat-tab label="Activity"><ng-template matTabContent><hs-activity-tab /></ng-template></mat-tab>
       }
     </mat-tab-group>
@@ -43,6 +49,6 @@ const TABS = ['profile', 'team', 'markets', 'reminders', 'billing', 'activity'] 
 })
 export class Settings {
   protected readonly auth = inject(AuthService);
-  /** ?tab=profile|team|markets|reminders|billing|activity opens that tab (links from the dashboard); anything else opens Profile. */
+  /** ?tab=profile|team|markets|reminders|billing|branding|emails|activity opens that tab (links from the dashboard); anything else opens Profile. */
   protected readonly initialTab = Math.max(0, TABS.indexOf(inject(ActivatedRoute).snapshot.queryParamMap.get('tab') as (typeof TABS)[number]));
 }

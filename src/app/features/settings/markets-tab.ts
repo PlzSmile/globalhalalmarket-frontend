@@ -19,7 +19,7 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; markets:
       <mat-card appearance="outlined" class="hs-card">
         <mat-card-header><mat-card-title>Export markets</mat-card-title></mat-card-header>
         <mat-card-content>
-          <p class="muted">The authorities whose recognition we check for your products.</p>
+          <p class="muted">The official lists we check for your products.</p>
           @if (!auth.canManageTeam()) { <p class="notice notice--info">Only owners and admins can change markets.</p> }
           @let s = state();
           @if (s.kind === 'loading') {

@@ -293,7 +293,7 @@ export class SupplierDetailPage implements OnInit {
       return;
     }
     const data: UploadRequestDialogData = { supplier: s.supplier, hasOpenLink: this.requests().some((r) => r.status === 'open') };
-    await firstValueFrom(this.dialog.open(UploadRequestDialog, { data, autoFocus: 'first-tabbable', width: '560px', maxWidth: 'calc(100vw - 32px)' }).afterClosed());
+    await firstValueFrom(this.dialog.open(UploadRequestDialog, { data, autoFocus: false, width: '1400px', maxWidth: 'calc(100vw - 32px)', height: 'calc(100dvh - 32px)', maxHeight: 'calc(100dvh - 32px)' }).afterClosed());
     await this.loadRequests();
   }
 

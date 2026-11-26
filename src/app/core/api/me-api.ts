@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { ApiItem, CompanyDetail, CompanyReminders, CompanySummary, CurrentUser, EmailCodeSent, PasswordChangeRequest, TwoFactorSetup, TwoFactorStatus } from '../models/auth';
+import { ApiItem, BrandingChange, CompanyDetail, CompanyReminders, CompanySummary, CurrentUser, EmailCodeSent, PasswordChangeRequest, TwoFactorSetup, TwoFactorStatus } from '../models/auth';
 
 @Injectable({ providedIn: 'root' })
 export class MeApi {
@@ -21,6 +21,26 @@ export class MeApi {
 
   updateReminders(change: Partial<CompanyReminders>): Observable<CompanyDetail> {
     return this.http.patch<ApiItem<CompanyDetail>>('/api/v1/company/reminders', change).pipe(map((r) => r.data));
+  }
+
+  /** 12 Nov 2026: the details suppliers see (outside the setup wizard it needs the emailed code first, 403 profile_locked). */
+  updateBranding(change: BrandingChange): Observable<CompanyDetail> {
+    return this.http.patch<ApiItem<CompanyDetail>>('/api/v1/company/branding', change).pipe(map((r) => r.data));
+  }
+
+  uploadLogo(file: File): Observable<CompanyDetail> {
+    const body = new FormData();
+    body.append('logo', file);
+    return this.http.post<ApiItem<CompanyDetail>>('/api/v1/company/logo', body).pipe(map((r) => r.data));
+  }
+
+  removeLogo(): Observable<CompanyDetail> {
+    return this.http.delete<ApiItem<CompanyDetail>>('/api/v1/company/logo').pipe(map((r) => r.data));
+  }
+
+  /** The last setup wizard step (422 two_factor_required until the authenticator app is on). */
+  completeSetup(): Observable<CompanyDetail> {
+    return this.http.post<ApiItem<CompanyDetail>>('/api/v1/company/setup/complete', {}).pipe(map((r) => r.data));
   }
 
   updateCompany(name: string): Observable<CompanySummary> {

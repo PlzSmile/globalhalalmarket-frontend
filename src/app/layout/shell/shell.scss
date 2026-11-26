@@ -1,7 +1,13 @@
 :host { display: block; }
 
-/* 3 Nov 2026 redesign: a plain warm canvas; a slim, fixed sidebar whose active item is a filled pill. */
+/* 3 Nov 2026 redesign: a plain warm canvas; a fixed sidebar whose active item is a filled pill.
+   14 Nov 2026 (Bilal): the sidebar can be slim (icons with tooltips, 64px); below 1200px it is always slim and the
+   full one lays over the page. The page moves with the sidebar width (--rail-w). The pill slides between items. */
 .shell {
+  --rail-full: 232px;
+  --rail-slim: 64px;
+  --rail-w: var(--rail-full);
+  --item-h: 48px;           /* list item height; the pill moves by item + 2px gap = 50px (shell.html) */
   min-height: 100dvh;
   background: var(--color-app-bg); /* one plain light colour (Bilal, 3 Nov 2026) */
   --mat-sidenav-container-background-color: var(--color-app-sidebar);
@@ -9,60 +15,115 @@
   --mat-sidenav-content-background-color: transparent;
   --mat-sidenav-container-shape: 0;
 }
+.shell.is-slim { --rail-w: var(--rail-slim); }
+@media (max-width: 1199px) { .shell { --rail-w: var(--rail-slim); } } /* the full sidebar lays over the page here */
+.shell.is-small { --rail-w: 0px; } /* phones: no rail, the menu button opens the sidebar */
+.is-small .shell__sidenav { width: min(var(--rail-full), 86vw); box-shadow: var(--shadow-lg); }
+.shell__close { margin-left: auto; flex: none; }
+.is-small .shell__brand { padding-inline: var(--space-4) var(--space-2); }
+.is-small .shell__brand ::ng-deep .logo img { max-width: 156px; }
+.shell__menu {
+  flex: none; display: grid; place-items: center; width: 44px; height: 44px; margin-left: calc(-1 * var(--space-2)); padding: 0;
+  border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-text); cursor: pointer;
+  &:hover { background: var(--color-app-hover); }
+  &:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+}
 
-.shell__sidenav { width: 232px; display: flex; flex-direction: column; backdrop-filter: blur(14px) saturate(140%); }
-.shell__sidenav ::ng-deep .mat-drawer-inner-container { display: flex; flex-direction: column; }
-@media (max-width: 899px) { .shell { --mat-sidenav-container-background-color: var(--color-surface); } }
-.shell__toolbar-logo { margin-right: auto; }
+.shell__sidenav {
+  width: var(--rail-full); display: flex; flex-direction: column; overflow: visible; /* the round toggle sits on the edge */
+  backdrop-filter: blur(14px) saturate(140%);
+  transition: width 260ms cubic-bezier(0.32, 0.72, 0, 1), box-shadow 260ms ease;
+}
+.is-slim .shell__sidenav { width: var(--rail-slim); }
+.is-overlay .shell__sidenav { box-shadow: var(--shadow-lg); }
+@media (max-width: 1199px) { .shell { --mat-sidenav-container-background-color: var(--color-surface); } }
+.shell__sidenav ::ng-deep .mat-drawer-inner-container { display: flex; flex-direction: column; overflow: visible; }
+
+/* Material sets the page margin once; ours follows the sidebar width smoothly. */
+.shell__main { margin-left: var(--rail-w) !important; transition: margin-left 260ms cubic-bezier(0.32, 0.72, 0, 1); }
+/* 15 Nov 2026 (Bilal: "fix the header on top"): the window scrolls, so Material's overflow hidden/auto on the
+   container and content would stop the sticky top bar; visible lets it stay at the top of the screen. */
+.shell.mat-drawer-container, .shell__main.mat-drawer-content { overflow: visible; }
+.shell__backdrop { position: fixed; inset: 0; z-index: 30; background: var(--color-overlay); animation: fade-in 200ms ease; }
+@keyframes fade-in { from { opacity: 0; } }
 
 .shell__brand {
-  display: flex; align-items: center; justify-content: space-between;
-  min-height: var(--header-height); padding: 0 var(--space-3) 0 var(--space-5);
+  position: relative; display: flex; align-items: center;
+  min-height: var(--header-height); padding: 0 var(--space-3) 0 var(--space-5); overflow: hidden;
 }
+.shell__brand ::ng-deep .logo img { max-width: 184px; height: auto; } /* clear of the round button on the edge */
+.shell__mark { display: none; place-items: center; width: 40px; height: 40px; border-radius: var(--radius-md); }
+.shell__mark img { display: block; width: 32px; height: 32px; }
+.is-slim .shell__brand { padding: 0; justify-content: center; }
+.is-slim .shell__logo { display: none; }
+.is-slim .shell__mark { display: grid; }
+
+.shell__toggle {
+  position: absolute; z-index: 5; top: calc(var(--header-height) / 2 - 14px); right: -14px;
+  display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 2px solid var(--color-surface); border-radius: 50%;
+  background: var(--color-primary); color: var(--color-primary-contrast); cursor: pointer; box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-fast) var(--ease-standard);
+  mat-icon { width: 16px; height: 16px; }
+  &::before { content: ""; position: absolute; inset: -8px; } /* 44px touch area */
+  &:hover { transform: scale(1.08); }
+  &:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+}
+
 .shell__who {
   display: grid; gap: var(--space-1); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-border);
   span { color: var(--color-text-muted); font-size: var(--text-sm); }
 }
 
 .shell__section {
-  margin: var(--space-3) var(--space-5) var(--space-1);
+  margin: var(--space-3) var(--space-5) var(--space-1); white-space: nowrap;
   font-size: var(--text-xs); font-weight: var(--weight-semibold); letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--color-text-subtle);
+  color: var(--color-text-subtle); transition: opacity 160ms linear;
 }
+.is-slim .shell__section { opacity: 0; }
 
 .shell__nav, .shell__footer {
+  position: relative;
   padding: var(--space-1) var(--space-3);
-  --mat-list-active-indicator-color: var(--color-primary);
+  transition: padding 260ms cubic-bezier(0.32, 0.72, 0, 1);
+  --mat-list-active-indicator-color: transparent;
   --mat-list-active-indicator-shape: var(--radius-md);
   --mat-list-list-item-leading-icon-color: var(--color-text-muted);
   --mat-list-list-item-label-text-color: var(--color-text);
   --mat-list-list-item-label-text-weight: var(--weight-medium);
   --mat-list-list-item-label-text-size: var(--text-sm);
-  --mat-list-list-item-one-line-container-height: var(--touch-target);
+  --mat-list-list-item-one-line-container-height: var(--item-h);
   --mat-list-list-item-hover-state-layer-opacity: 0;
   --mat-list-list-item-hover-leading-icon-color: var(--color-primary);
   --mat-list-list-item-hover-label-text-color: var(--color-text);
   /* Small icons close to their label. */
   --mat-list-list-item-leading-icon-size: 18px;
-  --mat-list-list-item-leading-icon-start-space: var(--space-3);
+  --mat-list-list-item-leading-icon-start-space: 15px; /* centred in the 48px slim item */
   --mat-list-list-item-leading-icon-end-space: var(--space-3);
 }
+.is-slim .shell__nav, .is-slim .shell__footer { padding-inline: var(--space-2); }
 .shell__nav .mdc-list-item, .shell__footer .mdc-list-item {
-  border-radius: var(--radius-md); margin-bottom: var(--space-half);
+  position: relative; z-index: 1; height: var(--item-h); border-radius: var(--radius-md); margin-bottom: 2px; overflow: hidden;
   transition: background-color var(--duration-base) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
+.shell__nav ::ng-deep .mdc-list-item__primary-text, .shell__footer ::ng-deep .mdc-list-item__primary-text { white-space: nowrap; transition: opacity 160ms linear; }
+.is-slim .shell__nav ::ng-deep .mdc-list-item__primary-text, .is-slim .shell__footer ::ng-deep .mdc-list-item__primary-text { opacity: 0; }
 .shell__nav .mdc-list-item:not(.mdc-list-item--activated):hover, .shell__footer .mdc-list-item:hover { background: var(--color-app-hover); }
 .shell__nav .mdc-list-item:not(.mdc-list-item--activated):hover { transform: translateX(2px); }
-/* Active page: a filled primary pill with white text and icon (Kinlo-style). */
+/* Active page: white text and icon on the green pill that slides behind the items (Kinlo-style). */
 .shell__nav .mdc-list-item--activated {
   --mat-list-list-item-leading-icon-color: var(--color-primary-contrast);
   --mat-list-list-item-hover-leading-icon-color: var(--color-primary-contrast);
   --mat-list-list-item-label-text-color: var(--color-primary-contrast);
   --mat-list-list-item-hover-label-text-color: var(--color-primary-contrast);
   --mat-list-list-item-focus-label-text-color: var(--color-primary-contrast);
-  background: var(--color-primary);
-  box-shadow: 0 6px 14px -8px var(--color-primary);
+  background: transparent;
 }
+.shell__pill {
+  position: absolute; z-index: 0; top: var(--space-1); left: var(--space-3); right: var(--space-3); height: var(--item-h);
+  border-radius: var(--radius-md); background: var(--color-primary); box-shadow: 0 6px 14px -8px var(--color-primary);
+  transition: transform 220ms cubic-bezier(0.32, 0.72, 0, 1), left 260ms cubic-bezier(0.32, 0.72, 0, 1), right 260ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.is-slim .shell__pill { left: var(--space-2); right: var(--space-2); }
 .shell__footer { margin-top: auto; border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent); padding-block: var(--space-2); }
 
 .shell__toolbar {
@@ -70,19 +131,65 @@
   gap: var(--space-2);
   height: var(--header-height);
   padding-inline: var(--gutter);
+  padding-left: max(var(--gutter), var(--space-6)); /* clear of the round sidebar button */
   --mat-toolbar-container-background-color: color-mix(in srgb, var(--color-app-bg) 72%, transparent);
   --mat-toolbar-container-text-color: var(--color-text);
   backdrop-filter: saturate(160%) blur(12px);
   border-bottom: 1px solid color-mix(in srgb, var(--color-border) 50%, transparent);
 }
+/* 14 Nov 2026 (Bilal): round buttons in light green with dark green icons (same theme shade); the profile is
+   initials on the theme colour. */
+.shell__toolbar ::ng-deep .mat-mdc-icon-button {
+  --mat-icon-button-icon-color: var(--color-primary-hover);
+  width: 40px; height: 40px; padding: 8px; color: var(--color-primary-hover);
+  background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface)); /* light green, clear on the page colour */
+}
+.shell__toolbar ::ng-deep .mat-mdc-icon-button:hover { background: color-mix(in srgb, var(--color-primary) 24%, var(--color-surface)); }
+.shell__avatar {
+  flex: none; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  background: var(--color-primary); color: var(--color-primary-contrast);
+  font: inherit; font-size: var(--text-sm); font-weight: var(--weight-bold); letter-spacing: 0.02em;
+  box-shadow: 0 4px 10px -6px var(--color-primary);
+  &:hover { filter: brightness(1.08); }
+  &:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+}
 
 .shell__content { padding: var(--space-6) var(--gutter) var(--space-12); max-width: 1280px; margin-inline: auto; }
 .shell__content:focus { outline: none; }
-.shell__content { view-transition-name: app-page; }
 @media (min-width: 1200px) {
   .shell { --header-height: 56px; }
   .shell__content { padding: var(--space-6) var(--space-8) var(--space-12); }
 }
+@media (max-width: 599px) {
+  .shell__toolbar { gap: var(--space-1); padding-inline: var(--space-3); }
+  .shell__content { padding-inline: var(--space-3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell__sidenav, .shell__main, .shell__pill, .shell__nav, .shell__footer { transition: none; }
+}
 
-/* Phones: only the shield mark in the toolbar, so the company name and buttons keep their room. */
-@media (max-width: 599px) { .shell__toolbar-logo ::ng-deep .logo > span { display: none; } }
+/* ---- Slim rail (15 Nov 2026, Bilal): a light column with a green edge; the logo (white circle) and the menu in one
+   narrow dark green pill; Public checker and Help on their own at the bottom ---- */
+.shell__rail { display: contents; }
+.shell.is-slim:not(.is-small) { --rail-slim: 72px; --mat-sidenav-container-divider-color: var(--color-primary); }
+.is-slim:not(.is-small) .shell__sidenav { background: var(--color-app-bg); backdrop-filter: none; }
+.is-slim:not(.is-small) .shell__sidenav ::ng-deep .mat-drawer-inner-container { padding-block: var(--space-3); align-items: center; }
+.is-slim:not(.is-small) .shell__rail {
+  display: flex; flex-direction: column; align-items: center; width: 52px; padding-bottom: var(--space-6);
+  border-radius: 26px; background: var(--color-rail-bg); box-shadow: var(--shadow-md);
+}
+.is-slim:not(.is-small) .shell__brand { min-height: 0; padding: 0 0 var(--space-3); }
+.is-slim:not(.is-small) .shell__mark { width: 52px; height: 52px; border-radius: 50%; background: var(--color-logo-circle); border: 3px solid var(--color-rail-bg); }
+.is-slim:not(.is-small) .shell__mark img { width: 34px; height: 34px; }
+.is-slim:not(.is-small) .shell__section { display: none; }
+.is-slim:not(.is-small) .shell__nav { width: 52px; padding-inline: 4px;
+  --mat-list-list-item-leading-icon-start-space: 13px;
+  --mat-list-list-item-leading-icon-color: color-mix(in srgb, var(--color-rail-fg) 70%, transparent);
+  --mat-list-list-item-hover-leading-icon-color: var(--color-rail-fg); }
+.is-slim:not(.is-small) .shell__nav .mdc-list-item--activated { --mat-list-list-item-leading-icon-color: var(--color-rail-fg); --mat-list-list-item-hover-leading-icon-color: var(--color-rail-fg); }
+.is-slim:not(.is-small) .shell__nav .mdc-list-item:not(.mdc-list-item--activated):hover { background: color-mix(in srgb, var(--color-rail-fg) 12%, transparent); transform: none; }
+.is-slim:not(.is-small) .shell__pill { left: 4px; right: 4px; background: color-mix(in srgb, var(--color-rail-fg) 22%, transparent); box-shadow: none; }
+.is-slim:not(.is-small) .shell__footer { width: 60px; padding-inline: 6px; border-top: 0;
+  --mat-list-list-item-leading-icon-start-space: 13px; --mat-list-list-item-leading-icon-size: 22px;
+  --mat-list-list-item-leading-icon-color: var(--color-primary-hover); }
+.is-slim:not(.is-small) .shell__toggle { top: 76px; right: -14px; border-color: var(--color-app-bg); }

@@ -23,8 +23,11 @@ export interface ActivityPage {
 export class ActivityApi {
   private readonly http = inject(HttpClient);
 
-  page(cursor: string | null = null): Observable<ActivityPage> {
-    const params = cursor ? new HttpParams().set('cursor', cursor) : undefined;
+  /** `event`: only that kind of change (e.g. "reminders_changed" for the reminder settings history). */
+  page(cursor: string | null = null, event: string | null = null): Observable<ActivityPage> {
+    let params = new HttpParams();
+    if (cursor) params = params.set('cursor', cursor);
+    if (event) params = params.set('event', event);
     return this.http.get<ActivityPage>('/api/v1/activity', { params });
   }
 }

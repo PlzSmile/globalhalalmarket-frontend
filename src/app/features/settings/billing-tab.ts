@@ -92,7 +92,7 @@ const USAGE: readonly { key: keyof PlanLimits; label: string }[] = [
                   @if (p.description) { <p class="billing__note">{{ p.description }}</p> }
                   <ul class="billing__limits">
                     <li>{{ p.limits.suppliers === null ? 'Unlimited' : p.limits.suppliers }} suppliers</li>
-                    <li>{{ p.limits.markets }} {{ p.limits.markets === 1 ? 'market' : 'markets' }}</li>
+                    <li>{{ p.limits.markets === null ? 'Every market' : p.limits.markets + (p.limits.markets === 1 ? ' market' : ' markets') }}</li>
                     <li>{{ p.limits.users }} users</li>
                   </ul>
                   @if (b.can_manage) {

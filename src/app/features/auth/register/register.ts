@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,12 +11,15 @@ import { PromoApi } from '../../../core/api/promo-api';
 import { Promo } from '../../../core/models/promo';
 import { applyServerErrors, clearServerErrors, serverError } from '../../../shared/forms/server-errors';
 import { PASSWORD_MIN, matchesField } from '../../../shared/forms/validators';
+import { PasswordChecklist } from '../../../shared/forms/password-checklist';
+import { SecurityBadge } from '../../../shared/ui/security-badge';
 
 import { Loader } from '../../../shared/ui/loader';
 @Component({
   selector: 'hs-register',
-  imports: [Loader, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule],
+  imports: [Loader, PasswordChecklist, SecurityBadge, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule],
   templateUrl: './register.html',
+  styles: `.auth-security { display: block; margin-top: var(--space-6); }`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Register {
@@ -33,6 +36,8 @@ export class Register {
     // Phase 6c: optional promotion code; ?offer=CODE links fill it in.
     offer_code: [(inject(ActivatedRoute).snapshot.queryParamMap.get('offer') ?? '').trim().toUpperCase().slice(0, 40), [Validators.maxLength(40)]],
   });
+  protected readonly passwordValue = toSignal(this.form.controls.password.valueChanges, { initialValue: '' });
+  protected readonly confirmationValue = toSignal(this.form.controls.password_confirmation.valueChanges, { initialValue: '' });
   protected readonly busy = signal(false);
   protected readonly formError = signal<string | null>(null);
   protected readonly showPassword = signal(false);

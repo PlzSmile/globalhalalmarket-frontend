@@ -51,10 +51,65 @@ describe('CertificateDialog', () => {
     fill(dialog);
     await dialog['save']();
     expect(api.create).toHaveBeenCalledWith({
-      supplier_id: 5, certification_body_id: 9, body_name_other: null, certificate_number: 'HMC-1', scope: null,
+      supplier_id: 5, type: 'halal', type_name: null, certification_body_id: 9, body_name_other: null, certificate_number: 'HMC-1', scope: null,
       issued_on: '2026-01-10', expires_on: '2027-01-09', ingredient_ids: [3],
     }, expect.any(File));
     expect(close).toHaveBeenCalledWith(SAVED);
+  });
+
+  it('saves another certificate type with only the issuer name and no ingredients (week 8)', async () => {
+    const { fixture, dialog, api, el } = setup({ certificate: null });
+    await settle(fixture);
+    dialog['onTypeChange']('brcgs');
+    dialog['form'].patchValue({ type: 'brcgs', supplier_id: ACME, body_name_other: ' SGS United Kingdom ', expires_on: new Date(2027, 4, 1) });
+    dialog['file'].set(new File(['%PDF-1.4'], 'c.pdf', { type: 'application/pdf' }));
+    await settle(fixture);
+    expect(el.querySelector('[data-test="issued-by"]')).not.toBeNull();
+    await dialog['save']();
+    expect(api.create).toHaveBeenCalledWith({
+      supplier_id: 5, type: 'brcgs', type_name: null, certification_body_id: null, body_name_other: 'SGS United Kingdom', certificate_number: null, scope: null,
+      issued_on: null, expires_on: '2027-05-01', ingredient_ids: [],
+    }, expect.any(File));
+  });
+
+  it('needs a name for an "Other" certificate (week 8)', async () => {
+    const { fixture, dialog, api } = setup({ certificate: null });
+    await settle(fixture);
+    dialog['onTypeChange']('other');
+    dialog['form'].patchValue({ type: 'other', supplier_id: ACME, body_name_other: 'Local Board', expires_on: new Date(2027, 4, 1) });
+    dialog['file'].set(new File(['%PDF-1.4'], 'c.pdf', { type: 'application/pdf' }));
+    await dialog['save']();
+    expect(api.create).not.toHaveBeenCalled();
+    expect(dialog['form'].controls.type_name.hasError('required')).toBe(true);
+  });
+
+  it('fills the empty fields from the chosen PDF and says so (week 4)', async () => {
+    const read = vi.fn(() => of({ read: true, certification_body_id: 9, body_name: HMC.name, certificate_number: 'HMC-2231', issued_on: '2026-03-01', expires_on: '2027-02-28' }));
+    const { fixture, dialog, el } = setup({ certificate: null }, { read });
+    await settle(fixture);
+    dialog['form'].controls.certificate_number.setValue('TYPED-1'); // typed first: never overwritten
+    await dialog['onFile'](new File(['%PDF-1.4'], 'c.pdf', { type: 'application/pdf' }));
+    await settle(fixture);
+    const c = dialog['form'].controls;
+    expect(c.certification_body_id.value).toEqual({ id: 9, name: HMC.name });
+    expect(c.certificate_number.value).toBe('TYPED-1');
+    expect(c.expires_on.value).toEqual(new Date(2027, 1, 28));
+    expect(c.issued_on.value).toEqual(new Date(2026, 2, 1));
+    expect(el.querySelector('[data-test="read-note"]')?.textContent).toContain('We filled in 3 fields');
+  });
+
+  it('leaves the form alone when the PDF has no text, and when reading fails', async () => {
+    const read = vi.fn(() => of({ read: false, certification_body_id: null, body_name: null, certificate_number: null, issued_on: null, expires_on: null }));
+    const { fixture, dialog } = setup({ certificate: null }, { read });
+    await settle(fixture);
+    await dialog['onFile'](new File(['%PDF-1.4'], 'scan.pdf', { type: 'application/pdf' }));
+    expect(dialog['readNote']()).toContain('could not read');
+    expect(dialog['form'].controls.expires_on.value).toBeNull();
+
+    read.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })) as never);
+    await dialog['onFile'](new File(['%PDF-1.4'], 'other.pdf', { type: 'application/pdf' }));
+    expect(dialog['readNote']()).toBeNull();
+    expect(dialog['file']()?.name).toBe('other.pdf'); // the file is still chosen for saving
   });
 
   it('accepts a typed body name when the body is not in the list', async () => {

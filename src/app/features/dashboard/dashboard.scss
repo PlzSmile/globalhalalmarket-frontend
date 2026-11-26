@@ -5,7 +5,7 @@
 .overview { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); align-items: start; }
 @media (min-width: 768px) { .overview { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
 
-.card-title { font-size: var(--text-lg); }
+.card-title { font-size: var(--text-lg); font-weight: var(--weight-bold); letter-spacing: -0.01em; }
 
 .markets { display: grid; gap: var(--space-3); justify-items: start; }
 .markets__edit { min-height: var(--touch-target); }
@@ -19,44 +19,88 @@
 .updated { margin: 0 0 calc(-1 * var(--space-2)); font-size: var(--text-sm); }
 
 /* Status tones (shared by the totals, the column heads and the counts). */
-.tone--red, .total--red, .count--red { --tone-bg: var(--color-danger-bg); --tone-fg: var(--color-danger-fg); --tone-border: var(--color-danger-border); }
-.tone--amber, .total--amber, .count--amber { --tone-bg: var(--color-warning-bg); --tone-fg: var(--color-warning-fg); --tone-border: var(--color-warning-border); }
-.tone--green, .total--green, .count--green { --tone-bg: var(--color-success-bg); --tone-fg: var(--color-success-fg); --tone-border: var(--color-success-border); }
+.tone--red, .count--red { --tone-bg: var(--color-danger-bg); --tone-fg: var(--color-danger-fg); --tone-border: var(--color-danger-border); }
+.tone--amber, .count--amber { --tone-bg: var(--color-warning-bg); --tone-fg: var(--color-warning-fg); --tone-border: var(--color-warning-border); }
+.tone--green, .count--green { --tone-bg: var(--color-success-bg); --tone-fg: var(--color-success-fg); --tone-border: var(--color-success-border); }
 .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--tone-fg); flex: none; }
 
-/* ---- Totals: three tinted tiles (all markets) ---- */
-.totals { display: grid; gap: var(--space-3); grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.total {
-  all: unset; box-sizing: border-box; cursor: pointer;
-  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
-  padding: var(--space-4); min-height: var(--touch-target);
-  border-radius: var(--radius-lg); border: 1px solid var(--tone-border);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-card);
-  transition: box-shadow var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
+/* ---- 14 Nov 2026 (Bilal, "like Foods Connected"): four numbers in one strip, each with a 12-week line ---- */
+.kpis {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: var(--space-5) 0; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-card);
 }
-.total:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
-.total__text { display: grid; gap: var(--space-1); min-width: 0; }
-.total__label { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--tone-fg); }
-.total__hint { font-size: var(--text-xs); color: var(--color-text-muted); }
-/* The count sits on the right in a round badge: the status's light colour behind its dark colour. */
-.total__value {
-  flex: none; display: grid; place-items: center; width: 3.25rem; height: 3.25rem; border-radius: 50%;
-  background: var(--tone-bg); color: var(--tone-fg); border: 1px solid var(--tone-border);
-  font-size: var(--text-xl); font-weight: var(--weight-bold); font-variant-numeric: tabular-nums;
+.kpi {
+  display: grid; gap: var(--space-1); align-content: start; min-width: 0; padding: var(--space-1) var(--space-5);
+  border-left: 1px solid var(--color-border); text-align: left;
 }
-@media (max-width: 767px) {
-  .totals { gap: var(--space-2); }
-  .total { flex-direction: column-reverse; align-items: flex-start; padding: var(--space-3); gap: var(--space-2); }
-  .total__value { width: 2.5rem; height: 2.5rem; font-size: var(--text-lg); }
-  .total__hint { display: none; }
-  .total__label { font-size: var(--text-xs); }
+.kpi:first-child { border-left: 0; }
+.kpi--button {
+  all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: var(--space-1); align-content: start; min-width: 0;
+  padding: var(--space-1) var(--space-5); border-left: 1px solid var(--color-border); border-radius: 0;
+  transition: background-color var(--duration-base) var(--ease-standard);
 }
+.kpi--button:hover { background: var(--color-app-hover); }
+.kpi--button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; border-radius: var(--radius-md); }
+.kpi__label { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-text-muted); }
+.kpi__row { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); }
+.kpi__value { font-size: var(--text-3xl); line-height: 1.1; font-weight: var(--weight-bold); letter-spacing: -0.02em; color: var(--color-text); font-variant-numeric: tabular-nums; }
+.kpi__spark { flex: 1 1 auto; max-width: 140px; height: 40px; margin-bottom: 4px; }
+.kpi__delta { font-size: var(--text-sm); color: var(--color-text-muted); }
+.kpi__delta.is-good { color: var(--color-success-fg); font-weight: var(--weight-medium); }
+.kpi__delta.is-bad { color: var(--color-danger-fg); font-weight: var(--weight-medium); }
+.kpi--green { --tone-fg: var(--color-success-fg); }
+.kpi--amber { --tone-fg: var(--color-warning-fg); }
+.kpi--red { --tone-fg: var(--color-danger-fg); }
+@media (max-width: 1199px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: var(--space-5); }
+  .kpi:nth-child(3) { border-left: 0; }
+}
+@media (max-width: 599px) {
+  .kpis { padding: var(--space-4) 0; row-gap: var(--space-4); }
+  .kpi { padding-inline: var(--space-4); }
+  .kpi__spark { max-width: 64px; height: 32px; }
+  .kpi__value { font-size: var(--text-2xl); }
+}
+
+/* ---- Two-card rows ---- */
+.grid { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); align-items: stretch; }
+@media (min-width: 1024px) {
+  .grid--charts { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+  .grid--detail { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+}
+.grid > .hs-card { height: 100%; }
+.card-link { margin-top: var(--space-4); min-height: var(--touch-target); }
+
+/* Certificates by state: label, bar, count */
+.bars { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: var(--space-4); }
+.bar { display: grid; grid-template-columns: minmax(7.5rem, 1.2fr) minmax(0, 1.4fr) 2.5rem; align-items: center; gap: var(--space-3); }
+.bar__label { font-size: var(--text-base); }
+.bar__track { height: 14px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--color-border) 70%, transparent); overflow: hidden; }
+.bar__fill { display: block; height: 100%; min-width: 2px; border-radius: inherit; background: var(--bar-color); transition: width 600ms var(--ease-standard); }
+.bar__value { text-align: right; font-size: var(--text-lg); font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; }
+.bar--green { --bar-color: var(--color-success-fg); }
+.bar--amber { --bar-color: var(--color-warning-fg); }
+.bar--red { --bar-color: var(--color-danger-fg); }
+.bar--primary { --bar-color: var(--color-primary); }
+
+.trend { height: 260px; padding-top: var(--space-3); }
+.trend hs-area-chart { height: 100%; }
+@media (max-width: 599px) { .trend { height: 220px; } }
+
+/* Latest changes: a line of dots */
+.timeline { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; }
+.timeline__item { position: relative; display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: var(--space-3); padding-bottom: var(--space-4); }
+.timeline__item:not(:last-child)::before { content: ""; position: absolute; left: 6px; top: 18px; bottom: 0; width: 2px; background: var(--color-border); }
+.timeline__dot { width: 14px; height: 14px; margin-top: 4px; border-radius: 50%; background: var(--tone-fg, var(--color-text-subtle)); box-shadow: 0 0 0 3px var(--color-surface); position: relative; }
+.timeline__text { display: grid; min-width: 0; }
+.timeline__title { font-weight: var(--weight-semibold); color: var(--color-text); text-decoration: none; overflow-wrap: anywhere; }
+.timeline__title:hover { color: var(--color-primary); text-decoration: underline; }
+.timeline__sub { font-size: var(--text-sm); color: var(--color-text-muted); }
+.timeline__time { font-size: var(--text-sm); color: var(--color-text-muted); white-space: nowrap; }
 
 /* ---- Per market: label on the left, three compact counts on the right ---- */
-.compliance { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); align-items: start; }
-@media (min-width: 1200px) { .compliance { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
 
+.summary__note { margin: 0 0 var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); }
 .summary { --count-col: 6rem; display: grid; }
 .summary__head, .summary__row {
   display: grid; align-items: center; gap: var(--space-2);
@@ -115,6 +159,11 @@
 .expiry:first-child { border-top: 0; padding-top: 0; }
 .expiry__date { font-weight: var(--weight-semibold); font-size: var(--text-sm); }
 .expiry__link { display: inline-flex; align-items: center; min-height: var(--touch-target); }
+/* 15 Nov 2026 (Bilal): two columns (50/50) from tablets up; one column on phones */
+@media (min-width: 768px) {
+  .expiries { grid-template-columns: 1fr 1fr; column-gap: var(--space-8); }
+  .expiry:nth-child(2) { border-top: 0; padding-top: 0; }
+}
 
 /* The filtered table stops just under the sticky top bar. */
 #matrix { scroll-margin-top: calc(var(--header-height) + var(--space-4)); }

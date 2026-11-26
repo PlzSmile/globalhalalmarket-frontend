@@ -47,7 +47,10 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
       <header class="page-top">
         <div>
           <h1 class="page-top__title">{{ name(c) }}</h1>
-          @if (!c.body) { <p class="notice notice--info">Not in our list of bodies — counts as not recognised by any authority.</p> }
+          @if (c.type && c.type !== 'halal') {
+            <!-- week 8: other certificate types are tracked for expiry only -->
+            <p class="notice notice--info" data-test="other-type-note">{{ c.type_label }} certificate: tracked for expiry and reminders. It does not affect the halal status.</p>
+          } @else if (!c.body) { <p class="notice notice--info">Not in our list of bodies — counts as not recognised by any authority.</p> }
           <hs-certificate-status-badge [status]="c.status" />
           @switch (c.file.scan) {
             @case ('pending') {
@@ -93,13 +96,14 @@ type State = { kind: 'loading' } | { kind: 'notFound' } | { kind: 'error' } | { 
       <mat-card appearance="outlined" class="hs-card">
         <mat-card-content>
           <dl class="facts">
+            <dt>Type</dt><dd data-test="type">{{ c.type_label ?? 'Halal' }}</dd>
             <dt>Supplier</dt><dd><a [routerLink]="['/suppliers', c.supplier.id]">{{ c.supplier.name }}</a></dd>
             <dt>Certificate number</dt><dd class="mono">{{ c.certificate_number ?? '—' }}</dd>
             <dt>Issued</dt><dd>{{ c.issued_on ? date(c.issued_on) : '—' }}</dd>
             <dt>Expires</dt>
             <dd>{{ date(c.expires_on) }} @if (expiry(c.expires_on).text; as note) { <span [class]="'note note--' + expiry(c.expires_on).tone">{{ note }}</span> }</dd>
             <dt>Scope</dt><dd>{{ c.scope ?? '—' }}</dd>
-            <dt>Covers</dt><dd>{{ c.ingredients.length ? ingredientNames(c) : 'Covers no ingredients — edit to choose them' }}</dd>
+            <dt>Covers</dt><dd>{{ c.ingredients.length ? ingredientNames(c) : (c.type && c.type !== 'halal' ? 'No ingredients chosen (optional for this type)' : 'Covers no ingredients — edit to choose them') }}</dd>
             <dt>File</dt><dd>{{ c.file.original_name }} · {{ size(c.file.size) }}</dd>
             @if (c.from_upload_link) {
               <dt>Source</dt><dd data-test="from-link">Uploaded by the supplier through an upload link on {{ date(c.created_at) }}</dd>

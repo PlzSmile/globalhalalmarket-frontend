@@ -1,6 +1,6 @@
 import { ApplicationConfig, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient, withFetch, withInterceptors, withXsrfConfiguration } from '@angular/common/http';
-import { ActivatedRouteSnapshot, NavigationEnd, provideRouter, Router, withComponentInputBinding, withViewTransitions } from '@angular/router';
+import { NavigationEnd, PreloadAllModules, provideRouter, Router, withComponentInputBinding, withPreloading } from '@angular/router';
 import { filter } from 'rxjs';
 import { registerIcons } from './core/icons/icons';
 import { apiInterceptor } from './core/http/api.interceptor';
@@ -22,28 +22,13 @@ function scrollToTopOnNewPage(): void {
   });
 }
 
-/** The page path of a route snapshot (every segment down to the leaf, without the query). */
-function pathOf(snapshot: ActivatedRouteSnapshot): string {
-  const parts: string[] = [];
-  for (let s: ActivatedRouteSnapshot | null = snapshot.root; s; s = s.firstChild) {
-    parts.push(...s.url.map((u) => u.path));
-  }
-  return parts.join('/');
-}
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    // Moving between pages slides the content softly (Bilal, 3 Nov 2026; styles.scss). A query-only change (a filter,
-    // a tab) does not animate.
-    provideRouter(routes, withComponentInputBinding(), withViewTransitions({
-      skipInitialTransition: true,
-      onViewTransitionCreated: ({ transition, from, to }) => {
-        if (pathOf(from) === pathOf(to)) {
-          transition.skipTransition();
-        }
-      },
-    })),
+    // 15 Nov 2026 (Bilal: "the sidebar takes time to move"): every page's code is fetched quietly after the first
+    // page shows, so a click opens the next page at once instead of waiting for its file to download. No View
+    // Transitions: they froze the whole screen until the new page's API calls finished (the slide is CSS now, shell.scss).
+    provideRouter(routes, withComponentInputBinding(), withPreloading(PreloadAllModules)),
     provideAppInitializer(scrollToTopOnNewPage),
     // Laravel Sanctum SPA auth: send the XSRF-TOKEN cookie back as X-XSRF-TOKEN.
     provideHttpClient(withFetch(), withXsrfConfiguration({ cookieName: 'XSRF-TOKEN', headerName: 'X-XSRF-TOKEN' }), withInterceptors([apiInterceptor])),

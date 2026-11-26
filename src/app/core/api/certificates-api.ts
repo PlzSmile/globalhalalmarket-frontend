@@ -3,7 +3,7 @@ import { HttpClient, HttpEventType, HttpParams } from '@angular/common/http';
 import { Observable, filter, map } from 'rxjs';
 import { ApiItem } from '../models/auth';
 import { Paginated } from '../models/catalogue';
-import { CertificateDetail, CertificateFields, CertificateFilters, CertificateListItem, DownloadLink, UploadEvent } from '../models/certificates';
+import { CertificateDetail, CertificateFields, CertificateFilters, CertificateListItem, CertificateReading, DownloadLink, UploadEvent } from '../models/certificates';
 import { ScopeCheck, ScopeCheckResult } from '../models/compliance';
 import { AuthorityCode } from '../models/markets';
 
@@ -15,6 +15,7 @@ export class CertificatesApi {
     let params = new HttpParams().set('page', String(filters.page));
     if (filters.search) { params = params.set('search', filters.search); }
     if (filters.status) { params = params.set('status', filters.status); }
+    if (filters.type) { params = params.set('type', filters.type); }
     if (filters.supplierId !== null) { params = params.set('supplier_id', String(filters.supplierId)); }
     if (filters.expiring) { params = params.set('expiring', '1'); }
     if (filters.archived) { params = params.set('archived', '1'); }
@@ -23,6 +24,13 @@ export class CertificatesApi {
 
   get(id: number): Observable<CertificateDetail> {
     return this.http.get<ApiItem<CertificateDetail>>(`/api/v1/certificates/${id}`).pipe(map((r) => r.data));
+  }
+
+  /** 16 Nov 2026 (week 4): suggested form values read from a PDF; the file is not stored. */
+  read(file: File): Observable<CertificateReading> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.post<ApiItem<CertificateReading>>('/api/v1/certificates/read', form).pipe(map((r) => r.data));
   }
 
   /** Multipart upload with progress events; the last event carries the saved certificate. */

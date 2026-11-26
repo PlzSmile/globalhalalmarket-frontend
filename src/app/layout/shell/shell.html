@@ -1,44 +1,68 @@
 <a class="skip-link" href="#app-main">Skip to content</a>
 
-<mat-sidenav-container class="shell">
-  <mat-sidenav #drawer class="shell__sidenav" [mode]="isLarge() ? 'side' : 'over'" [opened]="isLarge()"
+<mat-sidenav-container class="shell" [class.is-slim]="slim()" [class.is-small]="isSmall()" [class.is-overlay]="!isWide() && !isSmall() && overlayOpen()">
+  <!-- phones: the sidebar slides in over the page from the menu button (Material's own backdrop and Escape) -->
+  <mat-sidenav class="shell__sidenav" [mode]="isSmall() ? 'over' : 'side'" [opened]="!isSmall() || overlayOpen()" (closed)="overlayOpen.set(false)"
                [fixedInViewport]="true" aria-label="App navigation">
+    <!-- 14 Nov 2026 (Bilal): the round button on the edge makes the sidebar slim (icons only) or full. -->
+    @if (!isSmall()) {
+    <button type="button" class="shell__toggle" (click)="toggleSidebar()" data-test="sidebar-toggle"
+            [attr.aria-label]="slim() ? 'Show the full menu' : 'Make the menu slim'" [attr.aria-expanded]="!slim()">
+      <mat-icon [svgIcon]="slim() ? 'chevron-right' : 'chevron-left'" />
+    </button>
+    }
+    <!-- 15 Nov 2026 (Bilal): when slim, the logo and the menu sit in one narrow dark green pill -->
+    <div class="shell__rail">
     <div class="shell__brand">
-      <hs-logo />
-      @if (!isLarge()) {
-        <button mat-icon-button type="button" (click)="drawer.close()" aria-label="Close menu">
-          <mat-icon svgIcon="close" />
-        </button>
+      <hs-logo class="shell__logo" />
+      <a class="shell__mark" href="/" aria-label="Global Halal Market home"><img src="/images/brand/icon-192.png" width="32" height="32" alt="" /></a>
+      @if (isSmall()) {
+        <button mat-icon-button type="button" class="shell__close" (click)="overlayOpen.set(false)" aria-label="Close menu"><mat-icon svgIcon="close" /></button>
       }
     </div>
 
     <p class="shell__section" aria-hidden="true">Tracker</p>
     <mat-nav-list class="shell__nav">
-      @for (item of nav; track item.path) {
-        <a mat-list-item [routerLink]="item.path" routerLinkActive #rla="routerLinkActive"
-           [activated]="rla.isActive" [attr.aria-current]="rla.isActive ? 'page' : null"
-           (click)="isLarge() || drawer.close()">
+      <!-- the green pill slides to the page being opened -->
+      @if (activeIndex() >= 0) {
+        <span class="shell__pill" aria-hidden="true" [style.transform]="'translateY(' + activeIndex() * 50 + 'px)'"></span>
+      }
+      <!-- 15 Nov 2026 (Bilal): the white label follows the click at once (not when the next page has loaded) -->
+      @for (item of nav; track item.path; let i = $index) {
+        <a mat-list-item [routerLink]="item.path"
+           [activated]="i === activeIndex()" [attr.aria-current]="i === activeIndex() ? 'page' : null"
+           [matTooltip]="item.label" matTooltipPosition="right" [matTooltipDisabled]="!slim()"
+           (click)="afterNavigate()">
           <mat-icon matListItemIcon [svgIcon]="item.icon" />
           <span matListItemTitle>{{ item.label }}</span>
         </a>
       }
     </mat-nav-list>
+    </div>
 
     <mat-nav-list class="shell__footer">
-      <a mat-list-item href="/">
+      <a mat-list-item href="/" matTooltip="Public checker" matTooltipPosition="right" [matTooltipDisabled]="!slim()">
         <mat-icon matListItemIcon svgIcon="external" />
         <span matListItemTitle>Public checker</span>
+      </a>
+      <!-- 14 Nov 2026: the help centre (public pages at /help), in a new tab so the app keeps its place. -->
+      <a mat-list-item href="/help" target="_blank" rel="noopener" data-test="help-link"
+         matTooltip="Help centre" matTooltipPosition="right" [matTooltipDisabled]="!slim()">
+        <mat-icon matListItemIcon svgIcon="help" />
+        <span matListItemTitle>Help centre<span class="visually-hidden"> (opens in a new tab)</span></span>
       </a>
     </mat-nav-list>
   </mat-sidenav>
 
   <mat-sidenav-content class="shell__main">
+    @if (!isWide() && !isSmall() && overlayOpen()) {
+      <div class="shell__backdrop" (click)="overlayOpen.set(false)" aria-hidden="true"></div>
+    }
     <mat-toolbar class="shell__toolbar">
-      @if (!isLarge()) {
-        <button mat-icon-button type="button" (click)="drawer.open()" aria-label="Open menu" [attr.aria-expanded]="drawer.opened">
+      @if (isSmall()) {
+        <button type="button" class="shell__menu" (click)="overlayOpen.set(true)" aria-label="Open menu" [attr.aria-expanded]="overlayOpen()" data-test="menu-button">
           <mat-icon svgIcon="menu" />
         </button>
-        <hs-logo class="shell__toolbar-logo" />
       }
       <hs-company-switcher />
       <hs-notifications-bell />
@@ -48,9 +72,9 @@
               [attr.aria-label]="theme.theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'">
         <mat-icon [svgIcon]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
       </button>
-      <button mat-icon-button type="button" [matMenuTriggerFor]="userMenu" aria-label="Account menu">
-        <mat-icon svgIcon="user" />
-      </button>
+      <!-- 14 Nov 2026 (Bilal): first letters of the first and last name on the theme colour -->
+      <button type="button" class="shell__avatar" [matMenuTriggerFor]="userMenu" data-test="avatar"
+              [attr.aria-label]="'Account menu for ' + (auth.user()?.name ?? 'you')">{{ initials() }}</button>
       <mat-menu #userMenu="matMenu" xPosition="before">
         <div class="shell__who" aria-hidden="true">
           <strong>{{ auth.user()?.name }}</strong>
@@ -58,6 +82,7 @@
         </div>
         <a mat-menu-item routerLink="/settings"><mat-icon svgIcon="settings" /> Settings</a>
         <a mat-menu-item routerLink="/settings" [queryParams]="{ tab: 'team' }"><mat-icon svgIcon="users" /> Team</a>
+        <a mat-menu-item href="/help" target="_blank" rel="noopener"><mat-icon svgIcon="help" /> Help centre</a>
         <button mat-menu-item type="button" (click)="logout()"><mat-icon svgIcon="logout" /> Log out</button>
       </mat-menu>
     </mat-toolbar>

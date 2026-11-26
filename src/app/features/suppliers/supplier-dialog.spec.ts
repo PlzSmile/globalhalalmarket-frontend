@@ -78,7 +78,7 @@ describe('SupplierDialog', () => {
     const update = vi.fn(() => of({ ...SAVED, auto_chase: false }));
     const { dialog, el } = setup({ supplier: { ...SAVED, auto_chase: false } }, { update });
     expect(dialog['autoChase'].value).toBe(false);
-    expect(el.textContent).toContain('Ask this supplier automatically for the renewed certificate');
+    expect(el.textContent).toContain('Ask this supplier automatically for the renewed halal certificate');
 
     dialog['autoChase'].setValue(true);
     await dialog['save']();

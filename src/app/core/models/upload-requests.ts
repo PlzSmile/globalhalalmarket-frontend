@@ -1,4 +1,6 @@
+import { CertificateType } from './certificates';
 import { NamedRef } from './catalogue';
+import { EmailDraftInput } from './email-templates';
 
 /** Mirrors App\Http\Resources\UploadRequestResource. */
 export type UploadRequestStatus = 'open' | 'closed' | 'expired';
@@ -35,8 +37,12 @@ export interface SentUploadRequest extends UploadRequestItem { readonly link: st
 
 export interface SendUploadRequestInput {
   readonly ingredient_ids: readonly number[];
+  /** 19 Nov 2026: what the request asks for; halal when left out. */
+  readonly certificate_type?: CertificateType;
   readonly note: string | null;
   readonly send_email: boolean;
+  /** 12 Nov 2026: the "Send email" dialog; without it the saved template goes to the supplier's address. */
+  readonly email?: EmailDraftInput;
 }
 
 export const CLOSED_REASON_TEXT: Record<UploadClosedReason, string> = {

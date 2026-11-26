@@ -43,6 +43,9 @@ html {
   );
 }
 
+// 26 Nov 2026 (Bilal): selected text is dark with light letters, as on the public site.
+::selection { background: var(--color-selection-bg); color: var(--color-selection-text); }
+
 body {
   margin: 0;
   min-height: 100dvh;
@@ -130,8 +133,8 @@ a { color: var(--color-link); }
   }
 }
 
-/* Buttons: pill shaped, crisp labels, a small press feedback. */
-.mat-mdc-button-base { --mat-button-filled-container-shape: var(--radius-pill); --mat-button-outlined-container-shape: var(--radius-pill); --mat-button-text-container-shape: var(--radius-pill); }
+/* Buttons: 3px corners (--radius-button, Bilal 12 Nov 2026; were pills), crisp labels, a small press feedback. */
+.mat-mdc-button-base { --mat-button-filled-container-shape: var(--radius-button); --mat-button-outlined-container-shape: var(--radius-button); --mat-button-text-container-shape: var(--radius-button); --mat-button-tonal-container-shape: var(--radius-button); }
 .mat-mdc-button-base:not(.mat-mdc-icon-button) { transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard); }
 .mat-mdc-button-base:not(.mat-mdc-icon-button):active { transform: scale(0.97); }
 .mat-mdc-unelevated-button.mat-primary:not(:disabled):hover { box-shadow: var(--shadow-md); }
@@ -211,30 +214,30 @@ a { color: var(--color-link); }
 
 /* ---------------------------------------------------------------- Auth screens (login, sign-up, …) */
 .auth-title { font-size: var(--text-2xl); font-weight: var(--weight-semibold); margin: 0; }
-.auth-subtitle { color: var(--color-text-muted); margin: var(--space-1) 0 var(--space-6); }
-.auth-form { display: grid; gap: var(--space-2); }
+.auth-subtitle { color: var(--color-text-muted); margin: var(--space-1) 0 var(--space-5); }
+/* Slightly denser fields on auth screens (12 Nov 2026: the login felt too big); still 48px tall, above the 44px touch target. */
+.auth-form { display: grid; gap: var(--space-1); }
+@media (max-width: 1199px) { .auth-form { @include mat.form-field-density(-2); } } /* large screens keep the compact desktop -4 */
 .auth-form mat-form-field { width: 100%; }
-.auth-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; min-height: 44px; }
-.auth-submit { width: 100%; min-height: 44px; margin-top: var(--space-2); }
-.auth-footer { margin: var(--space-6) 0 0; text-align: center; color: var(--color-text-muted); }
+.auth-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; min-height: var(--touch-target); }
+.auth-submit { width: 100%; min-height: var(--touch-target); margin-top: var(--space-2); }
+.auth-footer { margin: var(--space-4) 0 0; text-align: center; color: var(--color-text-muted); }
 /* Standalone links on auth screens are touch targets too (≥ 44px). */
-.auth-footer a, .auth-row a { display: inline-flex; align-items: center; min-height: 44px; }
+.auth-footer a, .auth-row a { display: inline-flex; align-items: center; min-height: var(--touch-target); }
+@media (min-width: 1200px) { .auth-title { font-size: var(--text-xl); } .auth-subtitle { margin-bottom: var(--space-4); font-size: var(--text-sm); } }
 
 .notice { border: 1px solid; border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); margin: 0 0 var(--space-4); font-size: var(--text-sm); }
 .notice--success { color: var(--color-success-fg); background: var(--color-success-bg); border-color: var(--color-success-border); }
 .notice--error { color: var(--color-danger-fg); background: var(--color-danger-bg); border-color: var(--color-danger-border); }
 .notice--info { color: var(--color-info-fg); background: var(--color-info-bg); border-color: var(--color-info-border); }
 
-/* ---------------------------------------------------------------- Page change: a soft slide (View Transitions)
-   Only the page content (#app-main, named app-page in the shell) moves; the sidebar and top bar stay still. */
-@keyframes hs-page-out { to { opacity: 0; transform: translateX(-16px); } }
+/* ---------------------------------------------------------------- Page change: a soft slide in
+   15 Nov 2026 (Bilal: "the sidebar is stuck until the page loads"): View Transitions froze the whole screen (sidebar
+   included) until the new page's API calls finished, about 2 s on the live server. Now only the new page slides in
+   with plain CSS and the sidebar moves at once. "backwards": no transform stays on the page afterwards. */
 @keyframes hs-page-in { from { opacity: 0; transform: translateX(24px); } }
-::view-transition-old(root), ::view-transition-new(root) { animation: none; }
-::view-transition-old(app-page) { animation: hs-page-out 160ms var(--ease-standard) both; }
-::view-transition-new(app-page) { animation: hs-page-in 280ms var(--ease-standard) both; }
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(app-page), ::view-transition-new(app-page) { animation: none; }
-}
+#app-main > router-outlet + * { animation: hs-page-in 260ms var(--ease-standard) backwards; }
+@media (prefers-reduced-motion: reduce) { #app-main > router-outlet + * { animation: none; } }
 
 /* Before the app starts (index.html): the same three dots, centred on the page. */
 .boot-loader { display: grid; place-items: center; min-height: 100dvh; color: var(--color-primary); }

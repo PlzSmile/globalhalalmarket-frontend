@@ -24,7 +24,6 @@
       <mat-form-field appearance="outline">
         <mat-label>Password</mat-label>
         <input matInput type="password" formControlName="password" autocomplete="new-password" required />
-        <mat-hint>At least {{ passwordMin }} characters.</mat-hint>
         @if (form.controls.password.hasError('required')) { <mat-error>Choose a password.</mat-error> }
         @else if (form.controls.password.hasError('minlength')) { <mat-error>Use at least {{ passwordMin }} characters.</mat-error> }
         @else if (serverError(form.controls.password); as message) { <mat-error>{{ message }}</mat-error> }
@@ -35,6 +34,7 @@
         @if (form.controls.password_confirmation.hasError('mismatch')) { <mat-error>The passwords do not match.</mat-error> }
         @else if (form.controls.password_confirmation.hasError('required')) { <mat-error>Type your password again.</mat-error> }
       </mat-form-field>
+      <hs-password-checklist [password]="passwordValue()" [confirmation]="confirmationValue()" />
       <button mat-flat-button class="auth-submit" type="submit" [disabled]="busy()">Join {{ s.preview.company_name }}</button>
       @if (busy()) { <hs-loader label="Creating your account" /> }
     </form>

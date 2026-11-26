@@ -41,6 +41,8 @@
             </button>
           }
         </mat-menu>
+        <button mat-stroked-button type="button" class="btn" (click)="shareWithBuyer(product)" data-test="share-buyer"
+                title="A read-only page for a buyer or importer, for one market">Share with a buyer</button>
       }
       <button mat-stroked-button type="button" class="btn" (click)="editProduct(product)" [disabled]="busy()">Edit</button>
       <button mat-stroked-button type="button" class="btn" (click)="deleteProduct()" [disabled]="busy()" data-test="delete-product">Delete</button>

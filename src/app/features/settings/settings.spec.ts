@@ -27,6 +27,10 @@ describe('Settings', () => {
   });
 
   it('opens Activity for ?tab=activity (Phase 7)', () => {
-    expect(initialTab('activity')).toBe(5);
+    expect(initialTab('activity')).toBe(7); // after Branding and Email templates (12 Nov 2026)
+    TestBed.resetTestingModule();
+    expect(initialTab('branding')).toBe(5);
+    TestBed.resetTestingModule();
+    expect(initialTab('emails')).toBe(6);
   });
 });

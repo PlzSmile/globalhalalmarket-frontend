@@ -35,7 +35,7 @@
             [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'" [attr.aria-pressed]="showPassword()">
       <mat-icon [svgIcon]="showPassword() ? 'eye-off' : 'eye'" />
     </button>
-    <mat-hint>At least {{ passwordMin }} characters. A short sentence works well.</mat-hint>
+    <mat-hint>A short sentence works well.</mat-hint>
     @if (form.controls.password.hasError('required')) { <mat-error>Choose a password.</mat-error> }
     @else if (form.controls.password.hasError('minlength')) { <mat-error>Use at least {{ passwordMin }} characters.</mat-error> }
     @else if (serverError(form.controls.password); as message) { <mat-error>{{ message }}</mat-error> }
@@ -47,6 +47,7 @@
     @if (form.controls.password_confirmation.hasError('required')) { <mat-error>Type your password again.</mat-error> }
     @else if (form.controls.password_confirmation.hasError('mismatch')) { <mat-error>The passwords do not match.</mat-error> }
   </mat-form-field>
+  <hs-password-checklist [password]="passwordValue()" [confirmation]="confirmationValue()" />
 
   <mat-form-field appearance="outline">
     <mat-label>Company name</mat-label>
@@ -65,5 +66,7 @@
   <button mat-flat-button class="auth-submit" type="submit" [disabled]="busy()">Create account</button>
   @if (busy()) { <hs-loader label="Creating your account" /> }
 </form>
+
+<hs-security-badge class="auth-security" />
 
 <p class="auth-footer">Already have an account? <a routerLink="/login">Log in</a></p>

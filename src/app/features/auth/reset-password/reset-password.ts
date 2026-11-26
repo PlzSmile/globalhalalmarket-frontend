@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -9,11 +9,12 @@ import { MatInputModule } from '@angular/material/input';
 import { AuthApi } from '../../../core/api/auth-api';
 import { applyServerErrorsOr, clearServerErrors, serverError } from '../../../shared/forms/server-errors';
 import { PASSWORD_MIN, matchesField } from '../../../shared/forms/validators';
+import { PasswordChecklist } from '../../../shared/forms/password-checklist';
 
 import { Loader } from '../../../shared/ui/loader';
 @Component({
   selector: 'hs-reset-password',
-  imports: [Loader, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [PasswordChecklist, Loader, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule],
   template: `
     <h1 class="auth-title">Choose a new password</h1>
     <p class="auth-subtitle">For {{ email || 'your account' }}.</p>
@@ -26,7 +27,6 @@ import { Loader } from '../../../shared/ui/loader';
       <mat-form-field appearance="outline">
         <mat-label>New password</mat-label>
         <input matInput type="password" formControlName="password" autocomplete="new-password" required />
-        <mat-hint>At least {{ passwordMin }} characters.</mat-hint>
         @if (form.controls.password.hasError('required')) { <mat-error>Choose a password.</mat-error> }
         @else if (form.controls.password.hasError('minlength')) { <mat-error>Use at least {{ passwordMin }} characters.</mat-error> }
         @else if (serverError(form.controls.password); as message) { <mat-error>{{ message }}</mat-error> }
@@ -37,6 +37,7 @@ import { Loader } from '../../../shared/ui/loader';
         @if (form.controls.password_confirmation.hasError('mismatch')) { <mat-error>The passwords do not match.</mat-error> }
         @else if (form.controls.password_confirmation.hasError('required')) { <mat-error>Type your password again.</mat-error> }
       </mat-form-field>
+      <hs-password-checklist [password]="passwordValue()" [confirmation]="confirmationValue()" />
       <button mat-flat-button class="auth-submit" type="submit" [disabled]="busy()">Change password</button>
       @if (busy()) { <hs-loader label="Saving" /> }
     </form>
@@ -56,6 +57,8 @@ export class ResetPassword {
     password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN)]],
     password_confirmation: ['', [Validators.required, matchesField('password')]],
   });
+  protected readonly passwordValue = toSignal(this.form.controls.password.valueChanges, { initialValue: '' });
+  protected readonly confirmationValue = toSignal(this.form.controls.password_confirmation.valueChanges, { initialValue: '' });
   protected readonly busy = signal(false);
   protected readonly formError = signal<string | null>(null);
 

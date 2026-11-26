@@ -12,12 +12,13 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
 import { BodiesApi } from '../../core/api/bodies-api';
 import { CertificatesApi } from '../../core/api/certificates-api';
 import { IngredientsApi } from '../../core/api/ingredients-api';
 import { SuppliersApi } from '../../core/api/suppliers-api';
 import { NamedRef } from '../../core/models/catalogue';
-import { BodyOption, CertificateDetail, CertificateFields } from '../../core/models/certificates';
+import { BodyOption, CERTIFICATE_TYPES, CertificateDetail, CertificateFields, CertificateType } from '../../core/models/certificates';
 import { toIsoDate, fromIsoDate } from '../../shared/format/uk-date';
 import { UkDateAdapter } from '../../shared/format/uk-date-adapter';
 import { collapseSpaces } from '../../shared/forms/normalise';
@@ -43,7 +44,7 @@ function picked(control: AbstractControl<Picked<NamedRef>>): ValidationErrors | 
   providers: [provideNativeDateAdapter(), { provide: DateAdapter, useClass: UkDateAdapter }, { provide: MAT_DATE_LOCALE, useValue: 'en-GB' }],
   imports: [
     ReactiveFormsModule, MatAutocompleteModule, MatButtonModule, MatCheckboxModule, MatDatepickerModule, MatDialogModule,
-    MatFormFieldModule, MatInputModule, MatProgressBarModule, FilePicker, SecurityBadge,
+    MatFormFieldModule, MatInputModule, MatProgressBarModule, MatSelectModule, FilePicker, SecurityBadge,
   ],
   template: `
     <h2 mat-dialog-title>{{ data.certificate ? 'Edit certificate' : 'Add certificate' }}</h2>
@@ -54,9 +55,29 @@ function picked(control: AbstractControl<Picked<NamedRef>>): ValidationErrors | 
         @if (!data.certificate) {
           <div class="file">
             <span class="field-label">Certificate PDF</span>
-            <hs-file-picker [disabled]="busy()" (fileChange)="file.set($event)" />
+            <hs-file-picker [disabled]="busy()" (fileChange)="onFile($event)" />
+            @if (readNote(); as note) { <p class="notice notice--info read-note" role="status" data-test="read-note">{{ note }}</p> }
           </div>
         }
+
+        <!-- 16 Nov 2026 (week 8): other certificate types. Only halal counts for recognition and red/amber/green. -->
+        <div class="row">
+          <mat-form-field appearance="outline">
+            <mat-label>Certificate type</mat-label>
+            <mat-select formControlName="type" (selectionChange)="onTypeChange($event.value)" data-test="type">
+              @for (t of types; track t.value) { <mat-option [value]="t.value">{{ t.label }}</mat-option> }
+            </mat-select>
+            @if (!isHalal()) { <mat-hint>Tracked for expiry and reminders. Only halal certificates affect the red, amber and green status.</mat-hint> }
+          </mat-form-field>
+          @if (type() === 'other') {
+            <mat-form-field appearance="outline">
+              <mat-label>Name of the certificate</mat-label>
+              <input matInput formControlName="type_name" maxlength="80" data-test="type-name" />
+              @if (form.controls.type_name.hasError('required')) { <mat-error>Enter the name of the certificate.</mat-error> }
+              @else if (serverError(form.controls.type_name); as m) { <mat-error>{{ m }}</mat-error> }
+            </mat-form-field>
+          }
+        </div>
 
         <mat-form-field appearance="outline">
           <mat-label>Supplier</mat-label>
@@ -68,7 +89,15 @@ function picked(control: AbstractControl<Picked<NamedRef>>): ValidationErrors | 
           @else if (serverError(form.controls.supplier_id); as m) { <mat-error>{{ m }}</mat-error> }
         </mat-form-field>
 
-        @if (!useOtherBody()) {
+        @if (!isHalal()) {
+          <mat-form-field appearance="outline">
+            <mat-label>Issued by</mat-label>
+            <input matInput formControlName="body_name_other" maxlength="160" data-test="issued-by" />
+            <mat-hint>The certification body named on the certificate.</mat-hint>
+            @if (form.controls.body_name_other.hasError('required')) { <mat-error>Enter who issued the certificate.</mat-error> }
+            @else if (serverError(form.controls.body_name_other); as m) { <mat-error>{{ m }}</mat-error> }
+          </mat-form-field>
+        } @else if (!useOtherBody()) {
           <mat-form-field appearance="outline">
             <mat-label>Certification body</mat-label>
             <input matInput formControlName="certification_body_id" [matAutocomplete]="bodyAuto" autocomplete="off" />
@@ -80,7 +109,7 @@ function picked(control: AbstractControl<Picked<NamedRef>>): ValidationErrors | 
             @if (form.controls.certification_body_id.hasError('picked')) { <mat-error>Choose the certification body from the list.</mat-error> }
             @else if (serverError(form.controls.certification_body_id); as m) { <mat-error>{{ m }}</mat-error> }
           </mat-form-field>
-          <button mat-button type="button" class="btn link" (click)="useOtherBody.set(true)" data-test="other-body">Not in the list — type the name</button>
+          <button mat-button type="button" class="btn link" (click)="useOtherBody.set(true)" data-test="other-body">Not in the list? Type the name</button>
         } @else {
           <mat-form-field appearance="outline">
             <mat-label>Certification body name</mat-label>
@@ -93,7 +122,7 @@ function picked(control: AbstractControl<Picked<NamedRef>>): ValidationErrors | 
         }
 
         <fieldset class="ingredients">
-          <legend class="field-label">Ingredients this certificate covers</legend>
+          <legend class="field-label">Ingredients this certificate covers@if (!isHalal()) { <span class="muted"> (optional)</span> }</legend>
           @for (i of ingredientOptions(); track i.id) {
             <mat-checkbox [checked]="selected().has(i.id)" (change)="toggleIngredient(i, $event.checked)" [attr.data-test]="'ingredient-' + i.id">{{ i.name }}</mat-checkbox>
           } @empty {
@@ -158,6 +187,7 @@ function picked(control: AbstractControl<Picked<NamedRef>>): ValidationErrors | 
     .row { display: grid; gap: var(--space-2); grid-template-columns: minmax(0, 1fr); }
     @media (min-width: 600px) { .row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     .btn { min-height: var(--touch-target); }
+    .read-note { margin: var(--space-2) 0 0; }
     .link { justify-self: start; margin-top: calc(-1 * var(--space-2)); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -178,8 +208,13 @@ export class CertificateDialog implements OnInit {
   protected readonly ingredientsError = signal<string | null>(null);
   protected readonly file = signal<File | null>(null);
   protected readonly useOtherBody = signal(!!this.data.certificate?.body_name_other);
+  protected readonly types = CERTIFICATE_TYPES;
+  protected readonly type = signal<CertificateType>(this.data.certificate?.type ?? 'halal');
+  protected readonly isHalal = computed(() => this.type() === 'halal');
 
   protected readonly form = this.fb.group({
+    type: this.fb.control<CertificateType>(this.data.certificate?.type ?? 'halal'),
+    type_name: [this.data.certificate?.type_name ?? '', [Validators.maxLength(80)]],
     supplier_id: this.fb.control<Picked<NamedRef>>(this.data.certificate?.supplier ?? this.data.supplier ?? '', picked),
     certification_body_id: this.fb.control<Picked<NamedRef | BodyOption>>(this.data.certificate?.body ?? ''),
     body_name_other: [this.data.certificate?.body_name_other ?? '', [Validators.maxLength(160)]],
@@ -223,11 +258,61 @@ export class CertificateDialog implements OnInit {
     search<NamedRef>(this.form.controls.other_ingredient, (t) => this.ingredients.search(t), (r) => this.otherIngredientOptions.set(r));
   }
 
+  protected readonly readNote = signal<string | null>(null);
+
+  /**
+   * 16 Nov 2026 (week 4): read the chosen PDF and fill the fields that are still empty (never overwrite what the person
+   * typed). A scan or an unreadable file simply leaves the form as it is.
+   */
+  async onFile(file: File | null): Promise<void> {
+    this.file.set(file);
+    this.readNote.set(null);
+    if (!file) {
+      return;
+    }
+    this.readNote.set('Reading the PDF…');
+    try {
+      const r = await firstValueFrom(this.certificates.read(file));
+      if (this.file() !== file) {
+        return; // another file was chosen meanwhile
+      }
+      const c = this.form.controls;
+      let filled = 0;
+      const empty = (value: unknown): boolean => value === null || value === '';
+      if (r.certification_body_id !== null && r.body_name && this.isHalal() && !this.useOtherBody() && empty(c.certification_body_id.value)) {
+        c.certification_body_id.setValue({ id: r.certification_body_id, name: r.body_name });
+        filled++;
+      }
+      if (r.certificate_number && empty(c.certificate_number.value)) {
+        c.certificate_number.setValue(r.certificate_number);
+        filled++;
+      }
+      if (r.issued_on && empty(c.issued_on.value)) {
+        c.issued_on.setValue(fromIsoDate(r.issued_on));
+        filled++;
+      }
+      if (r.expires_on && empty(c.expires_on.value)) {
+        c.expires_on.setValue(fromIsoDate(r.expires_on));
+        filled++;
+      }
+      this.readNote.set(filled > 0
+        ? `We filled in ${filled} ${filled === 1 ? 'field' : 'fields'} from the PDF. Please check ${filled === 1 ? 'it' : 'them'} before saving.`
+        : 'We could not read the details from this PDF (a scanned image has no text). Please fill in the form.');
+    } catch {
+      this.readNote.set(null); // reading is a help only: the form works as before
+    }
+  }
+
   ngOnInit(): void {
     const supplier = this.form.controls.supplier_id.value;
     if (typeof supplier === 'object' && supplier !== null) {
       void this.loadSupplierIngredients(supplier.id);
     }
+  }
+
+  protected onTypeChange(type: CertificateType): void {
+    this.type.set(type);
+    this.ingredientsError.set(null);
   }
 
   protected async onSupplierPicked(supplier: NamedRef): Promise<void> {
@@ -303,15 +388,21 @@ export class CertificateDialog implements OnInit {
     const expires = c.expires_on.value;
     let valid = true;
 
+    const halal = this.isHalal();
+    const typeName = collapseSpaces(c.type_name.value);
     c.supplier_id.updateValueAndValidity();
     if (typeof supplier !== 'object') { valid = false; }
-    if (this.useOtherBody()) {
+    if (this.type() === 'other' && !typeName) { c.type_name.setErrors({ required: true }); valid = false; }
+    if (!halal) {
+      // Week 8: another type keeps only the issuer's name (the catalogue lists halal certifiers).
+      if (!other) { c.body_name_other.setErrors({ required: true }); valid = false; }
+    } else if (this.useOtherBody()) {
       if (!other) { c.body_name_other.setErrors({ required: true }); valid = false; }
     } else if (typeof body !== 'object' || body === null) {
       c.certification_body_id.setErrors({ picked: true });
       valid = false;
     }
-    if (this.selected().size === 0) {
+    if (halal && this.selected().size === 0) {
       this.ingredientsError.set('Choose at least one ingredient.');
       valid = false;
     }
@@ -334,8 +425,10 @@ export class CertificateDialog implements OnInit {
     const text = (value: string): string | null => collapseSpaces(value) || null;
     return {
       supplier_id: supplier.id,
-      certification_body_id: this.useOtherBody() ? null : (body as NamedRef).id,
-      body_name_other: this.useOtherBody() ? other : null,
+      type: this.type(),
+      type_name: this.type() === 'other' ? typeName : null,
+      certification_body_id: halal && !this.useOtherBody() ? (body as NamedRef).id : null,
+      body_name_other: !halal || this.useOtherBody() ? other : null,
       certificate_number: text(c.certificate_number.value),
       scope: text(c.scope.value),
       issued_on: issued ? toIsoDate(issued) : null,

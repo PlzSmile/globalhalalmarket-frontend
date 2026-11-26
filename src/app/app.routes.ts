@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard, unverifiedGuard } from './core/auth/guards';
+import { authGuard, guestGuard, setupGuard, unverifiedGuard } from './core/auth/guards';
 
 export const routes: Routes = [
   // The bare address (/app/) must go to the dashboard (or, logged out, on to the login form). Without this the empty
@@ -19,6 +19,8 @@ export const routes: Routes = [
       { path: 'invitation/:token', title: 'Accept invitation · Global Halal Market', loadComponent: () => import('./features/auth/accept-invitation/accept-invitation').then((m) => m.AcceptInvitation) },
     ],
   },
+  // 12 Nov 2026: first-run setup for a new sign-up (its own simple page: no menu until the account is set up).
+  { path: 'setup', title: 'Set up your account · Global Halal Market', canActivate: [setupGuard], loadComponent: () => import('./features/setup/setup-wizard').then((m) => m.SetupWizard) },
   {
     path: '',
     loadComponent: () => import('./layout/shell/shell').then((m) => m.Shell),

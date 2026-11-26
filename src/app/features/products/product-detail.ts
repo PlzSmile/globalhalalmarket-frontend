@@ -26,6 +26,7 @@ import { NameDialog, NameDialogData } from '../../shared/ui/name-dialog';
 import { ComplianceBreakdown } from '../compliance/compliance-breakdown';
 import { ComplianceHistory } from '../compliance/compliance-history';
 import { ProductDialog, ProductDialogData } from './product-dialog';
+import { ShareDialog, ShareDialogData } from './share-dialog';
 
 import { Skeleton } from '../../shared/ui/skeleton';
 import { onLiveChange } from '../../core/live/live-changes';
@@ -124,6 +125,12 @@ export class ProductDetailPage implements OnInit {
     } finally {
       this.downloading.set(false);
     }
+  }
+
+  /** 16 Nov 2026: "Share with a buyer", one read-only link per market (the markets with a compliance result). */
+  protected shareWithBuyer(product: ProductDetail): void {
+    const data: ShareDialogData = { productId: this.numericId(), productName: product.name, markets: this.auditPackMarkets().map((m) => m.market) };
+    this.dialog.open(ShareDialog, { data, autoFocus: false, width: '640px', maxWidth: 'calc(100vw - 32px)' });
   }
 
   protected readonly searchIngredients =(text: string): Observable<readonly NamedRef[]> => this.ingredients.search(text);

@@ -55,7 +55,7 @@ function countryPicked(control: AbstractControl<Country | string>): ValidationEr
           @else if (serverError(form.controls.country); as message) { <mat-error>{{ message }}</mat-error> }
         </mat-form-field>
         <mat-checkbox [formControl]="autoChase" class="chase" data-test="auto-chase">
-          Ask this supplier automatically for the renewed certificate, 30 days before it expires (needs a contact email).
+          Ask this supplier automatically for the renewed halal certificate before it expires, on the day set in Settings › Reminders (needs a contact email).
         </mat-checkbox>
       </mat-dialog-content>
       <mat-dialog-actions align="end">

@@ -5,6 +5,7 @@ import {
 import { Router } from '@angular/router';
 import { Observable, catchError, filter, from, switchMap, take, throwError } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
+import { returnUrlParams } from '../auth/return-url';
 import { AccessService } from '../billing/access.service';
 import { PlanLimitError } from '../models/billing';
 
@@ -61,7 +62,7 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
     const isMeCheck = req.method === 'GET' && req.url === '/api/v1/me';
     if (error.status === 401 && !isMeCheck) {
       auth.clear();
-      void router.navigate(['/login'], { queryParams: { returnUrl: router.url } });
+      void router.navigate(['/login'], { queryParams: returnUrlParams(router.url) });
     } else if (error.status === 409) {
       void router.navigate(['/verify-email']);
     } else if (error.status === 402) {

@@ -5,6 +5,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { CertificatesList } from './certificates-list';
 import { CertificatesApi } from '../../core/api/certificates-api';
+import { MeApi } from '../../core/api/me-api';
 import { Paginated } from '../../core/models/catalogue';
 import { CertificateListItem } from '../../core/models/certificates';
 import { settle } from '../../../testing/settle';
@@ -19,6 +20,7 @@ function setup(list: ReturnType<typeof vi.fn>, query: Record<string, string> = {
     providers: [
       provideRouter([]),
       { provide: CertificatesApi, useValue: { list } },
+      { provide: MeApi, useValue: { company: vi.fn(() => of({ id: 5, name: 'Khan Foods', reminders: { certificates: true } })) } },
       { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(query) } } },
       { provide: MatDialog, useValue: { open: vi.fn(() => ({ afterClosed: () => of(dialogResult) })) } },
     ],
@@ -29,11 +31,19 @@ function setup(list: ReturnType<typeof vi.fn>, query: Record<string, string> = {
 }
 
 describe('CertificatesList', () => {
+  it('shows the expiry reminder status, linking to its settings', async () => {
+    const { fixture, el } = setup(vi.fn(() => of(page([]))));
+    await settle(fixture);
+    const pill = el.querySelector('[data-test="reminders-pill"]') as HTMLAnchorElement;
+    expect(pill.textContent).toContain('Expiry reminders: On');
+    expect(pill.getAttribute('href')).toContain('/settings?tab=reminders');
+  });
+
   it('reads filters from the URL and shows rows with body, supplier, expiry note and status', async () => {
     const list = vi.fn(() => of(page([ITEM])));
     const { fixture, el } = setup(list, { status: 'pending', expiring: '1', search: 'mid', page: '2' });
     await settle(fixture);
-    expect(list).toHaveBeenCalledWith({ search: 'mid', status: 'pending', supplierId: null, expiring: true, archived: false, page: 2 });
+    expect(list).toHaveBeenCalledWith({ search: 'mid', status: 'pending', type: null, supplierId: null, expiring: true, archived: false, page: 2 });
     expect((el.querySelector('[data-test="certificate-link"]') as HTMLAnchorElement).getAttribute('href')).toContain('/certificates/1');
     expect(el.textContent).toContain('Midlands Halal Board');
     expect(el.textContent).toContain('Acme Gelatin');
@@ -48,11 +58,23 @@ describe('CertificatesList', () => {
     await settle(fixture);
     fixture.componentInstance['setFilter']('rejected');
     await settle(fixture);
-    expect(list).toHaveBeenLastCalledWith({ search: '', status: 'rejected', supplierId: null, expiring: false, archived: false, page: 1 });
-    expect(navigate).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: { search: null, status: 'rejected', expiring: null, archived: null, page: null } }));
+    expect(list).toHaveBeenLastCalledWith({ search: '', status: 'rejected', type: null, supplierId: null, expiring: false, archived: false, page: 1 });
+    expect(navigate).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: { search: null, status: 'rejected', type: null, expiring: null, archived: null, page: null } }));
     fixture.componentInstance['setFilter']('expiring');
     await settle(fixture);
-    expect(list).toHaveBeenLastCalledWith({ search: '', status: null, supplierId: null, expiring: true, archived: false, page: 1 });
+    expect(list).toHaveBeenLastCalledWith({ search: '', status: null, type: null, supplierId: null, expiring: true, archived: false, page: 1 });
+  });
+
+  it('filters by certificate type and keeps it in the URL (week 8)', async () => {
+    const list = vi.fn(() => of(page([{ ...ITEM, type: 'brcgs', type_label: 'BRCGS Food Safety', body_name_other: 'SGS' }])));
+    const { fixture, navigate, el } = setup(list, { type: 'organic' });
+    await settle(fixture);
+    expect(list).toHaveBeenCalledWith(expect.objectContaining({ type: 'organic' }));
+    fixture.componentInstance['setType']('brcgs');
+    await settle(fixture);
+    expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'brcgs', page: 1 }));
+    expect(navigate).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({ type: 'brcgs' }) }));
+    expect(el.querySelector('[data-test="type-label"]')?.textContent).toContain('BRCGS Food Safety');
   });
 
   it('shows empty, error and no-match states', async () => {
@@ -108,8 +130,8 @@ describe('CertificatesList', () => {
     await settle(fixture);
     fixture.componentInstance['setFilter']('archived');
     await settle(fixture);
-    expect(list).toHaveBeenLastCalledWith({ search: '', status: null, supplierId: null, expiring: false, archived: true, page: 1 });
-    expect(navigate).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: { search: null, status: null, expiring: null, archived: 1, page: null } }));
+    expect(list).toHaveBeenLastCalledWith({ search: '', status: null, type: null, supplierId: null, expiring: false, archived: true, page: 1 });
+    expect(navigate).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: { search: null, status: null, type: null, expiring: null, archived: 1, page: null } }));
   });
 
   it('reads the Archived filter from the URL', async () => {

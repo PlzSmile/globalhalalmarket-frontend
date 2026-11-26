@@ -11,10 +11,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { CertificatesApi } from '../../core/api/certificates-api';
+import { MeApi } from '../../core/api/me-api';
 import { Paginated } from '../../core/models/catalogue';
-import { CertificateDetail, CertificateListItem, CertificateStatus, bodyName } from '../../core/models/certificates';
+import { CERTIFICATE_TYPES, CertificateDetail, CertificateListItem, CertificateStatus, CertificateType, bodyName } from '../../core/models/certificates';
 import { expiryNote, ukDate } from '../../shared/format/uk-date';
 import { collapseSpaces } from '../../shared/forms/normalise';
 import { CertificateStatusBadge } from '../../shared/ui/certificate-status-badge';
@@ -26,7 +28,7 @@ import { SearchField } from '../../shared/ui/search-field';
 import { onLiveChange } from '../../core/live/live-changes';
 type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; page: Paginated<CertificateListItem> };
 type Filter = 'all' | CertificateStatus | 'expiring' | 'archived';
-interface Query { readonly search: string; readonly status: CertificateStatus | null; readonly expiring: boolean; readonly archived: boolean; readonly page: number; }
+interface Query { readonly search: string; readonly status: CertificateStatus | null; readonly type: CertificateType | null; readonly expiring: boolean; readonly archived: boolean; readonly page: number; }
 
 const STATUSES: readonly CertificateStatus[] = ['approved', 'pending', 'rejected'];
 
@@ -34,13 +36,19 @@ const STATUSES: readonly CertificateStatus[] = ['approved', 'pending', 'rejected
   selector: 'hs-certificates-list',
   imports: [Skeleton, SearchField, 
     ReactiveFormsModule, RouterLink, MatButtonModule, MatCardModule, MatChipsModule, MatFormFieldModule, MatIconModule, MatInputModule,
-    MatPaginatorModule, MatTableModule, CertificateStatusBadge, EmptyState,
+    MatPaginatorModule, MatSelectModule, MatTableModule, CertificateStatusBadge, EmptyState,
   ],
   template: `
     <header class="hs-list-head">
       <h1>Certificates</h1>
       <hs-search-field class="hs-list-head__search" [control]="search" label="Search body, number or supplier" />
       <div class="hs-list-head__actions">
+        <!-- 14 Nov 2026 (Bilal, like Xero's "Invoice Reminders: On"): the expiry reminder status, to its settings -->
+        @if (remindersOn() !== null) {
+          <a class="reminders-pill" routerLink="/settings" [queryParams]="{ tab: 'reminders' }" [class.reminders-pill--off]="!remindersOn()" data-test="reminders-pill">
+            <span class="reminders-pill__dot" aria-hidden="true"></span>Expiry reminders: {{ remindersOn() ? 'On' : 'Off' }}
+          </a>
+        }
         <button mat-flat-button type="button" class="btn" (click)="add()" data-test="add-certificate"><mat-icon svgIcon="plus" /> Add certificate</button>
       </div>
     </header>
@@ -49,6 +57,14 @@ const STATUSES: readonly CertificateStatus[] = ['approved', 'pending', 'rejected
       <mat-chip-listbox aria-label="Filter certificates" [value]="activeFilter()" (change)="setFilter($event.value ?? 'all')">
         @for (f of filters; track f.value) { <mat-chip-option [value]="f.value" [selectable]="true">{{ f.label }}</mat-chip-option> }
       </mat-chip-listbox>
+      <!-- 17 Nov 2026 (week 8 follow-up): filter by certificate type -->
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="type-filter">
+        <mat-label>Type</mat-label>
+        <mat-select [value]="query().type ?? ''" (selectionChange)="setType($event.value || null)" data-test="type-filter">
+          <mat-option value="">All types</mat-option>
+          @for (t of types; track t.value) { <mat-option [value]="t.value">{{ t.label }}</mat-option> }
+        </mat-select>
+      </mat-form-field>
     </div>
 
     @let s = state();
@@ -60,7 +76,7 @@ const STATUSES: readonly CertificateStatus[] = ['approved', 'pending', 'rejected
         <button mat-stroked-button type="button" class="btn" (click)="load()" data-test="retry">Try again</button>
       </mat-card-content></mat-card>
     } @else if (s.page.meta.total === 0 && isUnfiltered()) {
-      <hs-empty-state icon="file" heading="Add your first certificate" text="Upload your suppliers' halal certificates (PDF). We check every file before storing it.">
+      <hs-empty-state icon="file" heading="Add your first certificate" text="Upload your suppliers' halal certificates (PDF), and their BRCGS, ISO 22000, organic or other certificates too. We check every file before storing it.">
         <button mat-flat-button type="button" class="btn" (click)="add()">Add certificate</button>
       </hs-empty-state>
     } @else if (s.page.meta.total === 0) {
@@ -73,7 +89,9 @@ const STATUSES: readonly CertificateStatus[] = ['approved', 'pending', 'rejected
             <th mat-header-cell *matHeaderCellDef scope="col">Certification body</th>
             <td mat-cell *matCellDef="let c" class="hs-cell--primary">
               <a [routerLink]="['/certificates', c.id]" class="row-link" data-test="certificate-link">{{ name(c) }}</a>
-              @if (!c.body) { <span class="subtle"> · not in our list</span> }
+              <!-- week 8: other certificate types show their type; "not in our list" is about halal bodies only -->
+              @if (c.type && c.type !== 'halal') { <span class="subtle" data-test="type-label"> · {{ c.type_label }}</span> }
+              @else if (!c.body) { <span class="subtle"> · not in our list</span> }
             </td>
           </ng-container>
           <ng-container matColumnDef="supplier">
@@ -108,7 +126,15 @@ const STATUSES: readonly CertificateStatus[] = ['approved', 'pending', 'rejected
     .filters { display: grid; gap: var(--space-3); }
     /* Touch targets ≥ 44 px (Material chips default to 32 px). */
     .filters mat-chip-option { --mat-chip-container-height: var(--touch-target); }
+    .type-filter { width: 100%; max-width: var(--container-form); }
     .btn { min-height: var(--touch-target); }
+    .reminders-pill { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--touch-target); padding: 0 var(--space-4);
+      border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface);
+      font-weight: var(--weight-semibold); color: var(--color-link); text-decoration: none; white-space: nowrap; }
+    .reminders-pill:hover { border-color: var(--color-primary); }
+    .reminders-pill__dot { width: 10px; height: 10px; border-radius: 50%; background: var(--color-success-fg); }
+    .reminders-pill--off { color: var(--color-text-muted); }
+    .reminders-pill--off .reminders-pill__dot { background: var(--color-text-subtle); }
     .table-card { overflow: hidden; }
     .row-link { display: inline-flex; align-items: center; min-height: var(--touch-target); font-weight: var(--weight-semibold); }
     .note { margin-inline-start: var(--space-2); font-size: var(--text-xs); font-weight: var(--weight-semibold); }
@@ -123,6 +149,9 @@ export class CertificatesList implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
+  private readonly me = inject(MeApi);
+  /** null until known (or if it could not be loaded: then the pill is simply not shown). */
+  protected readonly remindersOn = signal<boolean | null>(null);
 
   protected readonly columns = ['body', 'supplier', 'number', 'expires', 'status'];
   protected readonly filters: readonly { value: Filter; label: string }[] = [
@@ -131,7 +160,8 @@ export class CertificatesList implements OnInit {
     { value: 'archived', label: 'Archived' },
   ];
   protected readonly search = new FormControl('', { nonNullable: true });
-  protected readonly query = signal<Query>({ search: '', status: null, expiring: false, archived: false, page: 1 });
+  protected readonly types = CERTIFICATE_TYPES;
+  protected readonly query = signal<Query>({ search: '', status: null, type: null, expiring: false, archived: false, page: 1 });
   protected readonly state = signal<State>({ kind: 'loading' });
   protected readonly liveRefresh = onLiveChange(() => void this.load(true));
   protected readonly name = bodyName;
@@ -148,15 +178,18 @@ export class CertificatesList implements OnInit {
     const params = this.route.snapshot.queryParamMap;
     const page = Number(params.get('page'));
     const status = params.get('status');
+    const type = params.get('type');
     this.query.set({
       search: collapseSpaces(params.get('search') ?? '').slice(0, 100),
       status: STATUSES.includes(status as CertificateStatus) ? (status as CertificateStatus) : null,
+      type: CERTIFICATE_TYPES.some((t) => t.value === type) ? (type as CertificateType) : null,
       expiring: params.get('expiring') === '1',
       archived: params.get('archived') === '1',
       page: Number.isInteger(page) && page > 0 ? page : 1,
     });
     this.search.setValue(this.query().search, { emitEvent: false });
     void this.load();
+    firstValueFrom(this.me.company()).then((c) => this.remindersOn.set(c.reminders?.certificates ?? null), () => undefined);
   }
 
   protected activeFilter(): Filter {
@@ -166,11 +199,15 @@ export class CertificatesList implements OnInit {
 
   protected isUnfiltered(): boolean {
     const q = this.query();
-    return !q.search && !q.status && !q.expiring && !q.archived;
+    return !q.search && !q.status && !q.type && !q.expiring && !q.archived;
   }
 
   protected setFilter(filter: Filter): void {
     this.go({ ...this.query(), status: STATUSES.includes(filter as CertificateStatus) ? (filter as CertificateStatus) : null, expiring: filter === 'expiring', archived: filter === 'archived', page: 1 });
+  }
+
+  protected setType(type: CertificateType | null): void {
+    this.go({ ...this.query(), type, page: 1 });
   }
 
   /** silent: a live refresh (5 Nov 2026) keeps the list on screen instead of showing the skeleton. */
@@ -181,7 +218,7 @@ export class CertificatesList implements OnInit {
     }
     try {
       const q = this.query();
-      const result = await firstValueFrom(this.api.list({ search: q.search, status: q.status, supplierId: null, expiring: q.expiring, archived: q.archived, page: q.page }));
+      const result = await firstValueFrom(this.api.list({ search: q.search, status: q.status, type: q.type, supplierId: null, expiring: q.expiring, archived: q.archived, page: q.page }));
       if (request === this.latestRequest) {
         this.state.set({ kind: 'ready', page: result });
       }
@@ -210,7 +247,7 @@ export class CertificatesList implements OnInit {
     this.query.set(query);
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { search: query.search || null, status: query.status, expiring: query.expiring ? 1 : null, archived: query.archived ? 1 : null, page: query.page > 1 ? query.page : null },
+      queryParams: { search: query.search || null, status: query.status, type: query.type, expiring: query.expiring ? 1 : null, archived: query.archived ? 1 : null, page: query.page > 1 ? query.page : null },
       replaceUrl: true,
     });
     void this.load();

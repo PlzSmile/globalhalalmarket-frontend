@@ -4,7 +4,15 @@ export type AssignableRole = Exclude<UserRole, 'owner'>;
 
 export interface CompanySummary { readonly id: number; readonly name: string; }
 /** Phase 6b: reminder settings (GET/PATCH /api/v1/company…). */
-export interface CompanyReminders { readonly certificates: boolean; readonly recognitions: boolean; readonly auto_chase_suppliers: boolean; }
+export interface CompanyReminders {
+  readonly certificates: boolean;
+  readonly recognitions: boolean;
+  readonly auto_chase_suppliers: boolean;
+  /** 14 Nov 2026: days before a certificate expires when the company is emailed (1 to 5, 0 to 180). */
+  readonly certificate_days: readonly number[];
+  /** Days before expiry when the supplier is asked for the renewed certificate. */
+  readonly chase_days: number;
+}
 /** Phase 6c: plan and free access. free_until is the day free access ends (null with free = until an admin ends it). */
 export type PlanKey = 'starter' | 'pro' | 'consultant';
 /** Phase 6c free access + Phase 7a access state (plan = the plan whose limits apply today). */
@@ -18,7 +26,22 @@ export interface CompanyAccess {
   readonly free: boolean;
   readonly free_until: string | null;
 }
-export interface CompanyDetail extends CompanySummary { readonly reminders?: CompanyReminders; readonly access?: CompanyAccess; }
+/** 12 Nov 2026: what suppliers see instead of us (emails, upload page, audit pack). */
+export interface CompanyBranding {
+  readonly logo_url: string | null;
+  readonly contact_email: string | null;
+  /** Security review: suppliers' replies go to contact_email only once a code sent to it was confirmed. */
+  readonly phone: string | null;
+  readonly website: string | null;
+  readonly address: string | null;
+}
+export interface BrandingChange { name?: string; contact_email?: string | null; phone?: string | null; website?: string | null; address?: string | null; }
+export interface CompanyDetail extends CompanySummary {
+  readonly reminders?: CompanyReminders;
+  readonly access?: CompanyAccess;
+  readonly branding?: CompanyBranding;
+  readonly needs_setup?: boolean;
+}
 
 export interface CurrentUser {
   readonly id: number;
@@ -26,6 +49,9 @@ export interface CurrentUser {
   readonly email: string;
   readonly role: UserRole;
   readonly email_verified: boolean;
+  /** 12 Nov 2026: the owner of a new sign-up goes through the setup wizard before the dashboard. */
+  readonly setup_required?: boolean;
+  readonly two_factor_enabled?: boolean;
   readonly company: CompanySummary;
   /** Phase 7c: a consultant can switch between their own company and its clients. */
   readonly can_switch_companies?: boolean;

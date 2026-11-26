@@ -4,7 +4,7 @@ import { PlanKey } from './auth';
 export type AccessState = 'subscribed' | 'free' | 'trial' | 'read_only';
 export type BillingInterval = 'monthly' | 'yearly';
 
-export interface PlanLimits { readonly suppliers: number | null; readonly markets: number; readonly users: number; }
+export interface PlanLimits { readonly suppliers: number | null; readonly markets: number | null; readonly users: number; }
 export interface PlanUsage { readonly suppliers: number; readonly markets: number; readonly users: number; }
 
 export interface OfferedPlan {

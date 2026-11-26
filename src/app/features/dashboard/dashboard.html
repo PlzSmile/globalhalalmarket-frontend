@@ -63,24 +63,69 @@
     @let c = s.data.compliance;
     <p class="muted updated" data-test="updated">{{ c.computed_at ? 'Updated ' + dateTime(c.computed_at) : 'Not calculated yet' }}</p>
 
-    <!-- 3 Nov 2026 redesign: three tinted totals, then one compact row per market (label left, counts right). -->
-    <div class="totals hs-rise" role="group" aria-label="All markets">
-      @for (st of statuses; track st) {
-        <button type="button" class="hs-lift" [class]="'total total--' + st" (click)="showStatus(null, st)" [attr.data-test]="'count-all-' + st"
-                [attr.aria-label]="c.summary.overall[st] + ' ' + (c.summary.overall[st] === 1 ? 'product' : 'products') + ': ' + statusLabel[st] + ', all markets'">
-          <span class="total__text">
-            <span class="total__label"><span class="dot" aria-hidden="true"></span><span class="long">{{ statusLabel[st] }}</span><span class="short">{{ statusShort[st] }}</span></span>
-            <span class="total__hint">{{ c.summary.overall[st] === 1 ? 'product' : 'products' }} · all markets</span>
+    @let t = s.data.trends;
+    <!-- 14 Nov 2026 (Bilal): one strip of four numbers with a 12-week line each (real past changes only). -->
+    <section class="kpis hs-card hs-rise" aria-label="All markets">
+      <div class="kpi">
+        <span class="kpi__label">Products tracked</span>
+        <span class="kpi__row">
+          <strong class="kpi__value" data-test="kpi-products">{{ s.data.product_count }}</strong>
+          <hs-sparkline class="kpi__spark" [values]="t.products" tone="primary" />
+        </span>
+        <span class="kpi__delta" [class]="'kpi__delta ' + deltaTone(t.products, false)">{{ deltaText(t.products) }}</span>
+      </div>
+      @for (st of kpiOrder; track st) {
+        <button type="button" class="kpi kpi--button" [class]="'kpi kpi--button kpi--' + st" (click)="showStatus(null, st)" [attr.data-test]="'count-all-' + st"
+                [attr.aria-label]="c.summary.overall[st] + ' ' + (c.summary.overall[st] === 1 ? 'product' : 'products') + ': ' + statusLabel[st] + '. Show them'">
+          <span class="kpi__label"><span class="dot" aria-hidden="true"></span>{{ kpiLabel[st] }}</span>
+          <span class="kpi__row">
+            <strong class="kpi__value">{{ c.summary.overall[st] }}</strong>
+            <hs-sparkline class="kpi__spark" [values]="t.overall[st]" [tone]="st" />
           </span>
-          <strong class="total__value">{{ c.summary.overall[st] }}</strong>
+          <span [class]="'kpi__delta ' + deltaTone(t.overall[st], st !== 'green')">{{ deltaText(t.overall[st]) }}</span>
         </button>
       }
+    </section>
+
+    <div class="grid grid--charts hs-rise">
+      <mat-card appearance="outlined" class="hs-card">
+        <mat-card-header>
+          <mat-card-title><h2 class="card-title">Certificates</h2></mat-card-title>
+          <mat-card-subtitle>{{ certificateTotal(s.data.certificates) }} in use, by state</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <ul class="bars" data-test="certificate-bars">
+            @for (row of certificateRows(s.data.certificates); track row.key) {
+              <li class="bar" [class]="'bar bar--' + row.tone">
+                <span class="bar__label">{{ row.label }}</span>
+                <span class="bar__track" aria-hidden="true"><span class="bar__fill" [style.width.%]="row.percent"></span></span>
+                <strong class="bar__value">{{ row.value }}</strong>
+              </li>
+            }
+          </ul>
+          <a mat-stroked-button routerLink="/certificates" class="card-link">See all certificates</a>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="hs-card">
+        <mat-card-header>
+          <mat-card-title><h2 class="card-title">Compliant products</h2></mat-card-title>
+          <mat-card-subtitle>Safe to ship, per week, last 12 weeks</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content class="trend">
+          <hs-area-chart [values]="t.overall.green" [dates]="t.weeks" tone="primary"
+                         [label]="'Compliant products per week for the last 12 weeks: ' + t.overall.green.join(', ') + '.'" />
+        </mat-card-content>
+      </mat-card>
     </div>
 
-    <div class="compliance hs-rise">
+    <div class="grid grid--detail hs-rise">
       <mat-card appearance="outlined" class="hs-card">
         <mat-card-header><mat-card-title><h2 class="card-title">What is safe to ship</h2></mat-card-title></mat-card-header>
         <mat-card-content>
+          <!-- 13 Nov 2026 (Bilal): the totals above count each product once; this table counts it once per market, so
+               the numbers can differ. Plain words, no "worst market". -->
+          <p class="summary__note" data-test="per-market-note">Counted for each market. A product sold to two markets appears in both rows, so these numbers can be different from the totals above.</p>
           <div class="summary" role="table" aria-label="Products by status for each market">
             <div class="summary__head" role="row">
               <span role="columnheader">Market</span>
@@ -104,28 +149,53 @@
       </mat-card>
 
       <mat-card appearance="outlined" class="hs-card">
-        <mat-card-header><mat-card-title><h2 class="card-title">Expiring in the next 60 days</h2></mat-card-title></mat-card-header>
+        <mat-card-header>
+          <mat-card-title><h2 class="card-title">Latest changes</h2></mat-card-title>
+          <mat-card-subtitle>Across all products</mat-card-subtitle>
+        </mat-card-header>
         <mat-card-content>
-          @if (c.upcoming_expiries.length) {
-            <ul class="expiries">
-              @for (e of c.upcoming_expiries; track $index) {
-                <li class="expiry">
-                  <span class="expiry__date">{{ date(e.date) }} · {{ daysText(e.days_left) }}</span>
-                  @if (e.kind === 'certificate') {
-                    <a [routerLink]="['/certificates', e.certificate_id]" class="expiry__link">{{ e.supplier }} — {{ e.body }} certificate</a>
-                  } @else {
-                    <span>{{ e.body }} — {{ e.authority }} recognition</span>
-                  }
-                  <span class="subtle">{{ e.products }} {{ e.products === 1 ? 'product' : 'products' }}</span>
+          @if (s.data.latest_changes.length) {
+            <ol class="timeline" data-test="latest-changes">
+              @for (ch of s.data.latest_changes; track ch.id) {
+                <li class="timeline__item" [class]="'timeline__item tone--' + (ch.status ?? 'none')">
+                  <span class="timeline__dot" aria-hidden="true"></span>
+                  <span class="timeline__text">
+                    <a [routerLink]="['/products', ch.product_id]" class="timeline__title">{{ changeTitle(ch) }}</a>
+                    <span class="timeline__sub">{{ ch.product }}{{ ch.market ? ' · ' + marketShort(ch.market) : '' }}</span>
+                  </span>
+                  <time class="timeline__time" [attr.datetime]="ch.changed_at">{{ when(ch.changed_at) }}</time>
                 </li>
               }
-            </ul>
+            </ol>
           } @else {
-            <p class="muted">Nothing expires in the next 60 days.</p>
+            <p class="muted">No changes yet. When a product's status changes, it shows here.</p>
           }
         </mat-card-content>
       </mat-card>
     </div>
+
+    <mat-card appearance="outlined" class="hs-card hs-rise">
+      <mat-card-header><mat-card-title><h2 class="card-title">Expiring in the next 60 days</h2></mat-card-title></mat-card-header>
+      <mat-card-content>
+        @if (c.upcoming_expiries.length) {
+          <ul class="expiries">
+            @for (e of c.upcoming_expiries; track $index) {
+              <li class="expiry">
+                <span class="expiry__date">{{ date(e.date) }} · {{ daysText(e.days_left) }}</span>
+                @if (e.kind === 'certificate') {
+                  <a [routerLink]="['/certificates', e.certificate_id]" class="expiry__link">{{ e.supplier }} — {{ e.body }} certificate</a>
+                } @else {
+                  <span class="expiry__link">{{ e.body }} — {{ e.authority }} {{ e.authority === 'GAC' ? 'accreditation' : 'recognition' }}</span>
+                }
+                <span class="subtle">{{ e.products }} {{ e.products === 1 ? 'product' : 'products' }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="muted">Nothing expires in the next 60 days.</p>
+        }
+      </mat-card-content>
+    </mat-card>
 
     <mat-card appearance="outlined" class="hs-card" id="matrix">
       <mat-card-header><mat-card-title><h2 class="card-title">Products by market</h2></mat-card-title></mat-card-header>

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, input, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -11,13 +11,14 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { InvitationPreview, ROLE_LABELS } from '../../../core/models/auth';
 import { applyServerErrorsOr, clearServerErrors, serverError } from '../../../shared/forms/server-errors';
 import { PASSWORD_MIN, matchesField } from '../../../shared/forms/validators';
+import { PasswordChecklist } from '../../../shared/forms/password-checklist';
 
 import { Loader } from '../../../shared/ui/loader';
 type State = { kind: 'loading' } | { kind: 'invalid' } | { kind: 'ready'; preview: InvitationPreview };
 
 @Component({
   selector: 'hs-accept-invitation',
-  imports: [Loader, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [PasswordChecklist, Loader, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule],
   templateUrl: './accept-invitation.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -39,6 +40,8 @@ export class AcceptInvitation implements OnInit {
     password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN)]],
     password_confirmation: ['', [Validators.required, matchesField('password')]],
   });
+  protected readonly passwordValue = toSignal(this.form.controls.password.valueChanges, { initialValue: '' });
+  protected readonly confirmationValue = toSignal(this.form.controls.password_confirmation.valueChanges, { initialValue: '' });
 
   constructor() {
     this.form.controls.password.valueChanges

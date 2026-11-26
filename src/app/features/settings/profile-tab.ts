@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,6 +15,7 @@ import { MeApi } from '../../core/api/me-api';
 import { ROLE_LABELS, TwoFactorStatus } from '../../core/models/auth';
 import { applyServerErrors, clearServerErrors, serverError } from '../../shared/forms/server-errors';
 import { PASSWORD_MIN, matchesField } from '../../shared/forms/validators';
+import { PasswordChecklist } from '../../shared/forms/password-checklist';
 import { EmailCodeDialog } from './email-code-dialog';
 import { TwoFactorDialog, TwoFactorDialogMode } from './two-factor-dialog';
 
@@ -28,7 +29,7 @@ const UNLOCK_MS = 15 * 60_000;
  */
 @Component({
   selector: 'hs-profile-tab',
-  imports: [ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule],
+  imports: [PasswordChecklist, ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule],
   template: `
     <div class="settings-grid">
       <mat-card appearance="outlined" class="hs-card">
@@ -37,7 +38,7 @@ const UNLOCK_MS = 15 * 60_000;
           @if (unlocked()) {
             <p class="lock lock--open" role="status"><mat-icon svgIcon="check" aria-hidden="true" />Confirmed: you can edit your profile until {{ unlockedUntilText() }}.</p>
           } @else {
-            <p class="lock"><mat-icon svgIcon="lock" aria-hidden="true" />Read-only. To change it, we email you a code first.</p>
+            <p class="lock"><mat-icon svgIcon="lock" aria-hidden="true" />Read-only. To change your profile or password, we email you a code first.</p>
           }
           <form class="settings-form profile-form" [formGroup]="profile" (ngSubmit)="saveProfile()" novalidate>
             <mat-form-field appearance="outline">
@@ -62,12 +63,46 @@ const UNLOCK_MS = 15 * 60_000;
               <mat-label>Role</mat-label>
               <input matInput [value]="roleLabel()" readonly />
             </mat-form-field>
+            @if (!unlocked()) {
+              <mat-form-field appearance="outline">
+                <mat-label>Password</mat-label>
+                <input matInput type="password" value="password-hidden" readonly aria-label="Password (hidden)" data-test="profile-password-locked" />
+              </mat-form-field>
+            }
             @if (unlocked()) {
               <button mat-flat-button type="submit" [disabled]="savingProfile()" data-test="profile-update">Update</button>
             } @else {
               <button mat-flat-button type="button" (click)="unlock()" data-test="profile-edit"><mat-icon svgIcon="mail" /> Edit profile</button>
             }
           </form>
+
+          @if (unlocked()) {
+            <form class="settings-form password-form" [formGroup]="password" (ngSubmit)="changePassword()" novalidate data-test="profile-password-form">
+              <h3 class="password-form__title">Change password <span class="muted">(optional)</span></h3>
+              <mat-form-field appearance="outline">
+                <mat-label>Current password</mat-label>
+                <input matInput type="password" formControlName="current_password" autocomplete="current-password" required />
+                @if (password.controls.current_password.hasError('required')) { <mat-error>Enter your current password.</mat-error> }
+                @else if (serverError(password.controls.current_password); as message) { <mat-error>{{ message }}</mat-error> }
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>New password</mat-label>
+                <input matInput type="password" formControlName="password" autocomplete="new-password" required />
+                @if (password.controls.password.hasError('required')) { <mat-error>Enter a new password.</mat-error> }
+                @else if (password.controls.password.hasError('minlength')) { <mat-error>Use at least {{ passwordMin }} characters.</mat-error> }
+                @else if (serverError(password.controls.password); as message) { <mat-error>{{ message }}</mat-error> }
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Confirm new password</mat-label>
+                <input matInput type="password" formControlName="password_confirmation" autocomplete="new-password" required />
+                @if (password.controls.password_confirmation.hasError('required')) { <mat-error>Type the new password again.</mat-error> }
+                @else if (password.controls.password_confirmation.hasError('mismatch')) { <mat-error>The passwords do not match.</mat-error> }
+              </mat-form-field>
+              <hs-password-checklist [password]="passwordValue()" [confirmation]="confirmationValue()" />
+              <p class="muted">Other devices where you are logged in will be signed out.</p>
+              <button mat-stroked-button type="submit" [disabled]="savingPassword()" data-test="password-change">Change password</button>
+            </form>
+          }
         </mat-card-content>
       </mat-card>
 
@@ -89,35 +124,6 @@ const UNLOCK_MS = 15 * 60_000;
         </mat-card-content>
       </mat-card>
 
-      <mat-card appearance="outlined" class="hs-card">
-        <mat-card-header><mat-card-title>Change password</mat-card-title></mat-card-header>
-        <mat-card-content>
-          <form class="settings-form" [formGroup]="password" (ngSubmit)="changePassword()" novalidate>
-            <mat-form-field appearance="outline">
-              <mat-label>Current password</mat-label>
-              <input matInput type="password" formControlName="current_password" autocomplete="current-password" required />
-              @if (password.controls.current_password.hasError('required')) { <mat-error>Enter your current password.</mat-error> }
-              @else if (serverError(password.controls.current_password); as message) { <mat-error>{{ message }}</mat-error> }
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>New password</mat-label>
-              <input matInput type="password" formControlName="password" autocomplete="new-password" required />
-              <mat-hint>At least {{ passwordMin }} characters.</mat-hint>
-              @if (password.controls.password.hasError('required')) { <mat-error>Enter a new password.</mat-error> }
-              @else if (password.controls.password.hasError('minlength')) { <mat-error>Use at least {{ passwordMin }} characters.</mat-error> }
-              @else if (serverError(password.controls.password); as message) { <mat-error>{{ message }}</mat-error> }
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Confirm new password</mat-label>
-              <input matInput type="password" formControlName="password_confirmation" autocomplete="new-password" required />
-              @if (password.controls.password_confirmation.hasError('required')) { <mat-error>Type the new password again.</mat-error> }
-              @else if (password.controls.password_confirmation.hasError('mismatch')) { <mat-error>The passwords do not match.</mat-error> }
-            </mat-form-field>
-            <p class="muted">Other devices where you are logged in will be signed out.</p>
-            <button mat-flat-button type="submit" [disabled]="savingPassword()">Change password</button>
-          </form>
-        </mat-card-content>
-      </mat-card>
     </div>
   `,
   styles: `
@@ -126,6 +132,8 @@ const UNLOCK_MS = 15 * 60_000;
     .lock mat-icon { width: 16px; height: 16px; flex: none; }
     .lock--open { background: var(--color-success-bg); color: var(--color-success-fg); }
     .profile-form input[readonly] { color: var(--color-text-muted); cursor: default; }
+    .password-form { margin-top: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
+    .password-form__title { margin: 0 0 var(--space-3); font-size: var(--text-base); }
     .tf { display: grid; gap: var(--space-3); }
     .tf p { margin: 0; }
     .tf__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
@@ -153,6 +161,8 @@ export class ProfileTab {
     password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN)]],
     password_confirmation: ['', [Validators.required, matchesField('password')]],
   });
+  protected readonly passwordValue = toSignal(this.password.controls.password.valueChanges, { initialValue: '' });
+  protected readonly confirmationValue = toSignal(this.password.controls.password_confirmation.valueChanges, { initialValue: '' });
   protected readonly savingProfile = signal(false);
   protected readonly savingPassword = signal(false);
 
@@ -180,7 +190,7 @@ export class ProfileTab {
     if (ok) {
       this.now.set(Date.now());
       this.unlockedUntil.set(Date.now() + UNLOCK_MS);
-      this.snackBar.open('Confirmed. You can now edit your profile.', 'Close', { duration: 4000 });
+      this.snackBar.open('Confirmed. You can now edit your profile and password.', 'Close', { duration: 4000 });
     }
   }
 
@@ -234,7 +244,12 @@ export class ProfileTab {
       this.password.reset();
       this.snackBar.open('Password changed.', 'Close', { duration: 4000 });
     } catch (error) {
-      applyServerErrors(this.password, error);
+      if (error instanceof HttpErrorResponse && error.error?.code === 'profile_locked') {
+        this.unlockedUntil.set(0); // the 15 minutes ran out on the server
+        this.snackBar.open('Please confirm a new code from your email first.', 'Close', { duration: 6000 });
+      } else {
+        applyServerErrors(this.password, error);
+      }
     } finally {
       this.savingPassword.set(false);
     }

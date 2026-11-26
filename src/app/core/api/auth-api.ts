@@ -47,8 +47,14 @@ export class AuthApi {
     return this.withCsrf(() => this.http.post<{ message: string }>('/api/v1/auth/reset-password', body));
   }
 
-  resendVerification(): Observable<unknown> {
-    return this.http.post('/api/v1/auth/email/verification-notification', {});
+  /** 12 Nov 2026: emails a new 6-digit code (429 with resend_after while the last one is under 30 seconds old). */
+  resendVerification(): Observable<{ message: string; resend_after?: number }> {
+    return this.http.post<{ message: string; resend_after?: number }>('/api/v1/auth/email/verification-notification', {});
+  }
+
+  /** 12 Nov 2026: confirms the email address with the code from the email. */
+  verifyEmailCode(code: string): Observable<CurrentUser> {
+    return this.http.post<ApiItem<CurrentUser>>('/api/v1/auth/email/verify-code', { code }).pipe(map((r) => r.data));
   }
 
   private withCsrf<T>(request: () => Observable<T>): Observable<T> {

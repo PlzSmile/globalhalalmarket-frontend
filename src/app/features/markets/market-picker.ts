@@ -101,9 +101,11 @@ export class MarketPicker {
     try {
       this.saved.emit(await firstValueFrom(this.api.update(codes)));
     } catch (error) {
+      const planLimit = error instanceof HttpErrorResponse && error.status === 422 && error.error?.code === 'plan_limit' ? String(error.error.message ?? '') : '';
       this.error.set(error instanceof HttpErrorResponse && error.status === 403
         ? 'Only owners and admins can change markets.'
-        : applyServerErrorsOr(this.form, error, 'Your markets could not be saved. Please try again.'));
+        : planLimit !== '' ? planLimit // 22 Nov 2026: say it is the plan, not "try again"
+          : applyServerErrorsOr(this.form, error, 'Your markets could not be saved. Please try again.'));
     } finally {
       this.busy.set(false);
     }

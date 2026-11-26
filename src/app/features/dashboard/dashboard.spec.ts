@@ -22,6 +22,9 @@ const NEW_COMPANY: DashboardData = {
   ] },
   product_count: 0,
   compliance: { computed_at: null, summary: { overall: { green: 0, amber: 0, red: 0 }, markets: [] }, upcoming_expiries: [] },
+  trends: { weeks: [], products: [], overall: { green: [], amber: [], red: [] } },
+  certificates: { valid: 0, expiring: 0, expired: 0, pending: 0 },
+  latest_changes: [],
 };
 
 const WITH_MARKETS: DashboardData = {
@@ -41,6 +44,16 @@ const WITH_RESULTS: DashboardData = {
       { kind: 'recognition', date: '2026-11-02', days_left: 33, body: 'Halal Food Council', authority: 'MoIAT', products: 1 },
     ],
   },
+  trends: {
+    weeks: ['2026-07-15', '2026-07-22', '2026-07-29', '2026-08-05', '2026-08-12', '2026-08-19', '2026-08-26', '2026-09-02', '2026-09-09', '2026-09-16', '2026-09-23', '2026-09-30'],
+    products: [0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2],
+    overall: { green: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1], amber: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], red: [0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 1, 1] },
+  },
+  certificates: { valid: 3, expiring: 1, expired: 0, pending: 2 },
+  latest_changes: [
+    { id: 5, product_id: 1, product: 'Beef sausage', market: 'JAKIM', status: 'green', reason: null, changed_at: '2026-09-29T09:15:00' },
+    { id: 4, product_id: 2, product: 'Chicken pie', market: 'JAKIM', status: 'red', reason: 'No certificate for Gelatin', changed_at: '2026-09-20T08:00:00' },
+  ],
 };
 
 function setup(get: ReturnType<typeof vi.fn>, afterClosed: unknown = undefined, canManage = true) {
@@ -136,6 +149,9 @@ describe('Dashboard', () => {
     await settle(fixture);
     expect(el.querySelector('[data-test="updated"]')?.textContent).toContain('Updated 30 Sep 2026, 10:12');
     expect(el.querySelector('[data-test="count-all-red"]')?.textContent).toContain('1');
+    // 13 Nov 2026: the totals count each product once; the table says it counts per market.
+    expect(el.querySelector('[data-test="count-all-red"]')?.textContent).not.toContain('worst market');
+    expect(el.querySelector('[data-test="per-market-note"]')?.textContent).toContain('Counted for each market');
     expect(el.textContent).toContain('13 Oct 2026 · 13 days');
     expect(el.textContent).toContain('Acme Gelatin — Halal Food Council certificate');
     expect(el.textContent).toContain('Halal Food Council — MoIAT recognition');
@@ -171,5 +187,23 @@ describe('Dashboard', () => {
     await settle(fixture);
 
     expect(get).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows the four numbers with 12-week lines, certificates by state and the latest changes', async () => {
+    const { fixture, el } = setup(vi.fn(() => of(WITH_RESULTS)));
+    fixture.detectChanges();
+    await settle(fixture);
+    expect(el.querySelector('[data-test="kpi-products"]')?.textContent?.trim()).toBe('2');
+    expect(el.querySelectorAll('.kpis hs-sparkline').length).toBe(4);
+    expect(el.querySelector('[data-test="count-all-green"]')?.textContent).toContain('▲ 1 more in 12 weeks');
+    expect(el.querySelector('[data-test="count-all-amber"]')?.textContent).toContain('No change in 12 weeks');
+    const bars = Array.from(el.querySelectorAll('[data-test="certificate-bars"] li')).map((li) => `${li.querySelector('.bar__label')?.textContent?.trim()} ${li.querySelector('.bar__value')?.textContent?.trim()}`);
+    expect(bars).toEqual(['Valid 3', 'Expiring in 60 days 1', 'Expired 0', 'Waiting for review 2']);
+    expect(el.querySelector('hs-area-chart [role="img"]')?.getAttribute('aria-label')).toContain('0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1');
+    const changes = el.querySelectorAll('[data-test="latest-changes"] li');
+    expect(changes.length).toBe(2);
+    expect(changes[0].textContent).toContain('Now compliant');
+    expect(changes[1].textContent).toContain('No certificate for Gelatin');
+    expect(changes[1].textContent).toContain('Chicken pie · Malaysia');
   });
 });

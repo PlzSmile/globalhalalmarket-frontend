@@ -29,13 +29,14 @@ describe('certificate APIs', () => {
     const events: UploadEvent[] = [];
     const file = new File(['%PDF-1.4'], 'cert.pdf', { type: 'application/pdf' });
     TestBed.inject(CertificatesApi).create({
-      supplier_id: 5, certification_body_id: null, body_name_other: 'Midlands Board', certificate_number: null, scope: null,
+      supplier_id: 5, type: 'halal', type_name: null, certification_body_id: null, body_name_other: 'Midlands Board', certificate_number: null, scope: null,
       issued_on: null, expires_on: '2027-01-01', ingredient_ids: [3, 4],
     }, file).subscribe((e) => events.push(e));
 
     const req = backend.expectOne({ method: 'POST', url: '/api/v1/certificates' });
     const body = req.request.body as FormData;
     expect(body.get('supplier_id')).toBe('5');
+    expect(body.get('type')).toBe('halal'); // week 8
     expect(body.get('body_name_other')).toBe('Midlands Board');
     expect(body.has('certification_body_id')).toBe(false);
     expect(body.getAll('ingredient_ids[]')).toEqual(['3', '4']);
