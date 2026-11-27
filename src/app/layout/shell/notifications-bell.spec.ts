@@ -19,7 +19,7 @@ const PAGE: NotificationPage = {
 
 function setup() {
   const api = { list: vi.fn(() => of(PAGE)), read: vi.fn(() => of(undefined)), readAll: vi.fn(() => of(undefined)) };
-  TestBed.configureTestingModule({ providers: [provideRouter([]), { provide: NotificationsApi, useValue: api }] });
+  TestBed.configureTestingModule({ providers: [provideRouter([{ path: 'dashboard', children: [] }]), { provide: NotificationsApi, useValue: api }] });
   const fixture = TestBed.createComponent(NotificationsBell);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bell = fixture.componentInstance as unknown as Record<string, any>;
@@ -80,6 +80,24 @@ describe('NotificationsBell', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+  it('shows a red header tag for an unread list change and clears it when opened', async () => {
+    const page: NotificationPage = { ...PAGE, data: [{ ...PAGE.data[1], read: false }], meta: { ...PAGE.meta, unread: 1 } };
+    const { fixture, api, bell, el } = setup();
+    api.list.mockReturnValue(of(page));
+    await settle(fixture);
+    expect(el.querySelector('[data-test="list-alert"]')?.textContent).toContain('List change: 1 product red');
+
+    await bell['openListAlerts'](new Event('click'));
+    expect(api.read).toHaveBeenCalledWith('b2');
+    fixture.detectChanges();
+    expect(el.querySelector('[data-test="list-alert"]')).toBeNull();
+  });
+
+  it('shows no red tag when list changes are already read', async () => {
+    const { fixture, el } = setup();
+    await settle(fixture);
+    expect(el.querySelector('[data-test="list-alert"]')).toBeNull();
   });
 });
 

@@ -3,6 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { NotificationsApi } from '../../core/api/notifications-api';
 import { AppNotification, NotificationPage } from '../../core/models/notifications';
@@ -16,6 +17,15 @@ const EMPTY: NotificationPage = { data: [], meta: { current_page: 1, last_page: 
   selector: 'hs-notifications-bell',
   imports: [MatButtonModule, MatIconModule, MatMenuModule, MatTooltipModule],
   template: `
+    <!-- 27 Nov 2026 (Bilal): an official list change that turned products red is shown as a blinking red tag in the header
+         until it is opened. -->
+    @if (listAlerts().length > 0) {
+      <a href="/app/dashboard" class="bell__alert" role="alert" data-test="list-alert" (click)="openListAlerts($event)">
+        <span class="bell__alert-dot" aria-hidden="true"></span>
+        <span class="bell__alert-long">List change: {{ redProducts() }} {{ redProducts() === 1 ? 'product' : 'products' }} red</span>
+        <span class="bell__alert-short" aria-hidden="true">{{ redProducts() }} red</span>
+      </a>
+    }
     <button mat-icon-button type="button" class="bell__button" [matMenuTriggerFor]="menu" (menuOpened)="load()" matTooltip="Notifications"
             [attr.aria-label]="unread() > 0 ? 'Notifications, ' + unread() + ' unread' : 'Notifications'">
       <mat-icon svgIcon="bell" />
@@ -42,6 +52,18 @@ const EMPTY: NotificationPage = { data: [], meta: { current_page: 1, last_page: 
     </mat-menu>
   `,
   styles: `
+    :host { display: inline-flex; align-items: center; gap: var(--space-2); }
+    .bell__alert { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 36px; padding: 0 var(--space-3);
+      border-radius: var(--radius-pill); background: var(--color-danger-fg); color: var(--color-surface); text-decoration: none;
+      font-size: var(--text-sm); font-weight: var(--weight-semibold); white-space: nowrap; animation: bell-alert 1.6s ease-in-out infinite; }
+    .bell__alert:focus-visible { outline: 2px solid var(--color-danger-fg); outline-offset: 2px; }
+    .bell__alert-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-surface); animation: bell-blink 1s steps(2, start) infinite; }
+    .bell__alert-short { display: none; }
+    @media (max-width: 767px) { .bell__alert-long { display: none; } .bell__alert-short { display: inline; } }
+    @keyframes bell-alert { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-danger-fg) 55%, transparent); }
+      50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-danger-fg) 0%, transparent); } }
+    @keyframes bell-blink { to { visibility: hidden; } }
+    @media (prefers-reduced-motion: reduce) { .bell__alert, .bell__alert-dot { animation: none; } }
     .bell__button { position: relative; }
     .bell__badge { position: absolute; top: 2px; right: 0; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box;
       border-radius: var(--radius-pill); background: var(--color-danger-fg); color: var(--color-surface); font-size: 10px;
@@ -73,6 +95,10 @@ export class NotificationsBell implements OnInit {
   protected readonly page = signal<NotificationPage>(EMPTY);
   protected readonly unread = computed(() => this.page().meta.unread);
   protected readonly time = ukDateTime;
+  /** Unread alerts that an official list change turned products red. */
+  protected readonly listAlerts = computed(() => this.page().data.filter((n) => n.kind === 'recognition_lost' && !n.read));
+  protected readonly redProducts = computed(() => this.listAlerts().reduce((sum, n) => sum + Math.max(1, n.products.length), 0));
+  private readonly router = inject(Router);
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
@@ -118,6 +144,20 @@ export class NotificationsBell implements OnInit {
       data: p.data.map((x) => (x.id === n.id ? { ...x, read: true } : x)),
       meta: { ...p.meta, unread: Math.max(0, p.meta.unread - 1) },
     }));
+  }
+
+  /** Opens the dashboard (the red products and why) and clears the header tag. */
+  protected async openListAlerts(event: Event): Promise<void> {
+    event.preventDefault();
+    const alerts = this.listAlerts();
+    void this.router.navigateByUrl('/dashboard');
+    for (const n of alerts) {
+      try {
+        await this.open(n);
+      } catch {
+        // The tag comes back on the next refresh; the dashboard already shows the red products.
+      }
+    }
   }
 
   protected async markAllRead(): Promise<void> {

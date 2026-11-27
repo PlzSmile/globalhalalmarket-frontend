@@ -124,6 +124,10 @@
   transition: transform 220ms cubic-bezier(0.32, 0.72, 0, 1), left 260ms cubic-bezier(0.32, 0.72, 0, 1), right 260ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 .is-slim .shell__pill { left: var(--space-2); right: var(--space-2); }
+/* 27 Nov 2026 (Bilal): in the full sidebar the active page fills the whole width, square, with a dark bar on its right edge. */
+.shell:not(.is-slim) .shell__nav { padding-inline: 0; }
+.shell:not(.is-slim) .shell__nav .mdc-list-item { border-radius: 0; padding-inline-start: var(--space-3); }
+.shell:not(.is-slim) .shell__pill { left: 0; right: 0; border-radius: 0; box-shadow: inset -4px 0 0 var(--brand-900); }
 .shell__footer { margin-top: auto; border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent); padding-block: var(--space-2); }
 
 .shell__toolbar {
